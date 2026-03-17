@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  background: #060D1A;
+  color: #F0F4FF;
+  font-family: 'Rajdhani', system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Evitamos que Vite/Tailwind rompa layouts complejos */
+#root {
+  display: block !important;
+}
