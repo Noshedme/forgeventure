@@ -9,7 +9,7 @@ import Home           from "./pages/Home";
 import LoginPage      from "./pages/LoginPage";
 import RegisterPage   from "./pages/RegisterPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
-// import UserDashboard from "./pages/user/UserDashboard"; // ← próximo módulo
+import UserDashboard  from "./pages/user/UserDashboard";
 
 // ── Pantalla de carga ─────────────────────────────────────────
 const LOAD_CSS = `
@@ -44,28 +44,6 @@ function AccessDenied({ onBack }) {
       </div>
       <button onClick={onBack} style={{ fontFamily:"'Press Start 2P'", fontSize:8, background:"#E85D04", border:"none", color:"#060D1A", padding:"12px 24px", cursor:"pointer", marginTop:6, letterSpacing:".05em" }}>
         ← VOLVER
-      </button>
-    </div>
-  );
-}
-
-// ── Placeholder usuario ───────────────────────────────────────
-function UserPlaceholder({ username, onLogout }) {
-  return (
-    <div style={{ height:"100vh", background:"#060D1A", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:14 }}>
-      <div style={{ fontSize:52, filter:"drop-shadow(0 0 18px #E85D04)" }}>⚔️</div>
-      <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:16, fontWeight:900, color:"#E85D04" }}>
-        BIENVENIDO, {(username || "HÉROE").toUpperCase()}
-      </div>
-      <div style={{ fontFamily:"'Rajdhani',sans-serif", fontSize:14, color:"#6B8CAE" }}>
-        Dashboard de usuario — próximamente
-      </div>
-      <button onClick={onLogout}
-        style={{ fontFamily:"'Press Start 2P'", fontSize:7, background:"transparent", border:"1px solid #1E3A5F", color:"#6B8CAE", padding:"10px 20px", cursor:"pointer", letterSpacing:".05em", marginTop:8, transition:"all .2s" }}
-        onMouseEnter={e => { e.currentTarget.style.borderColor="#E85D04"; e.currentTarget.style.color="#E85D04"; }}
-        onMouseLeave={e => { e.currentTarget.style.borderColor="#1E3A5F"; e.currentTarget.style.color="#6B8CAE"; }}
-      >
-        CERRAR SESIÓN
       </button>
     </div>
   );
@@ -185,8 +163,7 @@ export default function App() {
         return <AdminDashboard onLogout={logout} />;
 
       case "user":
-        // return <UserDashboard profile={sessionState.profile} onLogout={logout} />;
-        return <UserPlaceholder username={sessionState.profile.username} onLogout={logout} />;
+        return <UserDashboard profile={sessionState.profile} onLogout={logout} />;
 
       default:
         return <AccessDenied onBack={logout} />;
