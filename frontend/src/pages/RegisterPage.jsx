@@ -1110,6 +1110,7 @@ function RegisterLandingPanel({
   fromHome = false,
   afterEnterSteps = [],
   registerTrustBand = [],
+  registerStats = [],
   onReturnHome,
 }) {
   const cls = CLASSES[classIdx] ?? CLASSES[0];
@@ -1388,7 +1389,20 @@ function StepIndicator({ step, total = 2, classIdx = 0 }) {
 // MAIN COMPONENT — toda la lógica auth intacta
 // ─────────────────────────────────────────────────────────────────────────────
 export default function RegisterPage({ onGoLogin, onGoBack, onSuccess, googleData }) {
-  const initialDraft = useMemo(() => readRegisterDraft(), []);
+  const rawInitialDraft = useMemo(() => readRegisterDraft(), []);
+  // Un borrador de una sesión de Google anterior solo es válido si coincide
+  // con el usuario de Firebase Auth actualmente logueado (evita reusar un
+  // uid viejo/borrado que quedó guardado en localStorage).
+  const initialDraft = useMemo(() => {
+    if (rawInitialDraft?.authSource === "google") {
+      const currentUid = auth.currentUser?.uid;
+      if (!currentUid || rawInitialDraft?.googleProfile?.uid !== currentUid) {
+        clearRegisterDraft();
+        return null;
+      }
+    }
+    return rawInitialDraft;
+  }, [rawInitialDraft]);
   const initialGoogleProfile = useMemo(() => {
     if (googleData?.fromGoogle) return googleData;
     if (initialDraft?.authSource === "google" && initialDraft?.googleProfile?.uid) return initialDraft.googleProfile;
@@ -1759,6 +1773,7 @@ export default function RegisterPage({ onGoLogin, onGoBack, onSuccess, googleDat
             fromHome={fromHome}
             afterEnterSteps={afterEnterSteps}
             registerTrustBand={registerTrustBand}
+            registerStats={registerStats}
             onReturnHome={() => {
               if (onGoBack) {
                 onGoBack();

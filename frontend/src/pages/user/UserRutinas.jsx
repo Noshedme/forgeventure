@@ -79,62 +79,35 @@ const REST_TIPS = [
 const CLASS_COPY = {
   GUERRERO: {
     title: "Forja fuerza y constancia",
-    lead:
-      "La vista abre como una mesa de campanas y territorios. Primero muestra lo que hoy si conviene tocar y despues deja explorar sin que todo se vea apretado.",
+    lead: "Elige que entrenar hoy y explora el resto del mapa sin apuro.",
     focus: "Fuerza, calistenia y funcional",
-    command:
-      "Tu mejor progreso nace cuando las rutas pesadas quedan claras y el mapa no te hace perder tiempo antes de entrenar.",
+    command: "Entra sabiendo que ruta pesada toca hoy, sin perder tiempo decidiendo.",
     commandSecondary:
-      "Si no entrenaste hoy, entra por una ruta de fuerza. Si ya activaste el cuerpo, remata con una funcional corta para sumar sin vaciarte.",
+      "Si no entrenaste hoy, arranca con fuerza. Si ya activaste el cuerpo, cierra con una funcional corta.",
   },
   ARQUERO: {
     title: "Mantene ritmo, velocidad y precision",
-    lead:
-      "Rutinas entra con aire de landing interna, mas lectura rapida y territorios que priorizan cardio, HIIT y movilidad sin dejarlo plano ni tecnico.",
+    lead: "Rutas rapidas de cardio, HIIT y movilidad para mantener tu ritmo.",
     focus: "Cardio, HIIT y movilidad",
-    command:
-      "La pagina pone primero rutas que sostienen pulso, desplazamiento y sesiones agiles, justo donde tu clase mejor rinde.",
+    command: "Rutas de pulso y agilidad, priorizadas donde tu clase rinde mejor.",
     commandSecondary:
-      "Sin entreno hoy, abre una ruta corta de cardio. Si ya tomaste traccion, sube a HIIT y cierra un tramo mas agresivo.",
+      "Sin entreno hoy, arranca con cardio corto. Si ya tomaste traccion, sube a HIIT.",
   },
   MAGO: {
     title: "Sostene control, tecnica y energia",
-    lead:
-      "La estructura sube en presencia visual pero sin saturar. Movilidad, respiracion y sesiones tecnicas se leen mejor y con una piel mas RPG.",
+    lead: "Movilidad, respiracion y tecnica: entrena con precision, no al azar.",
     focus: "Flexibilidad, control y flujo",
-    command:
-      "Tu mejor tablero aparece donde la tecnica pesa tanto como el volumen y cada entrada se siente meditada, no improvisada.",
+    command: "Aqui la tecnica pesa tanto como el volumen: cada entrada cuenta.",
     commandSecondary:
-      "Con semana pesada, entra por movilidad. Si vienes limpio, toma una ruta larga y estable para mantener continuidad.",
+      "Con semana pesada, entra por movilidad. Si vienes limpio, toma una ruta larga y estable.",
   },
   DEFAULT: {
     title: "Ordena tu mapa de rutinas",
-    lead:
-      "La pantalla ya no cae como un listado cuadrado. Ahora se abre por escena, territorio y biblioteca, con mas jerarquia y menos ruido.",
+    lead: "Encuentra que entrenar hoy y explora el resto de tus rutinas.",
     focus: "Ritmo, rutas y progreso visible",
-    command:
-      "Primero ves lo que importa hoy. Luego el resto del mapa queda ordenado para entrar, revisar o cambiar de zona.",
+    command: "Primero ves lo que importa hoy. Despues, el resto del mapa.",
     commandSecondary:
-      "Empieza por la recomendacion diaria y usa territorios para abrir variedad sin perder el hilo del plan.",
-  },
-};
-
-const RUTINA_STAGE_ART = {
-  GUERRERO: {
-    scene: "/exercises/hero/training-scene-warrior.png",
-    glow: "/exercises/hero/hero-floor-glow-warrior.png",
-  },
-  ARQUERO: {
-    scene: "/exercises/hero/training-scene-archer.png",
-    glow: "/exercises/hero/hero-floor-glow-archer.png",
-  },
-  MAGO: {
-    scene: "/exercises/hero/training-scene-mage.png",
-    glow: "/exercises/hero/hero-floor-glow-mage.png",
-  },
-  DEFAULT: {
-    scene: "/exercises/hero/training-scene-default.png",
-    glow: "/exercises/hero/hero-floor-glow-default.png",
+      "Empieza por la recomendacion diaria y explora otras zonas cuando quieras.",
   },
 };
 
@@ -249,14 +222,14 @@ const PAGE_CSS = `
     font-size: clamp(18px, 1.6vw, 26px);
     line-height: 1.06;
   }
-  .urt-panel-head p, .urt-band-copy p, .urt-spotlight-copy p, .urt-stage-card p, .urt-hero-copy p, .urt-command-card p, .urt-command-item p, .urt-mini-card p {
+  .urt-panel-head p, .urt-band-copy p, .urt-spotlight-copy p, .urt-hero-copy p, .urt-command-card p, .urt-command-item p, .urt-mini-card p {
     margin: 0;
     color: ${UI.muted};
     font-family: "Manrope", sans-serif;
     font-size: 13px;
     line-height: 1.55;
   }
-  .urt-panel-tag, .urt-stage-tag {
+  .urt-panel-tag {
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -271,18 +244,13 @@ const PAGE_CSS = `
     letter-spacing: .08em;
     text-transform: uppercase;
   }
-  .urt-stage-tag.alt {
-    color: ${UI.gold};
-    border-color: rgba(243,201,105,.36);
-    background: rgba(243,201,105,.12);
-  }
   .urt-kicker, .urt-chip-row, .urt-actions, .urt-card-actions, .urt-mini-actions {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 10px;
   }
-  .urt-kicker img, .urt-chip img, .urt-map-card img, .urt-summary-card img, .urt-stage-emblem, .urt-mini-badge img, .urt-routine-mark img, .urt-band-visual img {
+  .urt-kicker img, .urt-chip img, .urt-map-card img, .urt-summary-card img, .urt-mini-badge img, .urt-routine-mark img, .urt-band-visual img {
     width: 18px;
     height: 18px;
     object-fit: contain;
@@ -350,7 +318,7 @@ const PAGE_CSS = `
   }
   .urt-hero {
     display: grid;
-    grid-template-columns: minmax(0, 1.08fr) minmax(300px, .92fr);
+    grid-template-columns: 1fr;
     gap: 14px;
     padding: 18px;
     align-items: start;
@@ -362,9 +330,9 @@ const PAGE_CSS = `
   }
   .urt-hero-copy h1 {
     margin: 0;
-    font: 900 clamp(36px, 5.2vw, 80px)/.92 "Manrope", sans-serif;
+    font: 900 clamp(36px, 4.4vw, 72px)/1.02 "Manrope", sans-serif;
     color: #fff9ef;
-    max-width: 16ch;
+    max-width: 32ch;
   }
   .urt-hero-copy h1 span {
     color: var(--class-accent);
@@ -373,7 +341,7 @@ const PAGE_CSS = `
   .urt-hero-copy > p {
     font: 500 clamp(14px, 1.2vw, 18px)/1.7 "Manrope", sans-serif;
     color: #cdbfe0;
-    max-width: 720px;
+    max-width: 900px;
   }
   .urt-hero-status {
     display: grid;
@@ -433,247 +401,12 @@ const PAGE_CSS = `
     text-transform: uppercase;
     letter-spacing: .08em;
   }
-  .urt-stage {
-    position: relative;
-    min-height: 280px;
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid color-mix(in srgb, var(--class-accent) 32%, rgba(255,255,255,.12));
-    box-shadow:
-      inset 0 0 0 1px rgba(255,255,255,.04),
-      inset 0 0 44px color-mix(in srgb, var(--class-accent) 16%, transparent),
-      0 0 28px color-mix(in srgb, var(--class-accent) 10%, transparent);
-    background:
-      linear-gradient(180deg, rgba(9,8,18,.18), rgba(9,8,18,.88)),
-      var(--stage-image) center/cover no-repeat;
-  }
-  .urt-stage::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    box-shadow:
-      inset 0 0 0 1px color-mix(in srgb, var(--class-accent) 28%, transparent),
-      inset 0 0 24px color-mix(in srgb, var(--class-accent) 18%, transparent),
-      inset 0 0 76px rgba(6,5,14,.4);
-    pointer-events: none;
-    z-index: 2;
-  }
-  .urt-stage-video, .urt-stage-overlay { position: absolute; inset: 0; }
-  .urt-stage-video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    filter: saturate(.8) brightness(.48);
-    z-index: 0;
-  }
-  .urt-stage-overlay {
-    background:
-      linear-gradient(180deg, rgba(10,8,18,.16), rgba(10,8,18,.82)),
-      radial-gradient(circle at 18% 70%, color-mix(in srgb, var(--class-accent) 22%, transparent), transparent 30%),
-      radial-gradient(circle at bottom, color-mix(in srgb, var(--class-accent) 14%, transparent), transparent 44%);
-    z-index: 1;
-  }
-  .urt-stage-class-art,
-  .urt-stage-floor,
-  .urt-stage-table {
-    position: absolute;
-    pointer-events: none;
-  }
-  .urt-stage-class-art {
-    left: -4%;
-    bottom: -2%;
-    width: clamp(320px, 55%, 540px);
-    height: 90%;
-    background: var(--stage-class-art) left bottom / contain no-repeat;
-    opacity: .3;
-    mix-blend-mode: screen;
-    filter: drop-shadow(0 0 28px color-mix(in srgb, var(--class-accent) 20%, transparent));
-    z-index: 1;
-  }
-  .urt-stage-floor {
-    left: 2%;
-    bottom: -2%;
-    width: clamp(240px, 45%, 420px);
-    height: 32%;
-    background: var(--stage-floor) left bottom / contain no-repeat;
-    opacity: .55;
-    z-index: 1;
-  }
-  .urt-stage-table {
-    left: 6%;
-    bottom: 16px;
-    width: min(360px, calc(100% - 460px));
-    min-width: 250px;
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid color-mix(in srgb, var(--class-accent) 24%, rgba(255,255,255,.12));
-    background:
-      linear-gradient(180deg, rgba(10,8,18,.3), rgba(10,8,18,.78)),
-      var(--stage-map-banner) center/cover no-repeat,
-      url("/ui/panel-texture.png");
-    box-shadow:
-      inset 0 0 0 1px rgba(255,255,255,.04),
-      inset 0 0 20px color-mix(in srgb, var(--class-accent) 16%, transparent),
-      0 16px 34px rgba(0,0,0,.34);
-    z-index: 2;
-  }
-  .urt-stage-table::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background:
-      linear-gradient(135deg, rgba(244,227,180,.09), transparent 28%, transparent 72%, rgba(244,227,180,.05)),
-      radial-gradient(circle at 20% 18%, rgba(255,255,255,.1), transparent 26%),
-      linear-gradient(180deg, rgba(7,6,14,.08), rgba(7,6,14,.32));
-    mix-blend-mode: screen;
-  }
-  .urt-stage-table::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: url("/ui/dashboard-frame.png") center/100% 100% no-repeat;
-    opacity: .18;
-  }
-  .urt-stage-table-copy {
-    position: relative;
-    z-index: 1;
-    padding: 16px 16px 14px;
-    display: grid;
-    gap: 12px;
-  }
-  .urt-stage-table-top,
-  .urt-stage-table-meta,
-  .urt-stage-campaign {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-  }
-  .urt-stage-table-top strong,
-  .urt-stage-campaign strong {
-    display: block;
-    font-family: "Manrope", sans-serif;
-    font-size: 15px;
-    color: ${UI.text};
-  }
-  .urt-stage-table-top span,
-  .urt-stage-table-meta span,
-  .urt-stage-campaign span {
-    color: ${UI.muted};
-    font-family: "Manrope", sans-serif;
-    font-size: 12px;
-  }
-  .urt-stage-table-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 8px;
-    border-radius: 999px;
-    border: 1px solid rgba(243,201,105,.26);
-    background: rgba(243,201,105,.1);
-    color: ${UI.gold};
-    font-family: "Manrope", sans-serif;
-    font-size: 11px;
-    font-weight: 800;
-  }
-  .urt-stage-table-line {
-    height: 6px;
-    border-radius: 999px;
-    background: rgba(255,255,255,.08);
-    overflow: hidden;
-  }
-  .urt-stage-table-line > span {
-    display: block;
-    height: 100%;
-    border-radius: inherit;
-    background: linear-gradient(90deg, var(--class-accent), color-mix(in srgb, var(--class-secondary) 70%, white 6%));
-    box-shadow: 0 0 18px color-mix(in srgb, var(--class-accent) 32%, transparent);
-  }
-  .urt-stage-campaign {
-    align-items: stretch;
-  }
-  .urt-stage-campaign-card {
-    flex: 1;
-    min-width: 0;
-    padding: 10px 12px;
-    border-radius: 8px;
-    border: 1px solid rgba(255,255,255,.08);
-    background: rgba(10,8,18,.48);
-  }
-  .urt-stage-campaign-card strong {
-    display: block;
-    font-family: "Manrope", sans-serif;
-    font-size: 14px;
-    margin-bottom: 2px;
-  }
-  .urt-stage-campaign-card span {
-    color: ${UI.muted};
-    font-family: "Manrope", sans-serif;
-    font-size: 12px;
-    line-height: 1.35;
-  }
-  .urt-stage-emblem {
-    position: absolute;
-    top: 18px;
-    right: 18px;
-    width: clamp(72px, 8vw, 108px);
-    height: clamp(72px, 8vw, 108px);
-    opacity: .96;
-    z-index: 3;
-  }
-  .urt-stage-card {
-    position: relative;
-    z-index: 3;
-    width: min(420px, calc(100% - 28px));
-    margin: auto 14px 14px auto;
-    padding: 18px;
-    border-radius: 8px;
-    border: 1px solid rgba(255,255,255,.1);
-    background: linear-gradient(180deg, rgba(16,12,28,.84), rgba(9,7,18,.92));
-    backdrop-filter: blur(12px);
-    display: grid;
-    gap: 12px;
-  }
-  .urt-stage-quest {
-    display: grid;
-    gap: 10px;
-    margin-top: 4px;
-    padding: 12px 14px;
-    border-radius: 8px;
-    border: 1px solid rgba(255,255,255,.08);
-    background: rgba(255,255,255,.04);
-  }
-  .urt-stage-quest-head {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    align-items: center;
-  }
-  .urt-stage-quest-head strong {
-    font-family: "Manrope", sans-serif;
-    font-size: 14px;
-    line-height: 1.1;
-  }
-  .urt-stage-quest-head span,
-  .urt-stage-quest p {
-    color: ${UI.muted};
-    font-family: "Manrope", sans-serif;
-    font-size: 12px;
-    margin: 0;
-  }
-  .urt-stage-top, .urt-summary-card-top, .urt-mini-card-top, .urt-routine-card-top, .urt-progress-head, .urt-toolbar, .urt-toolbar-row, .urt-tabs, .urt-week-strip, .urt-map-card-top, .urt-map-meta, .urt-routine-meta, .urt-routine-footer {
+  .urt-summary-card-top, .urt-mini-card-top, .urt-routine-card-top, .urt-progress-head, .urt-toolbar, .urt-toolbar-row, .urt-tabs, .urt-week-strip, .urt-map-card-top, .urt-map-meta, .urt-routine-meta, .urt-routine-footer {
     display: flex;
     align-items: center;
     gap: 12px;
   }
-  .urt-stage-top, .urt-progress-head, .urt-toolbar, .urt-toolbar-row, .urt-map-meta, .urt-routine-meta, .urt-routine-footer { justify-content: space-between; }
-  .urt-stage-card strong {
-    font-family: "Manrope", sans-serif;
-    font-weight: 900;
-    font-size: clamp(18px, 1.8vw, 26px);
-    line-height: 1.02;
-  }
+  .urt-progress-head, .urt-toolbar, .urt-toolbar-row, .urt-map-meta, .urt-routine-meta, .urt-routine-footer { justify-content: space-between; }
   .urt-band {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
@@ -890,6 +623,19 @@ const PAGE_CSS = `
   .urt-bitacora-head span,
   .urt-chart-head p,
   .urt-chart-note { font-size: 13px; line-height: 1.35; }
+  .urt-panel-head-side {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .urt-panel-head-art {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 14px rgba(255,196,92,.35));
+  }
   .urt-bitacora-icon {
     width: 42px;
     height: 42px;
@@ -899,16 +645,19 @@ const PAGE_CSS = `
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--group-color);
     flex-shrink: 0;
     box-shadow: 0 0 20px color-mix(in srgb, var(--group-color) 18%, transparent);
+  }
+  .urt-bitacora-icon img {
+    width: 26px;
+    height: 26px;
+    object-fit: contain;
   }
   .urt-bitacora-metrics {
     display: grid;
     gap: 10px;
   }
   .urt-bitacora-metric {
-    position: relative;
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
     gap: 12px;
@@ -917,24 +666,28 @@ const PAGE_CSS = `
     border-radius: 8px;
     border: 1px solid rgba(255,255,255,.06);
     background: rgba(0,0,0,.18);
+    transition: border-color .18s ease, background .18s ease, box-shadow .18s ease;
   }
-  .urt-bitacora-metric:hover,
-  .urt-bitacora-metric:focus-within {
+  .urt-bitacora-metric:hover {
     border-color: color-mix(in srgb, var(--metric-color) 38%, transparent);
     background: color-mix(in srgb, var(--metric-color) 10%, rgba(255,255,255,.02));
     box-shadow: 0 14px 28px rgba(0,0,0,.24);
   }
   .urt-bitacora-metric-badge {
-    width: 38px;
-    height: 38px;
+    width: 40px;
+    height: 40px;
     border-radius: 12px;
     border: 1px solid color-mix(in srgb, var(--metric-color) 34%, transparent);
     background: color-mix(in srgb, var(--metric-color) 14%, transparent);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--metric-color);
     flex-shrink: 0;
+  }
+  .urt-bitacora-metric-badge img {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
   }
   .urt-bitacora-metric-copy strong {
     display: block;
@@ -950,41 +703,6 @@ const PAGE_CSS = `
     text-align: right;
     text-shadow: 0 0 18px color-mix(in srgb, var(--metric-color) 14%, transparent);
   }
-  .urt-bitacora-tip {
-    position: absolute;
-    left: 12px;
-    top: calc(100% + 8px);
-    width: min(260px, calc(100vw - 68px));
-    padding: 12px 13px;
-    border-radius: 8px;
-    border: 1px solid color-mix(in srgb, var(--metric-color) 36%, transparent);
-    background: linear-gradient(180deg, rgba(18,14,30,.98), rgba(11,9,20,.98));
-    box-shadow: 0 20px 34px rgba(0,0,0,.42);
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(4px);
-    transition: opacity .18s ease, transform .18s ease, visibility .18s ease;
-    z-index: 6;
-    pointer-events: none;
-  }
-  .urt-bitacora-tip strong {
-    display: block;
-    font-family: "Manrope", sans-serif;
-    font-size: 12px;
-    color: var(--metric-color);
-    margin-bottom: 4px;
-  }
-  .urt-bitacora-tip p {
-    margin: 0;
-    font-size: 12px;
-    line-height: 1.4;
-  }
-  .urt-bitacora-metric:hover .urt-bitacora-tip,
-  .urt-bitacora-metric:focus-within .urt-bitacora-tip {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-  }
   .urt-bitacora-foot {
     margin-top: 12px;
     font-size: 12px;
@@ -998,12 +716,43 @@ const PAGE_CSS = `
       rgba(0,0,0,.22);
     overflow: hidden;
   }
-  .urt-progress-head { margin-bottom: 16px; }
+  .urt-progress-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .urt-progress-head-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+  .urt-progress-head-title img {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+    flex-shrink: 0;
+    filter: drop-shadow(0 0 10px color-mix(in srgb, var(--class-accent) 40%, transparent));
+  }
   .urt-chart-head strong,
   .urt-progress-head strong {
     display: block;
     font-family: "Manrope", sans-serif;
     font-size: 16px;
+  }
+  .urt-chart-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+  .urt-chart-title img {
+    width: 26px;
+    height: 26px;
+    object-fit: contain;
+    flex-shrink: 0;
   }
   .urt-chart-panel {
     position: relative;
@@ -1013,9 +762,9 @@ const PAGE_CSS = `
     border-radius: 8px;
     border: 1px solid rgba(255,255,255,.07);
     background:
-      linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015)),
+      linear-gradient(180deg, rgba(8,7,16,.86), rgba(8,7,16,.9)),
       radial-gradient(circle at top right, color-mix(in srgb, var(--class-accent) 10%, transparent), transparent 32%),
-      rgba(8,7,16,.72);
+      url("/exercises/summary/bitacora-chart-bg.png") center/cover;
   }
   .urt-chart-stage {
     position: relative;
@@ -1063,24 +812,6 @@ const PAGE_CSS = `
     justify-items: center;
     gap: 8px;
   }
-  .urt-chart-bar-wrap {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: end;
-    justify-content: center;
-  }
-  .urt-chart-bar {
-    width: min(34px, 100%);
-    min-height: 10px;
-    border-radius: 999px 999px 12px 12px;
-    border: 1px solid color-mix(in srgb, var(--bar-color) 28%, transparent);
-    background:
-      linear-gradient(180deg, color-mix(in srgb, var(--bar-color) 70%, white 5%), color-mix(in srgb, var(--bar-color) 48%, rgba(0,0,0,.4)));
-    box-shadow:
-      0 10px 18px color-mix(in srgb, var(--bar-color) 18%, transparent),
-      inset 0 1px 0 rgba(255,255,255,.18);
-  }
   .urt-chart-col small {
     font-size: 12px;
     color: ${UI.text};
@@ -1092,11 +823,9 @@ const PAGE_CSS = `
     letter-spacing: .08em;
   }
   .urt-chart-col.is-today span { color: var(--class-accent); }
-  .urt-chart-col.is-complete .urt-chart-bar {
-    box-shadow:
-      0 0 22px rgba(128,211,155,.22),
-      0 10px 18px rgba(128,211,155,.18),
-      inset 0 1px 0 rgba(255,255,255,.18);
+  .urt-chart-col.is-complete small {
+    color: ${UI.success};
+    text-shadow: 0 0 12px rgba(128,211,155,.4);
   }
   .urt-chart-legend {
     display: flex;
@@ -2172,12 +1901,10 @@ const PAGE_CSS = `
   }
   /* ── 1440px ── */
   @media (max-width: 1440px) {
-    .urt-hero { grid-template-columns: minmax(0, 1.2fr) minmax(280px, .8fr); }
     .urt-grid-2 { grid-template-columns: minmax(0, 1.1fr) minmax(290px, .9fr); }
   }
   /* ── 1280px ── */
   @media (max-width: 1280px) {
-    .urt-hero { grid-template-columns: minmax(0, 1.4fr) minmax(250px, .6fr); }
     .urt-grid-2 { grid-template-columns: minmax(0, 1.3fr) minmax(250px, .7fr); }
     .urt-hero-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .urt-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -2185,16 +1912,13 @@ const PAGE_CSS = `
   }
   /* ── 1180px: columna única ── */
   @media (max-width: 1180px) {
-    .urt-hero, .urt-grid-2, .urt-spotlight-banner { grid-template-columns: 1fr; }
-    .urt-hero { align-items: start; }
+    .urt-grid-2, .urt-spotlight-banner { grid-template-columns: 1fr; }
     .urt-summary-grid, .urt-loading-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .urt-mini-grid, .urt-command-grid, .urt-command-mini-grid { grid-template-columns: 1fr; }
     .urt-modal-hero, .urt-session-ritual-grid { grid-template-columns: 1fr; }
     .urt-library-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .urt-map-track { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
     .urt-map-card { grid-column: auto; margin-top: 0; }
-    .urt-stage-table { width: min(360px, calc(100% - 34px)); min-width: 0; }
-    .urt-stage { min-height: 240px; }
   }
   /* ── 1024px ── */
   @media (max-width: 1024px) {
@@ -2209,7 +1933,6 @@ const PAGE_CSS = `
     .urt-hero { padding: 12px 14px; gap: 12px; }
     .urt-hero-copy h1 { font-size: clamp(20px, 2.4vw, 36px); }
     .urt-hero-copy { gap: 10px; }
-    .urt-stage { min-height: 180px; }
     .urt-kpi { padding: 8px 12px; }
     .urt-kpi strong { font-size: clamp(16px, 1.5vw, 22px); }
     .urt-band { padding: 10px 14px; }
@@ -2225,11 +1948,6 @@ const PAGE_CSS = `
     .urt-band { grid-template-columns: 1fr; justify-items: start; }
     .urt-band-actions { max-width: none; width: 100%; display: flex; }
     .urt-hero-kpis, .urt-summary-grid, .urt-loading-grid, .urt-modal-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .urt-stage { min-height: 210px; }
-    .urt-stage-card { width: calc(100% - 24px); margin: auto 12px 12px; }
-    .urt-stage-class-art { width: 60%; height: 70%; opacity: .18; }
-    .urt-stage-floor { width: 48%; }
-    .urt-stage-table { left: 12px; right: 12px; bottom: 12px; width: auto; }
     .urt-map-banner { min-height: 96px; }
     .urt-modal-head, .urt-modal-head.ritual, .urt-modal-body { padding-left: 14px; padding-right: 14px; }
     .urt-modal-backdrop.detail { align-items: flex-end; padding: 10px; }
@@ -2248,9 +1966,6 @@ const PAGE_CSS = `
     .urt-map-track, .urt-week-strip, .urt-tabs { grid-template-columns: 1fr; }
     .urt-library-strip, .urt-routine-memory { grid-template-columns: 1fr; }
     .urt-tabs { display: grid; width: 100%; }
-    .urt-stage { min-height: 180px; }
-    .urt-stage-table { position: relative; left: auto; right: auto; bottom: auto; margin: 10px; width: auto; }
-    .urt-stage-campaign { flex-direction: column; }
     .urt-map-card-body { padding: 10px; }
     .urt-map-crest { width: 40px; height: 40px; }
     .urt-map-crest img { width: 24px; height: 24px; }
@@ -2296,10 +2011,6 @@ const PAGE_CSS = `
   }
   .urt-summary-card-top span {
     text-shadow: 0 0 8px rgba(255,255,255,.18);
-  }
-  .urt-stage-table-top strong,
-  .urt-stage-campaign strong {
-    text-shadow: 0 0 12px currentColor, 0 0 26px currentColor;
   }
   .urt-band-copy h2 {
     text-shadow: 0 0 22px rgba(255,255,255,.14), 0 0 44px rgba(255,255,255,.06);
@@ -3948,8 +3659,6 @@ export default function UserRutinas({ profile, onNavigate }) {
     if (!selectedTerritory || selectedTerritory.cat === "Todas") return sortedFuente;
     return sortedFuente.filter((rutina) => rutina.categoria === selectedTerritory.cat);
   }, [selectedTerritory, sortedFuente]);
-  const stageArt = RUTINA_STAGE_ART[classKey] || RUTINA_STAGE_ART.DEFAULT;
-
   const rutinasHoy = useMemo(() => misRutinas.filter((rutina) => rutina.diasSemana.includes(hoyDia)), [hoyDia, misRutinas]);
   const completadasHoy = rutinas.filter((rutina) => rutina.completadaHoy).length;
   const completadasEstaSemana = misRutinas.filter((rutina) => rutina.completadaEstaSemana).length;
@@ -4172,23 +3881,21 @@ export default function UserRutinas({ profile, onNavigate }) {
       hint: "Carga que el hero ya movio en esta etapa del mapa.",
       foot: totalMinutes > 0 ? "Cuenta tiempo real y experiencia conseguida." : "Aun no hay trabajo acumulado en esta etapa.",
       color: theme.secondary,
-      Ico: Clock,
+      asset: "/exercises/summary/sum-minutes.png",
       metrics: [
         {
           label: "Tiempo forjado",
           value: `${totalMinutes} min`,
           hint: "Trabajo total",
-          tip: "Suma los minutos de todas las rutas completadas. Sirve para leer carga real sin abrir cada ficha.",
           color: theme.secondary,
-          Ico: Clock,
+          asset: "/exercises/summary/sum-minutes.png",
         },
         {
           label: "XP fisico",
           value: totalXpEarned,
           hint: "Experiencia conseguida",
-          tip: "Experiencia acumulada por rutas cerradas. Aqui ves si la semana esta dejando recompensa o solo intencion.",
           color: UI.cyan,
-          Ico: Sparkles,
+          asset: "/exercises/summary/sum-xp.png",
         },
       ],
     },
@@ -4198,23 +3905,21 @@ export default function UserRutinas({ profile, onNavigate }) {
       hint: "Ritmo del plan y permanencia dentro de la semana activa.",
       foot: expectedThisWeek ? `${completadasEstaSemana} entradas limpias sobre ${expectedThisWeek} esperadas.` : "Todavia no hay objetivo semanal cargado.",
       color: UI.gold,
-      Ico: Flame,
+      asset: "/exercises/summary/sum-repeat.png",
       metrics: [
         {
           label: "Pulso semanal",
           value: `${completadasEstaSemana}/${expectedThisWeek || 0}`,
           hint: expectedThisWeek ? "Avance real" : "Sin meta semanal",
-          tip: "Compara lo completado esta semana contra lo que el plan ya deberia haber activado hasta hoy.",
           color: UI.gold,
-          Ico: Target,
+          asset: "/exercises/summary/sum-chart.png",
         },
         {
           label: "Racha activa",
           value: `${streak} d`,
           hint: streak > 0 ? "Cadena vigente" : "Sin cadena activa",
-          tip: "Mantener dias seguidos ayuda a que la pagina recomiende entradas mas firmes y no solo rutas sueltas.",
           color: theme.accent,
-          Ico: Flame,
+          asset: "/exercises/summary/sum-repeat.png",
         },
       ],
     },
@@ -4224,23 +3929,21 @@ export default function UserRutinas({ profile, onNavigate }) {
       hint: "Cuanto territorio ya dejo huella y cuanta mesa sigue abierta.",
       foot: clearedRoutes > 0 ? `${clearedRoutes} rutas ya tienen memoria en el tablero.` : "El tablero sigue limpio, sin rutas reclamadas aun.",
       color: theme.accent,
-      Ico: Shield,
+      asset: "/exercises/summary/sum-zones.png",
       metrics: [
         {
           label: "Campanas activas",
           value: misRutinas.length || totalActive,
           hint: "Rutas listas",
-          tip: "Rutas asignadas o activas para este usuario. Marca el tamano real de la mesa disponible.",
           color: theme.accent,
-          Ico: Calendar,
+          asset: "/ui/icons/zone-flag.png",
         },
         {
           label: "Zonas tocadas",
           value: `${exploredZones}/${Math.max(grouped.length, 1)}`,
           hint: exploredZones > 0 ? "Territorio con memoria" : "Aun sin explorar",
-          tip: "Cuenta cuantas zonas ya recibieron al menos una ruta completada. Sirve para leer variedad, no solo volumen.",
           color: UI.success,
-          Ico: Trophy,
+          asset: "/exercises/summary/sum-zones.png",
         },
       ],
     },
@@ -4277,21 +3980,6 @@ export default function UserRutinas({ profile, onNavigate }) {
   const territoryProgress = selectedTerritory?.ruts?.length
     ? Math.round((selectedTerritory.ruts.filter((rutina) => rutina.completadas > 0).length / selectedTerritory.ruts.length) * 100)
     : 0;
-  const stageCampaign = {
-    label: selectedTerritory?.meta.label || "Campana actual",
-    progressLabel: `${territoryProgress}% del territorio explorado`,
-    routeLabel: featuredRoutine?.nombre || "Sin ruta cargada",
-    rewardLabel: featuredRoutine
-      ? `+${hasClsBonus(classKey, featuredRoutine.subcategoria || featuredRoutine.categoria) ? Math.round(featuredRoutine.xpTotal * 1.25) : featuredRoutine.xpTotal} XP`
-      : "Sin recompensa",
-    rewardSub:
-      featuredRoutine && hasClsBonus(classKey, featuredRoutine.subcategoria || featuredRoutine.categoria)
-        ? "Incluye bono de clase"
-        : featuredRoutine
-          ? "Siguiente recompensa de ruta"
-          : "Esperando campana",
-    nextWindow: featuredRoutine?.diasSemana?.length ? `${featuredRoutine.diasSemana.length} dias activos` : "Sin rotacion",
-  };
   const orderRoutine = dailyRut || featuredRoutine;
   const orderZoneMeta = getRutinaCategoryMeta(orderRoutine?.categoria || selectedTerritory?.cat || "General");
   const classFocusSummary = (theme.focusZones || [])
@@ -4303,32 +3991,32 @@ export default function UserRutinas({ profile, onNavigate }) {
     ? {
         label: "Estado del heroe",
         title: "Cuerpo ya activado",
-        text: "La jornada ya dejo una ruta despejada. Conviene mantener tecnica o cerrar con una entrada corta, no forzar por inercia.",
+        text: "Ya despejaste una ruta hoy. Cierra con una entrada corta o descansa sin forzar.",
         asset: RUTINA_DAILY_ASSETS.state.cleared,
         accent: UI.success,
         chips: [`${completadasHoy} hoy`, streak > 0 ? `${streak} dias de racha` : "Ritmo retomado"],
-        note: "La escena sube de intensidad porque ya hubo trabajo real en esta jornada.",
+        note: "Tu escena cambia porque hoy si entrenaste.",
       }
     : sesionRut
       ? {
           label: "Alerta del cuerpo",
           title: "Sesion en marcha",
-          text: "Ya abriste una ruta. La mejor lectura ahora es terminarla limpia antes de cambiar de territorio o sumar otra carga.",
+          text: "Termina esta ruta antes de cambiar de zona o sumar otra carga.",
           asset: RUTINA_DAILY_ASSETS.state.active,
           accent: theme.accent,
           chips: ["Sesion abierta", orderRoutine?.duracionMin ? `${orderRoutine.duracionMin} min` : "Ruta activa"],
-          note: "Mientras la sesion este viva, el gremio prioriza continuidad sobre volumen.",
+          note: "Prioriza continuidad: termina lo que empezaste.",
         }
       : {
           label: "Alerta del cuerpo",
           title: "Listo para entrar",
           text: rutinasHoy.length > 0
-            ? "Hay rutas activas hoy. El cuerpo esta fresco y el mapa recomienda abrir primero una entrada afin a tu clase."
-            : "No hay orden fija hoy, asi que el cuerpo puede entrar por una zona suave y sostener la cadena sin saturarse.",
+            ? "Tienes rutas listas hoy. Empieza con una afin a tu clase."
+            : "Sin orden fija hoy: entra por una zona suave y manten tu racha.",
           asset: RUTINA_DAILY_ASSETS.state.idle,
           accent: UI.gold,
           chips: [rutinasHoy.length > 0 ? `${rutinasHoy.length} rutas hoy` : "Dia flexible", streak > 0 ? `${streak} dias de racha` : "Sin racha"],
-          note: "Si entrenas ahora, el tablero gana memoria y la siguiente recomendacion sube de precision.",
+          note: "Entrena ahora y mejoras las recomendaciones de manana.",
         };
 
   const startSession = useCallback(async (rutina) => {
@@ -4674,10 +4362,6 @@ export default function UserRutinas({ profile, onNavigate }) {
                   <PlayCircle size={16} />
                   {heroRoutine?.completadaHoy ? "Volver a la ruta" : "Entrar a la siguiente ruta"}
                 </button>
-                <button className="urt-btn-ghost" onClick={() => { if (dailyRut?.categoria) chooseTerritory(dailyRut.categoria, true); setTab("mis"); }}>
-                  <ChevronRight size={16} />
-                  Ver mapa de hoy
-                </button>
                 {onNavigate && (
                   <button className="urt-btn-ghost" onClick={() => onNavigate("dashboard")}>
                     <ChevronRight size={16} />
@@ -4702,88 +4386,6 @@ export default function UserRutinas({ profile, onNavigate }) {
                 <div className="urt-kpi">
                   <strong>{selectedRoutines.length}</strong>
                   <span>en la zona actual</span>
-                </div>
-              </div>
-            </div>
-
-            <div
-              className="urt-stage"
-              style={{
-                "--stage-image": `url(${heroRoutine ? getRutinaCategoryMeta(heroRoutine.categoria).banner : "/exercises/zones/zone-general-banner.png"})`,
-                "--stage-class-art": `url(${stageArt.scene})`,
-                "--stage-floor": `url(${stageArt.glow})`,
-                "--stage-map-banner": `url(${selectedTerritory?.meta.banner || "/exercises/zones/zone-general-banner.png"})`,
-              }}
-            >
-              <video className="urt-stage-video" autoPlay muted loop playsInline poster={heroRoutine ? getRutinaCategoryMeta(heroRoutine.categoria).banner : "/exercises/zones/zone-general-banner.png"}>
-                <source src="/videos/hero-bg.mp4" type="video/mp4" />
-              </video>
-              <div className="urt-stage-overlay" />
-              <div className="urt-stage-class-art" />
-              <div className="urt-stage-floor" />
-              <div className="urt-stage-table">
-                <div className="urt-stage-table-copy">
-                  <div className="urt-stage-table-top">
-                    <div>
-                      <strong>{stageCampaign.label}</strong>
-                      <span>Mapa desplegado del heroe</span>
-                    </div>
-                    <span className="urt-stage-table-badge">
-                      <Calendar size={12} />
-                      {hoyDia}
-                    </span>
-                  </div>
-                  <div className="urt-stage-table-meta">
-                    <span>Campana activa</span>
-                    <span>{stageCampaign.progressLabel}</span>
-                  </div>
-                  <div className="urt-stage-table-line">
-                    <span style={{ width: `${territoryProgress}%` }} />
-                  </div>
-                  <div className="urt-stage-campaign">
-                    <div className="urt-stage-campaign-card">
-                      <strong>{stageCampaign.routeLabel}</strong>
-                      <span>Ruta actual marcada en la mesa de campana.</span>
-                    </div>
-                    <div className="urt-stage-campaign-card">
-                      <strong>{stageCampaign.rewardLabel}</strong>
-                      <span>{stageCampaign.rewardSub} · {stageCampaign.nextWindow}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <img className="urt-stage-emblem" src={theme.crest} alt="" />
-              <div className="urt-stage-card">
-                <div className="urt-stage-top">
-                  <span className="urt-stage-tag">Ruta destacada</span>
-                  <span className="urt-stage-tag alt">{heroRoutine?.dificultad || "Lista"}</span>
-                </div>
-                <strong>{heroRoutine?.nombre || "Sin ruta destacada"}</strong>
-                <p>{heroRoutine?.objetivo || "El mapa seguira mostrando recomendaciones cuando haya progreso."}</p>
-                <div className="urt-chip-row">
-                  <span className="urt-chip">
-                    <Clock size={14} />
-                    {heroRoutine?.duracionMin || 0} min
-                  </span>
-                  <span className="urt-chip">
-                    <Award size={14} />
-                    +{heroRoutine?.xpTotal || 0} XP
-                  </span>
-                  <span className="urt-chip">
-                    <Dumbbell size={14} />
-                    {heroRoutine?.pasos?.length || 0} pasos
-                  </span>
-                </div>
-                <button className="urt-btn" onClick={() => heroRoutine && setDetalleRut(heroRoutine)} disabled={!heroRoutine}>
-                  <Search size={16} />
-                  Ver hoja tecnica
-                </button>
-                <div className="urt-stage-quest">
-                  <div className="urt-stage-quest-head">
-                    <strong>Campana actual</strong>
-                    <span>{stageCampaign.progressLabel}</span>
-                  </div>
-                  <p>La mesa ya marca la ruta abierta, el progreso de la zona y la siguiente recompensa para que esta portada se sienta mas viva y menos generica.</p>
                 </div>
               </div>
             </div>
@@ -4903,9 +4505,12 @@ export default function UserRutinas({ profile, onNavigate }) {
                 <div>
                   <div className="urt-panel-tag">Resumen semanal</div>
                   <h3>Bitacora del heroe</h3>
-                  <p>La semana ya no se lee como KPI. Aqui queda separada por volumen, consistencia y huella real dentro del mapa.</p>
+                  <p>Tu semana en tres partes: cuanto entrenaste, que tan seguido y cuanto territorio ganaste.</p>
                 </div>
-                <span className="urt-chip is-focus">{Math.round(weekProgressPct)}% ritmo</span>
+                <div className="urt-panel-head-side">
+                  <img src="/exercises/summary/sum-logbook.png" alt="" className="urt-panel-head-art" />
+                  <span className="urt-chip is-focus">{Math.round(weekProgressPct)}% ritmo</span>
+                </div>
               </div>
 
               <div className="urt-summary-shell">
@@ -4918,25 +4523,21 @@ export default function UserRutinas({ profile, onNavigate }) {
                           <span>{group.hint}</span>
                         </div>
                         <div className="urt-bitacora-icon">
-                          <group.Ico size={18} />
+                          <img src={group.asset} alt="" />
                         </div>
                       </div>
 
                       <div className="urt-bitacora-metrics">
                         {group.metrics.map((metric) => (
-                          <div key={metric.label} className="urt-bitacora-metric" style={{ "--metric-color": metric.color }} tabIndex={0}>
+                          <div key={metric.label} className="urt-bitacora-metric" style={{ "--metric-color": metric.color }}>
                             <div className="urt-bitacora-metric-badge">
-                              <metric.Ico size={16} />
+                              <img src={metric.asset} alt="" />
                             </div>
                             <div className="urt-bitacora-metric-copy">
                               <strong>{metric.label}</strong>
                               <span>{metric.hint}</span>
                             </div>
                             <div className="urt-bitacora-value">{metric.value}</div>
-                            <div className="urt-bitacora-tip" role="tooltip">
-                              <strong>{metric.label}</strong>
-                              <p>{metric.tip}</p>
-                            </div>
                           </div>
                         ))}
                       </div>
@@ -4948,17 +4549,25 @@ export default function UserRutinas({ profile, onNavigate }) {
 
                 <div className="urt-progress-block">
                   <div className="urt-progress-head">
-                    <div>
-                      <strong>Lectura del campo</strong>
-                      <span>{expectedThisWeek ? `${completadasEstaSemana} rutas ya cerradas frente a ${expectedThisWeek} entradas esperadas hasta hoy.` : "Todavia no hay presion semanal configurada."}</span>
+                    <div className="urt-progress-head-title">
+                      <img src="/ui/icons/map-pin.png" alt="" />
+                      <div>
+                        <strong>Lectura del campo</strong>
+                        <span>{expectedThisWeek ? `${completadasEstaSemana} rutas ya cerradas frente a ${expectedThisWeek} entradas esperadas hasta hoy.` : "Todavia no hay presion semanal configurada."}</span>
+                      </div>
                     </div>
                     <span className="urt-chip">{weekProgressPct >= 100 ? "Semana limpia" : "Ritmo en marcha"}</span>
                   </div>
 
                   <div className="urt-chart-panel">
                     <div className="urt-chart-head">
-                      <strong>Presion diaria del mapa</strong>
-                      <p>Grafico real por dias de la semana con la carga asignada para cada jornada.</p>
+                      <div className="urt-chart-title">
+                        <img src="/exercises/summary/sum-chart.png" alt="" />
+                        <div>
+                          <strong>Presion diaria del mapa</strong>
+                          <p>Grafico real por dias de la semana con la carga asignada para cada jornada.</p>
+                        </div>
+                      </div>
                     </div>
 
                     <div className="urt-chart-stage">
@@ -4985,16 +4594,6 @@ export default function UserRutinas({ profile, onNavigate }) {
                             className={`urt-chart-col ${item.isToday ? "is-today" : ""} ${item.completed ? "is-complete" : ""}`}
                             title={`${item.day}: ${item.assigned} rutas asignadas - carga ${item.pressure.toLowerCase()}`}
                           >
-                            <div className="urt-chart-bar-wrap">
-                              <div
-                                className="urt-chart-bar"
-                                style={{
-                                  "--bar-color": item.completed ? UI.success : item.isToday ? theme.accent : theme.secondary,
-                                  height: `${Math.max(12, (item.assigned / weekChartMax) * 100)}%`,
-                                  opacity: item.assigned > 0 ? 1 : 0.35,
-                                }}
-                              />
-                            </div>
                             <small>{item.assigned}</small>
                             <span>{item.day.slice(0, 2)}</span>
                           </div>
@@ -5004,7 +4603,7 @@ export default function UserRutinas({ profile, onNavigate }) {
 
                     <div className="urt-chart-legend">
                       <strong>Clave:</strong>
-                      <span>Columna = rutas previstas</span>
+                      <span>Numero = rutas previstas</span>
                       <span>Luz de clase = hoy</span>
                       <span>Brillo verde = jornada ya despejada</span>
                     </div>
@@ -5027,7 +4626,7 @@ export default function UserRutinas({ profile, onNavigate }) {
                 <div>
                   <div className="urt-panel-tag">Mesa del gremio</div>
                   <h3>Que conviene tocar ahora</h3>
-                  <p>La lectura baja en tres ordenes claras para que se entienda rapido que tocar, por que conviene y como esta respondiendo el cuerpo.</p>
+                  <p>Tu proxima ruta, ordenada por prioridad y estado del cuerpo.</p>
                 </div>
               </div>
 
@@ -5039,8 +4638,8 @@ export default function UserRutinas({ profile, onNavigate }) {
                       <h4>{orderRoutine?.nombre || "Sin orden cargada"}</h4>
                       <p>
                         {orderRoutine
-                          ? `${orderZoneMeta.summary} ${orderRoutine.completadaHoy ? "La ruta ya fue tocada hoy, pero sigue disponible para revisar tecnica y ritmo." : "Es la entrada mas limpia para abrir esta jornada sin perder el hilo del mapa."}`
-                          : "El gremio todavia no levanta una ruta puntual para hoy, pero el tablero sigue abierto para explorar."}
+                          ? `${orderZoneMeta.summary} ${orderRoutine.completadaHoy ? "Ya la completaste hoy, pero puedes repasar tecnica." : "Es la mejor opcion para arrancar esta jornada."}`
+                          : "Sin ruta puntual para hoy, pero el mapa sigue abierto para explorar."}
                       </p>
 
                       <div className="urt-guild-meta">
@@ -5136,7 +4735,7 @@ export default function UserRutinas({ profile, onNavigate }) {
               <div>
                 <div className="urt-panel-tag">Territorios de rutina</div>
                 <h3>Mapa del campo</h3>
-                <p>Primero eliges una zona. Luego el tablero baja a mostrar rutas, recompensa y hoja tecnica sin amontonarlo todo.</p>
+                <p>Elige una zona para ver sus rutas, recompensas y tu avance ahi.</p>
               </div>
             </div>
 
@@ -5244,7 +4843,7 @@ export default function UserRutinas({ profile, onNavigate }) {
                   <div className="urt-side-card">
                     <small>Resumen corto</small>
                     <strong>{featuredRoutine?.objetivo || "Sin objetivo cargado"}</strong>
-                    <p>{featuredRoutine ? `${featuredRoutine.pasos.length} pasos, ${featuredRoutine.dificultad.toLowerCase()} y una lectura limpia para entrar sin ruido. ${recommendationReasonText}` : "Cuando haya territorio seleccionado, esta ficha se llena sola."}</p>
+                    <p>{featuredRoutine ? `${featuredRoutine.pasos.length} pasos, dificultad ${featuredRoutine.dificultad.toLowerCase()}. ${recommendationReasonText}` : "Elige un territorio para ver esta ficha."}</p>
                   </div>
                   <div className="urt-side-card">
                     <small>Proximo gesto</small>

@@ -170,10 +170,10 @@ const FEATURE_BANDS = [
     icon: "/ui/header/section-rutinas.png",
     image: "/ui/scene-bg.png",
     label: "Mesa de rutinas",
-    title: "Las rutinas se sienten como campanas para sostener ritmo y progresion.",
+    title: "Las rutinas se sienten como campanas para sostener ritmo y progresión.",
     copy:
-      "Elige rutas por clase, sigue la recomendacion del dia y conserva memoria de lo que ya forjaste.",
-    bullets: ["Campanas por clase", "Rutas del dia", "Memoria de sesion"],
+      "Elige rutas por clase, sigue la recomendación del dia y conserva memoria de lo que ya forjaste.",
+    bullets: ["Campañas por clase", "Rutas del dia", "Memoria de sesión"],
   },
 ];
 

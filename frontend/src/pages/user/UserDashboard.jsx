@@ -86,7 +86,6 @@ const NAV = [
   { id:"salud",      icon:BookOpen,      key:"dash.nav.salud",      badge:null  },
   { id:"chat",       icon:MessageCircle, key:"dash.nav.chat",       badge:null  },
   { id:"mensajes",   icon:Bell,          key:"dash.nav.mensajes",   badge:null  },
-  { id:"donaciones", icon:Heart,         key:"dash.nav.donaciones", badge:"💛"  },
   { id:"perfil",     icon:User,          key:"dash.nav.perfil",     badge:null  },
 ];
 

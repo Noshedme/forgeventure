@@ -3989,7 +3989,7 @@ export default function UserMisiones({ profile, onNavigate }) {
                     <div className="umi-group">
                       <div className="umi-group-head" style={{ "--group-color": classTheme.accent }}>
                         <span />
-                        <strong>Campanas en marcha</strong>
+                        <strong>Campañas en marcha</strong>
                         <small>{boardGroups.active.length}</small>
                       </div>
                       {boardGroups.active.map((mission) => (

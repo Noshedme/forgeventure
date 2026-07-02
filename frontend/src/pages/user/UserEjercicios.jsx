@@ -141,22 +141,22 @@ const HERO_GLOW = {
 const CLASS_COPY = {
   GUERRERO: {
     title: "Forja fuerza real",
-    lead: "Tu campo prioriza empuje, piernas y trabajo funcional. Menos ruido, mas progreso fisico con pinta de aventura.",
+    lead: "Fuerza, piernas y trabajo funcional: progreso real con pinta de aventura.",
     focus: "Fuerza, calistenia y control del cuerpo.",
   },
   ARQUERO: {
     title: "Afina velocidad y resistencia",
-    lead: "El mapa abre rutas mas ligeras y agresivas: cardio, HIIT y movilidad activa para mantener el ritmo arriba.",
+    lead: "Cardio, HIIT y movilidad activa para mantener tu ritmo siempre arriba.",
     focus: "Pulso, desplazamiento y sesiones agiles.",
   },
   MAGO: {
     title: "Domina control corporal",
-    lead: "Tu ruta mezcla movilidad, respiracion y precision. El objetivo es entrenar sin perder tecnica ni energia mental.",
+    lead: "Movilidad, respiracion y precision: entrena sin perder tecnica ni foco.",
     focus: "Flexibilidad, core y flujo limpio.",
   },
   DEFAULT: {
     title: "Abre tu campo de entrenamiento",
-    lead: "Un mapa mas claro para entrar, entrenar y salir con progreso visible. Todo se mueve con la clase del heroe.",
+    lead: "Entra, entrena y sal con progreso visible. Todo se adapta a tu clase.",
     focus: "Base fisica y progreso medible.",
   },
 };
@@ -1115,97 +1115,97 @@ const CSS = `
   }
   .uex-route {
     display: grid;
-    gap: 12px;
+    gap: 10px;
     position: relative;
   }
   .uex-route-step {
     position: relative;
     display: grid;
-    grid-template-columns: 40px minmax(0, 1fr) auto;
-    gap: 10px;
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    gap: 12px;
     align-items: center;
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid rgba(255,255,255,.08);
-    background:
-      linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02)),
-      rgba(255,255,255,.02);
-    overflow: hidden;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,.06);
+    border-left: 3px solid rgba(255,255,255,.1);
+    background: rgba(255,255,255,.02);
+    transition: border-color .15s ease, background .15s ease;
   }
-  .uex-route-step::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: url("/ui/dashboard-frame.png") center/cover;
-    opacity: .05;
-    pointer-events: none;
+  .uex-route-step:hover {
+    border-color: rgba(255,255,255,.12);
+    background: rgba(255,255,255,.035);
+  }
+  .uex-route-step.is-focus {
+    border-left-color: var(--class-accent);
+    background: color-mix(in srgb, var(--class-accent) 6%, rgba(255,255,255,.02));
   }
   .uex-route-step:not(:last-child)::after {
     content: "";
     position: absolute;
-    left: 25px;
-    top: 56px;
-    bottom: -16px;
+    left: 33px;
+    top: 52px;
+    bottom: -10px;
     width: 2px;
     background: linear-gradient(180deg, color-mix(in srgb, var(--class-accent), transparent 28%), transparent);
     pointer-events: none;
   }
-  .uex-route-number {
-    width: 30px;
-    height: 30px;
+  .uex-route-tile {
+    position: relative;
+    width: 44px;
+    height: 44px;
+  }
+  .uex-route-tile-num {
+    position: absolute;
+    right: -4px;
+    bottom: -4px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
     display: grid;
     place-items: center;
-    border: 1px solid color-mix(in srgb, var(--class-accent), transparent 54%);
-    background: color-mix(in srgb, var(--class-accent), transparent 86%);
-    color: #fff6ef;
-    font: 900 13px/1 "JetBrains Mono", monospace;
-    box-shadow: 0 0 14px color-mix(in srgb, var(--class-accent), transparent 82%);
-    position: relative;
-    z-index: 1;
+    background: var(--class-accent);
+    color: #0a0612;
+    font: 900 10px/1 "JetBrains Mono", monospace;
+    border: 2px solid #100c1c;
+  }
+  .uex-route-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+  }
+  .uex-route-meta-zone {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: ${UI.muted};
+    font: 600 11px/1.2 "Manrope", sans-serif;
+  }
+  .uex-route-meta-zone img {
+    width: 13px;
+    height: 13px;
+    object-fit: contain;
   }
   .uex-route-reward {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .uex-route-reward-nums {
     display: grid;
     justify-items: end;
-    gap: 6px;
+    gap: 2px;
   }
-  .uex-route-reward strong {
-    font: 900 13px/1 "JetBrains Mono", monospace;
+  .uex-route-reward-nums strong {
+    font: 900 14px/1 "JetBrains Mono", monospace;
     color: #fff2d7;
+    white-space: nowrap;
   }
-  .uex-route-footer {
-    display: none;
-  }
-  .uex-route-footer-copy {
-    min-width: 0;
-  }
-  .uex-route-footer-copy strong {
-    display: block;
-    font: 900 17px/1.1 "Manrope", sans-serif;
-    color: #fff4de;
-  }
-  .uex-route-footer-copy p {
-    margin: 6px 0 0;
+  .uex-route-reward-nums span {
+    font: 600 11px/1 "Manrope", sans-serif;
     color: ${UI.muted};
-    font: 500 13px/1.55 "Manrope", sans-serif;
-  }
-  .uex-route-footer-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    justify-content: flex-end;
-  }
-  .uex-route-empty {
-    border-radius: 8px;
-    border: 1px dashed rgba(255,255,255,.12);
-    padding: 14px;
-    color: ${UI.muted};
-    background: rgba(255,255,255,.025);
-    text-align: center;
-    font: 600 13px/1.55 "Manrope", sans-serif;
-  }
-  .uex-quick-list {
-    display: none !important;
+    white-space: nowrap;
   }
   .uex-icon-tile {
     width: 44px;
@@ -1723,6 +1723,10 @@ const CSS = `
     font: 600 13px/1 "Manrope", sans-serif;
     box-sizing: border-box;
     outline: none;
+  }
+  .uex-select option {
+    background: #150f22;
+    color: ${UI.text};
   }
   .uex-search input {
     padding: 0 14px 0 40px;
@@ -3006,9 +3010,11 @@ const CSS = `
       height: 40px;
     }
     .uex-row,
-    .uex-route-step,
     .uex-quest-card-head {
       grid-template-columns: 36px minmax(0, 1fr);
+    }
+    .uex-route-step {
+      grid-template-columns: 44px minmax(0, 1fr);
     }
     .uex-row-actions,
     .uex-route-reward,
@@ -3359,10 +3365,7 @@ function ChartTooltip({ active, payload, label }) {
     <div className="uex-tooltip">
       <span>Zona del campo</span>
       <strong>{label}</strong>
-      <p>
-        {item.value} registros de avance en esta zona. Usa el panel lateral para entrar al territorio y abrir quests
-        fisicas.
-      </p>
+      <p>{item.value} registros de avance en esta zona.</p>
     </div>
   );
 }
@@ -3415,7 +3418,7 @@ function ExerciseCompactCard({ exercise, affinity, cls, isFavorite, onToggleFavo
           <h4>{exercise.bloqueado ? "Quest bloqueada" : exercise.nombre}</h4>
           <p>
             {exercise.bloqueado
-              ? "Falta rango para entrar. La prueba sigue sellada hasta subir tu lectura del mapa."
+              ? "Sube de nivel para desbloquear esta quest."
               : exercise.desc}
           </p>
         </div>
@@ -4972,7 +4975,7 @@ export default function UserEjercicios({ profile }) {
                 <div>
                   <div className="uex-panel-tag">Resumen semanal</div>
                   <h3>Pulso del campo</h3>
-                  <p>El bloque mantiene la data, pero ahora la presenta como una bitacora de avance real del heroe.</p>
+                  <p>Tu semana en numeros: tiempo entrenado, zonas visitadas y XP conseguido.</p>
                 </div>
                 <img src="/exercises/summary/sum-chart.png" alt="" style={{ width: 40, height: 40, objectFit: "contain" }} />
               </div>
@@ -5065,7 +5068,7 @@ export default function UserEjercicios({ profile }) {
                 <div>
                   <div className="uex-panel-tag">Rutina rapida</div>
                   <h3>Forjar sesion de 15 min</h3>
-                  <p>Una ruta corta, ya acomodada segun tu clase y la zona que esta arriba en el mapa.</p>
+                  <p>Ruta corta armada segun tu clase y tu zona activa.</p>
                 </div>
                 <button className="uex-btn-ghost" onClick={forgeQuickRoutine}>
                   <Clock size={16} />
@@ -5094,35 +5097,35 @@ export default function UserEjercicios({ profile }) {
                     asset={STATE_ASSET.emptyRoute}
                     tone={cls.accent}
                     title="La ruta corta aun no esta forjada"
-                    text="El herrero del gremio no encontro una cadena breve para esta zona. Cambia de territorio o vuelve a reforjar la sesion."
+                    text="No hay ruta corta armada para esta zona. Cambia de zona o reforja de nuevo."
                     fallback={<Clock size={26} color={cls.accent} />}
                     tags={["Ruta vacia", "Prueba otra zona"]}
                   />
                 ) : (
                   quickForge.map((exercise, index) => {
                     const zone = getZoneMeta(exercise.cat);
+                    const isFocus = affinity.includes(exercise.cat);
                     return (
-                      <div key={`route-${exercise.id}`} className="uex-route-step">
-                        <div className="uex-route-number">{index + 1}</div>
+                      <div key={`route-${exercise.id}`} className={`uex-route-step ${isFocus ? "is-focus" : ""}`}>
+                        <div className="uex-route-tile">
+                          <ExerciseTile exercise={exercise} zoneColor={zone.color} />
+                          <span className="uex-route-tile-num">{index + 1}</span>
+                        </div>
                         <div style={{ minWidth: 0 }}>
                           <strong>{exercise.nombre}</strong>
-                          <div className="uex-chip-row" style={{ marginTop: 6 }}>
-                            <span className="uex-row-chip">
+                          <div className="uex-route-meta">
+                            <span className="uex-route-meta-zone">
                               <img src={zone.icon} alt="" />
                               {zone.short}
                             </span>
                             <VerificationChip value={exercise.verif} />
-                            <span className={`uex-row-chip ${affinity.includes(exercise.cat) ? "is-focus" : ""}`}>
-                              {affinity.includes(exercise.cat) ? "Afinidad clase" : "Ruta secundaria"}
-                            </span>
                           </div>
                         </div>
                         <div className="uex-route-reward">
-                          <strong>+{exercise.xpBase} XP</strong>
-                          <span className="uex-row-chip">
-                            <Clock size={14} />
-                            {estimateExerciseMinutes(exercise)} min
-                          </span>
+                          <div className="uex-route-reward-nums">
+                            <strong>+{exercise.xpBase} XP</strong>
+                            <span>{estimateExerciseMinutes(exercise)} min</span>
+                          </div>
                           <button className="uex-btn" onClick={() => setSessionExercise(exercise)}>
                             <Play size={16} />
                             Iniciar
@@ -5134,50 +5137,6 @@ export default function UserEjercicios({ profile }) {
                 )}
               </div>
 
-              <div className="uex-route-footer">
-                <div className="uex-route-footer-copy">
-                  <strong>Botin de la ruta forjada</strong>
-                  <p>
-                    Una cadena corta, clara y util. Entras, completas pasos conectados y te llevas la recompensa total sin
-                    perder tiempo buscando que hacer.
-                  </p>
-                </div>
-                <div className="uex-route-footer-meta">
-                  <span className="uex-chip is-focus">
-                    <Award size={16} />
-                    {quickForgeSummary.totalXp} XP totales
-                  </span>
-                  <span className="uex-chip">
-                    <Clock size={16} />
-                    {quickForgeSummary.totalMinutes} min de ruta
-                  </span>
-                  <span className="uex-chip">
-                    <Play size={16} />
-                    {quickForgeSummary.steps} pasos
-                  </span>
-                </div>
-              </div>
-
-              <div className="uex-quick-list">
-                {quickForge.map((exercise) => {
-                  const zone = getZoneMeta(exercise.cat);
-                  return (
-                    <div key={exercise.id} className="uex-quick-item">
-                      <ExerciseTile exercise={exercise} zoneColor={zone.color} />
-                      <div style={{ minWidth: 0 }}>
-                        <strong>{exercise.nombre}</strong>
-                        <p>
-                          {exercise.duracion ? `${exercise.duracion}s` : `${exercise.series}x${exercise.reps}`} · +{exercise.xpBase} XP
-                        </p>
-                      </div>
-                      <button className="uex-btn" onClick={() => setSessionExercise(exercise)}>
-                        <Play size={16} />
-                        Iniciar
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
             </motion.aside>
           </div>
 
@@ -5186,7 +5145,7 @@ export default function UserEjercicios({ profile }) {
               <div>
                 <div className="uex-panel-tag">Mapa de zonas</div>
                 <h3>Territorios de entrenamiento</h3>
-                <p>Menos texto dentro de cada isla, mas arte y un spotlight claro para la zona elegida.</p>
+                <p>Elige una zona para ver sus quests y cuanto has avanzado ahi.</p>
               </div>
             </div>
 
@@ -5296,10 +5255,7 @@ export default function UserEjercicios({ profile }) {
               <div>
                 <div className="uex-panel-tag">Arena de jefes</div>
                 <h3>Sellos de combate del campo</h3>
-                <p>
-                  La base ya no depende de emojis. Cada encuentro entra por categoria con crest propio, tono claro y
-                  entrada de combate mas seria.
-                </p>
+                <p>Pon a prueba tu tecnica contra el jefe de cada zona y gana XP extra.</p>
               </div>
             </div>
 
@@ -5356,7 +5312,7 @@ export default function UserEjercicios({ profile }) {
               <div>
                 <div className="uex-panel-tag">Biblioteca completa</div>
                 <h3>Catalogo del heroe</h3>
-                <p>Ahora queda despues de la recomendacion y de las zonas, no aplastado al entrar.</p>
+                <p>Todos tus ejercicios disponibles, listos para filtrar y elegir.</p>
               </div>
             </div>
 
@@ -5452,7 +5408,7 @@ export default function UserEjercicios({ profile }) {
                   asset={STATE_ASSET.emptyLibrary}
                   tone={cls.accent}
                   title="El gremio no encontro quests en esta busqueda"
-                  text="Prueba limpiar filtros, abrir otra zona o volver al mapa completo para encontrar una ruta util."
+                  text="Prueba limpiar filtros o abrir otra zona."
                   fallback={<Search size={24} color={cls.accent} />}
                   tags={["Sin resultados", "Revisa filtros"]}
                 />

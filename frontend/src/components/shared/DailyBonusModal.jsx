@@ -179,15 +179,16 @@ const CSS = `
 
 /* ── Popup ───────────────────────────────────────────────────── */
 .db-popup {
-  position:relative; width:min(704px,calc(100vw - 28px)); max-height:min(84vh,680px);
+  position:relative; width:min(704px,calc(100vw - 28px)); max-height:min(94vh,760px);
   overflow-y:auto; overflow-x:hidden;
   border:1px solid rgba(255,224,138,.78);
   border-radius:18px;
   background:
-    radial-gradient(circle at 0 0,var(--db-class-soft),transparent 38%),
-    linear-gradient(160deg,var(--db-class-bg),rgba(10,7,18,.97) 52%,rgba(28,16,32,.96)),
+    radial-gradient(circle at 0 0,var(--db-class-soft),transparent 22%),
+    linear-gradient(160deg,rgba(15,11,22,.97),rgba(10,7,18,.97) 52%,rgba(20,14,26,.96)),
     url("/ui/panel-texture.png");
   background-size:auto,420px auto;
+  backdrop-filter:blur(18px);
   box-shadow:
     0 0 0 1px rgba(5,3,8,.98),
     0 0 0 5px var(--db-class-soft),
@@ -251,7 +252,8 @@ const CSS = `
   padding:10px 16px 12px;
   border:1px solid var(--db-class-line);
   border-radius:14px;
-  background:linear-gradient(180deg,var(--db-class-soft),rgba(255,224,138,.015));
+  background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,224,138,.015));
+  backdrop-filter:blur(10px);
   box-shadow:inset 0 0 24px var(--db-class-soft),0 0 22px rgba(0,0,0,.16);
   cursor:grab;
   user-select:none;
@@ -286,7 +288,8 @@ const CSS = `
 /* ── Streak bar ──────────────────────────────────────────────── */
 .db-streak-bar { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
 .db-sc { display:flex; align-items:center; gap:12px; padding:11px 14px;
-  background:linear-gradient(180deg,var(--db-class-soft),rgba(4,3,9,.38));
+  background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(4,3,9,.5));
+  backdrop-filter:blur(8px);
   border:1px solid var(--db-class-line);
   border-radius:14px;
   box-shadow:inset 0 0 0 1px rgba(244,204,120,.04),0 10px 26px rgba(0,0,0,.18);
@@ -319,8 +322,9 @@ const CSS = `
   border:1px solid var(--db-class-line);
   border-radius:14px;
   background:
-    linear-gradient(90deg,var(--db-class-soft),rgba(76,201,240,.035)),
-    rgba(7,5,13,.42);
+    linear-gradient(90deg,rgba(255,255,255,.05),rgba(76,201,240,.035)),
+    rgba(7,5,13,.5);
+  backdrop-filter:blur(8px);
   box-shadow:inset 0 0 0 1px var(--db-class-soft);
 }
 .db-week-item { min-width:0; }
@@ -353,9 +357,10 @@ const CSS = `
   border:1px solid var(--db-class-line);
   border-radius:16px;
   background:
-    radial-gradient(circle at 8% 20%,var(--db-class-soft),transparent 34%),
-    linear-gradient(90deg,rgba(244,204,120,.08),var(--db-class-soft)),
-    rgba(7,5,13,.5);
+    radial-gradient(circle at 8% 20%,var(--db-class-soft),transparent 20%),
+    linear-gradient(90deg,rgba(244,204,120,.08),rgba(255,255,255,.03)),
+    rgba(7,5,13,.6);
+  backdrop-filter:blur(8px);
   box-shadow:inset 0 0 0 1px rgba(244,204,120,.05),0 12px 24px rgba(0,0,0,.18);
   position:relative; overflow:hidden;
 }
@@ -370,12 +375,12 @@ const CSS = `
 }
 .db-shield-note.used {
   border-color:rgba(138,201,38,.5);
-  background:linear-gradient(90deg,rgba(138,201,38,.14),var(--db-class-soft)),rgba(7,5,13,.56);
+  background:linear-gradient(90deg,rgba(138,201,38,.12),rgba(255,255,255,.03)),rgba(7,5,13,.62);
 }
 .db-shield-icon {
   width:38px; height:38px; display:flex; align-items:center; justify-content:center;
   border:1px solid var(--db-class-line); border-radius:12px;
-  background:radial-gradient(circle,var(--db-class-soft),rgba(7,5,13,.64));
+  background:radial-gradient(circle,var(--db-class-soft) 0%,rgba(7,5,13,.75) 70%);
   color:var(--db-goldb); font-size:20px;
   filter:drop-shadow(0 0 10px var(--db-class-glow));
 }
@@ -400,16 +405,17 @@ const CSS = `
   border:1px solid var(--db-class-line);
   border-radius:18px;
   background:
-    radial-gradient(circle at 50% 0,var(--db-class-soft),transparent 42%),
-    rgba(7,5,13,.38);
+    radial-gradient(circle at 50% 0,var(--db-class-soft),transparent 24%),
+    rgba(7,5,13,.5);
+  backdrop-filter:blur(8px);
   box-shadow:inset 0 0 42px rgba(0,0,0,.26);
 }
 
 /* ── Day cell ────────────────────────────────────────────────── */
 .db-day { position:relative; min-height:82px;
   background:
-    linear-gradient(180deg,var(--db-class-soft),rgba(255,224,138,.012)),
-    rgba(11,8,18,.82);
+    linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,224,138,.012)),
+    rgba(11,8,18,.86);
   border:1px solid var(--db-class-line);
   border-radius:13px;
   box-shadow:inset 0 0 0 1px var(--db-class-soft),0 10px 22px rgba(0,0,0,.18);
@@ -423,7 +429,8 @@ const CSS = `
 .db-day::before { content:""; position:absolute; top:0; left:0; right:0; height:1px;
   background:linear-gradient(90deg,transparent,var(--db-gold)22,transparent); pointer-events:none; }
 .db-day.claimed { border-color:rgba(138,201,38,.35);
-  background:linear-gradient(180deg,rgba(23,42,17,.76),rgba(7,11,7,.72)); opacity:.82; }
+  background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(11,8,18,.7));
+  backdrop-filter:blur(6px); opacity:.82; }
 .db-day.today   { border-color:var(--db-gold); cursor:pointer;
   animation:db-today 1.8s ease-in-out infinite; }
 .db-day.today::after { content:""; position:absolute; top:-2px; left:50%;
@@ -456,7 +463,7 @@ const CSS = `
 .db-state-art.streakBroken { opacity:.88; z-index:3; filter:drop-shadow(0 0 14px rgba(224,92,138,.36)); }
 .db-state-fallback {
   position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-  pointer-events:none; z-index:3; background:rgba(8,12,8,.42);
+  pointer-events:none; z-index:3; background:rgba(10,8,16,.4); backdrop-filter:blur(4px);
 }
 .db-state-fallback::before {
   content:""; width:24px; height:24px; background:var(--db-green);
@@ -468,8 +475,7 @@ const CSS = `
   box-shadow:inset 0 0 0 1px rgba(224,92,138,.24),0 0 24px rgba(224,92,138,.18);
 }
 .db-lower-grid {
-  display:grid; grid-template-columns:minmax(0,1.1fr) minmax(180px,.9fr); gap:10px;
-  align-items:start; margin:10px 0 12px;
+  margin:10px 0 12px;
 }
 
 .db-reward-detail {
@@ -478,9 +484,10 @@ const CSS = `
   border:1px solid var(--db-class-line);
   border-radius:16px;
   background:
-    radial-gradient(circle at 8% 30%,var(--db-class-soft),transparent 34%),
-    linear-gradient(90deg,var(--db-class-soft),rgba(76,201,240,.028)),
-    rgba(7,5,13,.52);
+    radial-gradient(circle at 8% 30%,var(--db-class-soft),transparent 20%),
+    linear-gradient(90deg,rgba(255,255,255,.04),rgba(76,201,240,.028)),
+    rgba(7,5,13,.62);
+  backdrop-filter:blur(8px);
   box-shadow:inset 0 0 0 1px var(--db-class-soft),0 12px 28px rgba(0,0,0,.2),0 0 18px rgba(0,0,0,.08);
 }
 .db-detail-icon { width:44px; height:44px; display:flex; align-items:center; justify-content:center; }
@@ -619,33 +626,10 @@ const CSS = `
   width:20px; height:24px;
 }
 
-/* ── Bottom row ──────────────────────────────────────────────── */
-.db-bottom { display:flex; flex-direction:column; gap:8px; margin:0; }
-.db-streak-cell { display:flex; align-items:center; gap:10px; padding:12px 14px;
-  background:linear-gradient(180deg,var(--db-class-soft),rgba(5,4,10,.42));
-  border:1px solid var(--db-class-line);
-  border-radius:14px;
-  box-shadow:inset 0 0 0 1px var(--db-class-soft); }
-.db-streak-lbl { font-family:'JetBrains Mono',monospace; font-size:6px;
-  color:var(--db-dim); letter-spacing:1px; margin-bottom:6px; }
-.db-streak-val { font-family:'VT323',monospace; font-size:20px;
-  color:var(--db-goldb); letter-spacing:1px; text-shadow:0 0 8px rgba(244,204,120,.35); }
-.db-extra-cell { padding:12px 14px;
-  background:linear-gradient(180deg,var(--db-class-soft),rgba(5,4,10,.42));
-  border:1px solid var(--db-class-line);
-  border-radius:14px;
-  box-shadow:inset 0 0 0 1px var(--db-class-soft); }
-.db-extra-head { font-family:'JetBrains Mono',monospace; font-size:7px;
-  color:var(--db-goldb); letter-spacing:1px; margin-bottom:5px;
-  text-shadow:0 0 8px rgba(244,204,120,.4); }
-.db-extra-sub  { font-family:'VT323',monospace; font-size:14px;
-  color:var(--db-dim); margin-bottom:8px; letter-spacing:.5px; }
-.db-extra-row  { display:flex; align-items:center; gap:10px; }
-.db-extra-val  { font-family:'VT323',monospace; font-size:21px;
-  color:var(--db-goldb); text-shadow:0 0 10px rgba(244,204,120,.5); }
 
 /* ── Claim result banner ─────────────────────────────────────── */
-.db-result { background:linear-gradient(180deg,rgba(22,40,16,.92),rgba(10,18,10,.85));
+.db-result { background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(9,7,16,.7));
+  backdrop-filter:blur(8px);
   border:1px solid rgba(138,201,38,.5); border-radius:14px;
   padding:12px 14px; margin-bottom:12px;
   position:relative; overflow:hidden; }
@@ -1442,31 +1426,9 @@ export default function DailyBonusModal({ profile, onClose, onClaimed }) {
                 ))}
               </div>
 
-              {/* ── DETALLE DE RECOMPENSA + BOTTOM (en paralelo) ── */}
+              {/* ── DETALLE DE RECOMPENSA ── */}
               <div className="db-lower-grid">
                 <RewardDetail day={activeSelectedDay} reward={selectedReward}/>
-
-                <div className="db-bottom">
-                  <div className="db-streak-cell">
-                    <div style={{ flex:1 }}>
-                      <div className="db-streak-lbl">RACHA ACTUAL</div>
-                      <FlameRow streak={streakDays}/>
-                      <div className="db-streak-val" style={{ marginTop:6 }}>
-                        {displayStreak} DÍAS
-                      </div>
-                    </div>
-                  </div>
-                  <div className="db-extra-cell">
-                    <div className="db-extra-head">RECOMPENSA EXTRA</div>
-                    <div className="db-extra-sub">¡Mantén tu racha 7 días!</div>
-                    <div className="db-extra-row">
-                      <RwdIcon type="gems" size={22}/>
-                      <span className="db-extra-val">50</span>
-                      <span style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:"6px",
-                        color:"var(--db-dim)",marginLeft:4 }}>GEMAS</span>
-                    </div>
-                  </div>
-                </div>
               </div>
 
               {/* ── CTA ── */}

@@ -30,9 +30,20 @@ const PORT = process.env.PORT || 4001;
 
 // ── Middlewares globales ───────────────────────────────────────
 
-// CORS — solo permite requests desde el frontend
+// CORS — permite requests desde el frontend (soporta varios orígenes separados por coma en FRONTEND_URL,
+// más los puertos comunes que Vite usa cuando el puerto principal ya está ocupado)
+const allowedOrigins = new Set([
+  ...(process.env.FRONTEND_URL || "http://localhost:5173").split(",").map((o) => o.trim()),
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://localhost:5175",
+]);
+
 app.use(cors({
-  origin:      process.env.FRONTEND_URL || "http://localhost:5173",
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.has(origin)) return callback(null, true);
+    callback(new Error(`Origen no permitido por CORS: ${origin}`));
+  },
   credentials: true,
 }));
 
