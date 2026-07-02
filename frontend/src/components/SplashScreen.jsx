@@ -433,16 +433,21 @@ export default function SplashScreen({ onComplete }) {
           animation: glitch ? "glitchShift 0.15s steps(1) forwards" : "none",
         }}>
 
-          {/* Logo / sword icon */}
+          {/* Logo */}
           <div style={{
             opacity: titleVisible ? 1 : 0,
             transform: titleVisible ? "scale(1)" : "scale(0.5)",
             transition: "all 0.7s cubic-bezier(0.34, 1.56, 0.64, 1)",
-            fontSize: 48, marginBottom: 8,
-            filter: "drop-shadow(0 0 20px #E85D04)",
+            marginBottom: 4,
             animation: titleVisible ? "levelUp 2s ease-in-out infinite" : "none",
           }}>
-            ⚔️
+            <img src="/logo.png" alt="ForgeVenture" style={{
+              width: 120, height: 120,
+              objectFit: "cover",
+              imageRendering: "pixelated",
+              mixBlendMode: "screen",
+              filter: "drop-shadow(0 0 24px #E85D04) drop-shadow(0 0 48px #E85D0444)",
+            }} />
           </div>
 
           {/* FORGEVENTURE title */}

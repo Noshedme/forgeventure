@@ -1,0 +1,158 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ────────────────────────────────────────────────
+    function isAuth()  { return request.auth != null; }
+    function isOwner(uid) { return isAuth() && request.auth.uid == uid; }
+    function isAdmin() {
+      return isAuth() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
+    }
+
+    // ── Catálogo de objetos ────────────────────────────────────
+    // H26: bloquear escritura directa por usuarios — solo backend/admin SDK
+    match /objects/{itemId} {
+      allow read: if isAuth();
+      // Ningún cliente puede crear, actualizar ni borrar directamente.
+      // Toda escritura va por el backend (Admin SDK).
+      allow write: if false;
+    }
+
+    // ── Usuarios ───────────────────────────────────────────────
+    match /users/{uid} {
+      allow read:   if isOwner(uid) || isAdmin();
+      allow update: if isOwner(uid) && !isAdmin();
+      allow create: if isOwner(uid);
+      allow delete: if isAdmin();
+    }
+
+    // ── Inventario de usuario ─────────────────────────────────
+    // H26: el cliente solo puede actualizar el campo `equipado`;
+    //      ningún otro campo es escribible desde el cliente.
+    match /users/{uid}/inventario/{itemId} {
+      allow read:   if isOwner(uid) || isAdmin();
+      // Solo el campo `equipado` puede ser modificado desde el cliente
+      allow update: if isOwner(uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["equipado"]);
+      // Creación y borrado solo desde backend (Admin SDK)
+      allow create, delete: if false;
+    }
+
+    // ── Inventario legado (colección `inventory`) ─────────────
+    match /users/{uid}/inventory/{itemId} {
+      allow read:   if isOwner(uid) || isAdmin();
+      allow update: if isOwner(uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["equipado"]);
+      allow create, delete: if false;
+    }
+
+    // ── Historial de compras ──────────────────────────────────
+    match /users/{uid}/purchases/{purchaseId} {
+      allow read:   if isOwner(uid) || isAdmin();
+      allow write:  if false; // solo backend
+    }
+
+    // ── Misiones ──────────────────────────────────────────────
+    match /missions/{misionId} {
+      allow read:  if isAuth();
+      allow write: if isAdmin();
+    }
+
+    // ── Logros ────────────────────────────────────────────────
+    match /logros/{logroId} {
+      allow read:  if isAuth();
+      allow write: if isAdmin();
+    }
+
+    // ── Logros otorgados ──────────────────────────────────────
+    match /users/{uid}/logros/{logroId} {
+      allow read:  if isOwner(uid) || isAdmin();
+      allow write: if false; // solo backend (achievementEngine)
+    }
+
+    // ── Mensajes / broadcasts ─────────────────────────────────
+    match /mensajes/{msgId} {
+      allow read:  if isAuth();
+      allow write: if isAdmin();
+    }
+
+    // ── Feedback ──────────────────────────────────────────────
+    match /feedback/{fbId} {
+      allow read:   if isAdmin();
+      allow create: if isAuth();
+      allow update, delete: if isAdmin();
+    }
+
+    // ── Audit log ─────────────────────────────────────────────
+    match /auditLog/{logId} {
+      allow read:  if isAdmin();
+      allow write: if false; // solo backend (Admin SDK)
+    }
+
+    // ── Activity log ──────────────────────────────────────────
+    match /activityLog/{logId} {
+      allow read:  if isAdmin();
+      allow write: if false;
+    }
+
+    // ── Config global ─────────────────────────────────────────
+    match /config/{configId} {
+      allow read:  if isAuth();
+      allow write: if isAdmin();
+    }
+
+    // ── Skins / avatars ───────────────────────────────────────
+    match /skins/{skinId}   { allow read: if isAuth(); allow write: if isAdmin(); }
+    match /avatars/{avId}   { allow read: if isAuth(); allow write: if isAdmin(); }
+    match /titles/{titleId} { allow read: if isAuth(); allow write: if isAdmin(); }
+
+    // ── Presencia online (cliente escribe/lee directamente) ───
+    match /presence/{uid} {
+      allow read:         if isAuth();
+      allow write, delete: if isOwner(uid);
+    }
+
+    // ── Conversaciones (metadata) ─────────────────────────────
+    match /conversations/{convId} {
+      // Solo los participantes pueden leer; el backend escribe
+      allow read:  if isAuth() && request.auth.uid in resource.data.participants;
+      allow write: if false;
+    }
+
+    // ── Mensajes de conversación ──────────────────────────────
+    match /conversations/{convId}/messages/{msgId} {
+      // El acceso al convId implica participación (ID determinístico)
+      allow read:  if isAuth();
+      allow write: if false;
+    }
+
+    // ── Indicadores de escritura (typing) ─────────────────────
+    match /conversations/{convId}/typing/{typingUid} {
+      allow read:          if isAuth();
+      allow write, delete: if isOwner(typingUid);
+    }
+
+    // ── Solicitudes de amistad ────────────────────────────────
+    match /friendRequests/{reqId} {
+      // Solo los involucrados pueden leer; el backend escribe
+      allow read:  if isAuth() &&
+        (resource.data.fromUid == request.auth.uid ||
+         resource.data.toUid   == request.auth.uid);
+      allow write: if false;
+    }
+
+    // ── Mensajes de admin / notificaciones del sistema ────────
+    match /adminMessages/{msgId} {
+      allow read: if isAuth() &&
+        (resource.data.targetAll == true ||
+         resource.data.targetUid == request.auth.uid);
+      allow write: if false;
+    }
+
+    // ── Bloqueo por defecto ───────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -448,3 +448,299 @@ export const sendResetCodeEmail = async (to, username, code) => {
 
   console.log(`✅ Email de recuperación enviado a ${to}`);
 };
+
+// ══════════════════════════════════════════════════════════════
+// 3. EMAIL DE LOGRO DESBLOQUEADO
+// ══════════════════════════════════════════════════════════════
+export const sendAchievementEmail = async (to, username, achievementName, achievementDesc, xpReward) => {
+  const body = `
+    <!-- Header -->
+    <tr>
+      <td style="padding:40px 40px 20px;">
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="text-align:center;">
+              <div style="font-size:28px;margin-bottom:8px;">🏆</div>
+              <h1 style="margin:0;font-size:24px;font-weight:900;color:${C.white};text-align:center;">
+                ¡LOGRO DESBLOQUEADO!
+              </h1>
+              <p style="margin:12px 0 0;font-size:14px;color:${C.muted};text-align:center;">
+                Felicidades ${username}, has completado un nuevo desafío
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- Achievement Card -->
+    <tr>
+      <td style="padding:0 40px 32px;">
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td>
+              <div style="background:linear-gradient(135deg,${C.gold}22,${C.orange}22);
+                          border:2px solid ${C.gold}66;border-radius:12px;padding:24px;
+                          text-align:center;">
+                <div style="font-size:36px;margin-bottom:12px;">🏆</div>
+                <h2 style="margin:0 0 8px;font-size:20px;font-weight:900;color:${C.gold};">
+                  ${achievementName}
+                </h2>
+                <p style="margin:0;font-size:14px;color:${C.white};line-height:1.6;">
+                  ${achievementDesc}
+                </p>
+                <div style="margin-top:16px;padding:8px 16px;background:${C.gold}18;
+                            border:1px solid ${C.gold}44;border-radius:20px;display:inline-block;">
+                  <span style="font-size:12px;font-weight:700;color:${C.gold};">
+                    +${xpReward} XP
+                  </span>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- CTA -->
+    <tr>
+      <td style="padding:0 40px 40px;text-align:center;">
+        <a href="${APP_URL}"
+          style="display:inline-block;background:linear-gradient(135deg,${C.gold},${C.orange});
+                 color:${C.bg};font-size:13px;font-weight:900;letter-spacing:2px;
+                 padding:16px 32px;border-radius:6px;text-decoration:none;
+                 box-shadow:0 4px 24px ${C.gold}66;text-transform:uppercase;">
+          🎯 &nbsp; VER MIS LOGROS
+        </a>
+      </td>
+    </tr>`;
+
+  await transporter.sendMail({
+    from: FROM,
+    to,
+    subject: `🏆 ¡Nuevo logro desbloqueado en ForgeVenture!`,
+    html: wrap(body),
+  });
+
+  console.log(`✅ Email de logro enviado a ${to}`);
+};
+
+// ══════════════════════════════════════════════════════════════
+// 4. EMAIL DE RACHA EN PELIGRO
+// ══════════════════════════════════════════════════════════════
+export const sendStreakEmail = async (to, username, currentStreak, daysLeft) => {
+  const body = `
+    <!-- Header -->
+    <tr>
+      <td style="padding:40px 40px 20px;">
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="text-align:center;">
+              <div style="font-size:28px;margin-bottom:8px;">⚠️</div>
+              <h1 style="margin:0;font-size:24px;font-weight:900;color:${C.red};text-align:center;">
+                ¡RACHA EN PELIGRO!
+              </h1>
+              <p style="margin:12px 0 0;font-size:14px;color:${C.muted};text-align:center;">
+                ${username}, tu racha de ${currentStreak} días está a punto de romperse
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- Streak Warning -->
+    <tr>
+      <td style="padding:0 40px 32px;">
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td>
+              <div style="background:linear-gradient(135deg,${C.red}22,${C.orange}22);
+                          border:2px solid ${C.red}66;border-radius:12px;padding:24px;
+                          text-align:center;">
+                <div style="font-size:36px;margin-bottom:12px;">🔥</div>
+                <h2 style="margin:0 0 8px;font-size:20px;font-weight:900;color:${C.red};">
+                  ¡No pierdas tu racha!
+                </h2>
+                <p style="margin:0 0 16px;font-size:14px;color:${C.white};line-height:1.6;">
+                  Tienes <strong style="color:${C.red};">${daysLeft} día(s)</strong> para mantener viva tu racha de ${currentStreak} días consecutivos.
+                </p>
+                <div style="background:${C.red}18;border:1px solid ${C.red}44;border-radius:8px;
+                            padding:12px;margin:16px 0;">
+                  <div style="font-size:16px;font-weight:900;color:${C.red};margin-bottom:4px;">
+                    🔥 RACHA ACTUAL: ${currentStreak} DÍAS
+                  </div>
+                  <div style="font-size:12px;color:${C.muted};">
+                    Bonus activo: +${Math.floor(currentStreak * 0.5)} XP por sesión
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- CTA -->
+    <tr>
+      <td style="padding:0 40px 40px;text-align:center;">
+        <a href="${APP_URL}"
+          style="display:inline-block;background:linear-gradient(135deg,${C.red},${C.orange});
+                 color:${C.white};font-size:13px;font-weight:900;letter-spacing:2px;
+                 padding:16px 32px;border-radius:6px;text-decoration:none;
+                 box-shadow:0 4px 24px ${C.red}66;text-transform:uppercase;">
+          🔥 &nbsp; CONTINUAR RACHA
+        </a>
+      </td>
+    </tr>`;
+
+  await transporter.sendMail({
+    from: FROM,
+    to,
+    subject: `⚠️ ¡Tu racha de ${currentStreak} días está en peligro!`,
+    html: wrap(body),
+  });
+
+  console.log(`✅ Email de racha enviado a ${to}`);
+};
+
+// ══════════════════════════════════════════════════════════════
+// 5. EMAIL DE RESUMEN SEMANAL
+// ══════════════════════════════════════════════════════════════
+export const sendWeeklyEmail = async (to, username, stats) => {
+  const {
+    sessionsCompleted = 0,
+    totalXp = 0,
+    levelProgress = 0,
+    achievements = [],
+    bestDay = '',
+    totalTime = 0
+  } = stats;
+
+  const body = `
+    <!-- Header -->
+    <tr>
+      <td style="padding:40px 40px 20px;">
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="text-align:center;">
+              <div style="font-size:28px;margin-bottom:8px;">📊</div>
+              <h1 style="margin:0;font-size:24px;font-weight:900;color:${C.blue};text-align:center;">
+                TU SEMANA EN FORGEVENTURE
+              </h1>
+              <p style="margin:12px 0 0;font-size:14px;color:${C.muted};text-align:center;">
+                ¡Hola ${username}! Aquí está tu resumen semanal
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- Stats Grid -->
+    <tr>
+      <td style="padding:0 40px 32px;">
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td>
+              <table width="100%" cellpadding="0" cellspacing="12">
+                <tr>
+                  <td width="33%">
+                    <div style="background:${C.bgPanel};border:1px solid ${C.navy};border-radius:8px;
+                                padding:16px;text-align:center;">
+                      <div style="font-size:24px;margin-bottom:8px;">🏋️</div>
+                      <div style="font-size:18px;font-weight:900;color:${C.orange};margin-bottom:4px;">
+                        ${sessionsCompleted}
+                      </div>
+                      <div style="font-size:11px;color:${C.muted};text-transform:uppercase;">
+                        Sesiones completadas
+                      </div>
+                    </div>
+                  </td>
+                  <td width="33%">
+                    <div style="background:${C.bgPanel};border:1px solid ${C.navy};border-radius:8px;
+                                padding:16px;text-align:center;">
+                      <div style="font-size:24px;margin-bottom:8px;">⭐</div>
+                      <div style="font-size:18px;font-weight:900;color:${C.gold};margin-bottom:4px;">
+                        ${totalXp}
+                      </div>
+                      <div style="font-size:11px;color:${C.muted};text-transform:uppercase;">
+                        XP ganado
+                      </div>
+                    </div>
+                  </td>
+                  <td width="33%">
+                    <div style="background:${C.bgPanel};border:1px solid ${C.navy};border-radius:8px;
+                                padding:16px;text-align:center;">
+                      <div style="font-size:24px;margin-bottom:8px;">⏱️</div>
+                      <div style="font-size:18px;font-weight:900;color:${C.blue};margin-bottom:4px;">
+                        ${Math.floor(totalTime / 60)}min
+                      </div>
+                      <div style="font-size:11px;color:${C.muted};text-transform:uppercase;">
+                        Tiempo total
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- Achievements -->
+    ${achievements.length > 0 ? `
+    <tr>
+      <td style="padding:0 40px 32px;">
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td>
+              <div style="background:linear-gradient(135deg,${C.gold}22,${C.purple}22);
+                          border:2px solid ${C.gold}44;border-radius:12px;padding:20px;">
+                <h3 style="margin:0 0 16px;font-size:16px;font-weight:900;color:${C.gold};text-align:center;">
+                  🏆 LOGROS DE ESTA SEMANA
+                </h3>
+                ${achievements.map(achievement => `
+                  <div style="background:${C.bgPanel};border:1px solid ${C.navy}44;border-radius:6px;
+                              padding:12px;margin-bottom:8px;display:flex;align-items:center;">
+                    <span style="font-size:18px;margin-right:12px;">🏆</span>
+                    <div style="flex:1;">
+                      <div style="font-size:13px;font-weight:700;color:${C.white};margin-bottom:2px;">
+                        ${achievement.name}
+                      </div>
+                      <div style="font-size:11px;color:${C.muted};">
+                        +${achievement.xp} XP
+                      </div>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>` : ''}
+
+    <!-- CTA -->
+    <tr>
+      <td style="padding:0 40px 40px;text-align:center;">
+        <a href="${APP_URL}"
+          style="display:inline-block;background:linear-gradient(135deg,${C.blue},${C.teal});
+                 color:${C.white};font-size:13px;font-weight:900;letter-spacing:2px;
+                 padding:16px 32px;border-radius:6px;text-decoration:none;
+                 box-shadow:0 4px 24px ${C.blue}66;text-transform:uppercase;">
+          📈 &nbsp; VER ESTADÍSTICAS COMPLETAS
+        </a>
+      </td>
+    </tr>`;
+
+  await transporter.sendMail({
+    from: FROM,
+    to,
+    subject: `📊 Tu resumen semanal en ForgeVenture`,
+    html: wrap(body),
+  });
+
+  console.log(`✅ Email semanal enviado a ${to}`);
+};

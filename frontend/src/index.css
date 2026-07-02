@@ -1,11 +1,47 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   index.css  —  ForgeVenture v3.1 · Global Styles + Pixel RPG Base
+   ─────────────────────────────────────────────────────────────────────────────
+   FIXES v3.1:
+   - cursor: none solo en no-touch (evita dejar sin cursor a usuarios mobile/a11y)
+   - prefers-reduced-motion: desactiva animaciones para usuarios que lo requieren
+   - Responsive completo: Tablet 900px, Mobile 600px
+   - Carousel items: 33% → 50% → 100%
+   ───────────────────────────────────────────────────────────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-* {
+/* ── CSS Variables ── */
+:root {
+  --fv-bg:       #060D1A;
+  --fv-card:     #0D1B2E;
+  --fv-panel:    #0A1628;
+  --fv-navy:     #1E3A5F;
+  --fv-orange:   #E85D04;
+  --fv-orangeL:  #FF9F1C;
+  --fv-gold:     #FFD700;
+  --fv-blue:     #4CC9F0;
+  --fv-teal:     #0A9396;
+  --fv-white:    #F0F4FF;
+  --fv-muted:    #6B8CAE;
+  --px-1: 1px;
+  --px-2: 2px;
+  --px-4: 4px;
+}
+
+/* ── Global Reset ── */
+*, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 16px;
 }
 
 html, body, #root {
@@ -14,13 +50,429 @@ html, body, #root {
 }
 
 body {
-  background: #060D1A;
-  color: #F0F4FF;
-  font-family: 'Rajdhani', system-ui, sans-serif;
+  background: var(--fv-bg);
+  color: var(--fv-white);
+  font-family: 'Space Grotesk', system-ui, sans-serif;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-display: swap;
+  /* FIX: cursor: none solo en dispositivos con hover real (desktop) */
+  cursor: auto;
 }
 
-/* Evitamos que Vite/Tailwind rompa layouts complejos */
+/* Desktop con mouse real → cursor pixel */
+@media (hover: hover) and (pointer: fine) {
+  body {
+    cursor: none;
+  }
+}
+
 #root {
   display: block !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* ── Selection ── */
+::selection       { background: var(--fv-orange); color: var(--fv-bg); }
+::-moz-selection  { background: var(--fv-orange); color: var(--fv-bg); }
+
+/* ── Focus visible ── */
+:focus-visible {
+  outline: 2px solid var(--fv-orange);
+  outline-offset: 2px;
+}
+
+/* ── Pixel noise on body ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9985;
+  opacity: 0.018;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.92' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 100px 100px;
+}
+
+/* ── Corner vignette ── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9986;
+  background:
+    radial-gradient(ellipse at 0% 0%,     rgba(0,0,0,0.35) 0%, transparent 35%),
+    radial-gradient(ellipse at 100% 0%,   rgba(0,0,0,0.35) 0%, transparent 35%),
+    radial-gradient(ellipse at 0% 100%,   rgba(0,0,0,0.35) 0%, transparent 35%),
+    radial-gradient(ellipse at 100% 100%, rgba(0,0,0,0.35) 0%, transparent 35%);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   prefers-reduced-motion — a11y
+   ───────────────────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .fv-cursor,
+  .fv-cursor-ring {
+    display: none !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   TAILWIND COMPONENT LAYER
+   ───────────────────────────────────────────────────────────────────────── */
+@layer components {
+
+  .card-pixel {
+    @apply relative overflow-hidden;
+    background: var(--fv-card);
+    border: 2px solid var(--fv-navy);
+    box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
+  }
+
+  .btn-pixel {
+    font-family: 'Press Start 2P', monospace;
+    box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
+    transition: transform 0.08s, box-shadow 0.08s;
+    cursor: pointer;
+    position: relative;
+  }
+  .btn-pixel:active {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5);
+  }
+
+  .badge-pixel {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 7px;
+    display: inline-block;
+    padding: 4px 10px;
+    border: 2px solid currentColor;
+    box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.4);
+    letter-spacing: 0.06em;
+  }
+
+  .bar-rpg {
+    height: 12px;
+    background: var(--fv-panel);
+    border: 1px solid currentColor;
+    overflow: hidden;
+    display: flex;
+    gap: 2px;
+    padding: 1px;
+  }
+  .bar-rpg-fill {
+    height: 100%;
+    transition: width 0.3s ease;
+  }
+
+  .section-wrap {
+    @apply relative;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 5%;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   TAILWIND UTILITY LAYER
+   ───────────────────────────────────────────────────────────────────────── */
+@layer utilities {
+
+  .img-pixel {
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+  }
+
+  .font-pixel { font-family: 'Press Start 2P', monospace; }
+  .font-orb   { font-family: 'Orbitron', sans-serif; }
+  .font-raj   { font-family: 'Space Grotesk', sans-serif; }
+
+  .glow-orange { text-shadow: 0 0 8px #E85D04, 0 0 20px #E85D0466; }
+  .glow-gold   { text-shadow: 0 0 8px #FFD700, 0 0 20px #FFD70066; }
+  .glow-blue   { text-shadow: 0 0 8px #4CC9F0, 0 0 20px #4CC9F066; }
+  .glow-teal   { text-shadow: 0 0 8px #0A9396, 0 0 20px #0A939666; }
+
+  .shadow-px-sm { box-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
+  .shadow-px-md { box-shadow: 2px 2px 0 rgba(0,0,0,0.5); }
+  .shadow-px-lg { box-shadow: 4px 4px 0 rgba(0,0,0,0.5); }
+
+  /* FIX: cursor-none solo para desktop con hover real */
+  .cursor-none { cursor: none !important; }
+
+  .border-px   { border-width: 2px; }
+  .border-px-3 { border-width: 3px; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   RESPONSIVE — Breakpoints completos
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* ── Tablet ≤ 900px ── */
+@media (max-width: 900px) {
+  /* Nav */
+  .nav-desktop-links { display: none !important; }
+  .nav-hamburger     { display: flex !important; }
+
+  /* Hero */
+  .hero-grid {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+  }
+  .hero-btns  { justify-content: center !important; }
+  .hero-stats { justify-content: center !important; }
+
+  /* Features */
+  .features-grid { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* Classes */
+  .classes-grid { grid-template-columns: 1fr !important; }
+
+  /* Modules */
+  .modules-detail { grid-template-columns: 1fr !important; }
+
+  /* About */
+  .about-stats { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* Carousel: 2 items */
+  .carousel-item { flex: 0 0 50% !important; }
+
+  /* Login: panel izquierdo más estrecho en tablet */
+  .login-grid { grid-template-columns: 0.8fr 1.2fr !important; }
+
+  /* Register: panel izquierdo más estrecho en tablet */
+  .register-grid { grid-template-columns: 0.75fr 1.25fr !important; }
+  .class-selector-grid { grid-template-columns: repeat(3, 1fr) !important; }
+
+  /* Section number */
+  .section-number { font-size: clamp(40px, 8vw, 80px) !important; }
+
+  /* Hide large decorations */
+  .hide-tablet { display: none !important; }
+}
+
+/* ── Mobile ≤ 600px ── */
+@media (max-width: 600px) {
+  body { cursor: auto !important; }
+  .fv-cursor,
+  .fv-cursor-ring { display: none !important; }
+
+  /* Features: 1 col */
+  .features-grid { grid-template-columns: 1fr !important; }
+
+  /* Carousel: 1 item */
+  .carousel-item { flex: 0 0 100% !important; padding: 0 4px !important; }
+
+  /* Classes tabs wrap */
+  .classes-tabs { flex-wrap: wrap !important; gap: 6px !important; }
+
+  /* About stats: 2 cols */
+  .about-stats { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* Footer column */
+  .footer-inner {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 14px !important;
+    text-align: center !important;
+  }
+  .footer-save {
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 8px !important;
+  }
+
+  /* Hero stats */
+  .hero-stats-row {
+    gap: 16px !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+  }
+
+  /* Modules tabs */
+  .modules-tabs button {
+    padding: 10px 12px !important;
+    font-size: 5px !important;
+  }
+
+  /* Reduce section padding */
+  section { padding-left: 4% !important; padding-right: 4% !important; }
+
+  /* Classes grid: ya es 1 col, asegurar */
+  .classes-grid { grid-template-columns: 1fr !important; }
+
+  /* Hero h1 — evitar overflow */
+  h1 { word-break: break-word !important; }
+
+  /* Login: ocultar panel izquierdo, formulario full-width */
+  .login-grid { grid-template-columns: 1fr !important; }
+  .login-left  { display: none !important; }
+  .login-right {
+    padding: clamp(24px, 6vw, 52px) clamp(16px, 5vw, 40px) clamp(24px, 6vw, 44px) !important;
+  }
+  .login-title { font-size: clamp(16px, 4vw, 20px) !important; }
+
+  /* Register: ocultar panel izquierdo, formulario full-width */
+  .register-grid { grid-template-columns: 1fr !important; }
+  .register-left  { display: none !important; }
+  .register-right {
+    padding: clamp(24px, 6vw, 52px) clamp(16px, 5vw, 40px) clamp(24px, 6vw, 44px) !important;
+    max-height: 100vh;
+    overflow-y: auto;
+  }
+  .register-h1 { font-size: clamp(14px, 3.5vw, 18px) !important; }
+  /* Clase selector: 1 columna en mobile */
+  .class-selector-grid { grid-template-columns: 1fr !important; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   DASHBOARD RESPONSIVE — User & Admin pages (mobile ≤768px)
+   ─────────────────────────────────────────────────────────────────────────────
+   These pages use inline styles; classes here target wrapper containers
+   that components add via className.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* ── Dashboard sub-page wrappers ── */
+.ud-page-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Responsive tab bars (horizontal scroll) ── */
+.ud-tabs-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  flex-shrink: 0;
+}
+.ud-tabs-row::-webkit-scrollbar { display: none; }
+.ud-tabs-row > * { flex-shrink: 0; }
+
+/* ── Grid responsivo para cards ── */
+.ud-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+.ud-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+.ud-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+/* ── Tienda: layout con sidebar de filtros ── */
+.ut-layout {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+.ut-sidebar {
+  width: 200px;
+  flex-shrink: 0;
+}
+.ut-main { flex: 1; min-width: 0; }
+
+/* ── Perfil: tabs content ── */
+.up-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+/* ── Ejercicios / Rutinas: search + filter row ── */
+.ue-search-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* ── Misiones / Logros: grid ── */
+.um-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+.ul-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+/* ── Admin grid ── */
+.ad-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+.ad-charts-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 14px;
+}
+.ad-layout {
+  display: flex;
+  gap: 0;
+}
+.ad-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 1024px) {
+  .ud-grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
+  .ad-kpi-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .ad-charts-grid { grid-template-columns: 1fr !important; }
+  .up-stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+}
+
+@media (max-width: 768px) {
+  /* ── General ── */
+  .ud-grid-3  { grid-template-columns: 1fr !important; }
+  .ud-grid-2  { grid-template-columns: 1fr !important; }
+  .ud-grid-4  { grid-template-columns: repeat(2, 1fr) !important; }
+  .um-grid    { grid-template-columns: 1fr !important; }
+  .ul-grid    { grid-template-columns: repeat(2, 1fr) !important; }
+  .up-stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* ── Tienda ── */
+  .ut-layout  { flex-direction: column !important; }
+  .ut-sidebar { width: 100% !important; }
+
+  /* ── Ejercicios search row ── */
+  .ue-search-row { flex-wrap: wrap !important; }
+  .ue-search-row > * { flex: 1 1 100% !important; }
+
+  /* ── Admin ── */
+  .ad-kpi-grid    { grid-template-columns: repeat(2, 1fr) !important; }
+  .ad-charts-grid { grid-template-columns: 1fr !important; }
+  .ad-sidebar     { display: none !important; }
+  .ad-layout      { flex-direction: column !important; }
+}
+
+@media (max-width: 480px) {
+  .ul-grid  { grid-template-columns: 1fr !important; }
+  .ud-grid-4 { grid-template-columns: 1fr !important; }
+  .ad-kpi-grid { grid-template-columns: 1fr !important; }
 }

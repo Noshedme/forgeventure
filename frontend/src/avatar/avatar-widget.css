@@ -1,0 +1,91 @@
+.avatar-widget-root {
+  position: fixed;
+  bottom: 24px;
+  right: 24px; /* sobreescrito por el inline style */
+  z-index: 9998;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  transition: right 2.2s cubic-bezier(0.45, 0, 0.55, 1);
+}
+
+.avatar-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.2s ease;
+}
+
+.avatar-container:hover {
+  transform: translateY(-4px);
+}
+
+.avatar-container.open {
+  transform: translateY(-2px);
+}
+
+.avatar-hint {
+  margin-top: 4px;
+  background: #0D1B2E;
+  border: 1px solid #1E3A5F;
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: #6B8CAE;
+  white-space: nowrap;
+  animation: fadeIn 0.3s ease 1.2s both;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+/* ── Tip proactivo ── */
+.avatar-tip-bubble {
+  position: absolute;
+  bottom: 175px; /* ajustado al sprite cuadrado de 160px */
+  right: 10px;
+  width: 250px;
+  background: #0D1B2E;
+  border: 1px solid #E85D04;
+  border-radius: 14px 14px 4px 14px;
+  padding: 11px 30px 11px 13px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #F0F4FF;
+  box-shadow: 0 4px 20px rgba(232, 93, 4, 0.25);
+  animation: bubblePop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 9999;
+}
+
+.avatar-tip-close {
+  position: absolute;
+  top: 7px;
+  right: 9px;
+  background: none;
+  border: none;
+  color: #6B8CAE;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px;
+  line-height: 1;
+}
+
+.avatar-tip-close:hover {
+  color: #E85D04;
+}
+
+@keyframes bubblePop {
+  from { opacity: 0; transform: scale(0.85) translateY(8px); transform-origin: bottom right; }
+  to   { opacity: 1; transform: scale(1) translateY(0);      transform-origin: bottom right; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@media (max-width: 480px) {
+  .avatar-widget-root {
+    bottom: 16px;
+    right: 16px;
+  }
+}

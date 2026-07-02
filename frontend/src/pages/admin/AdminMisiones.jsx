@@ -5,7 +5,10 @@
 //  Conectar: getMisiones(), createMision(), updateMision(),
 //            deleteMision() desde api.js cuando esté el backend.
 // ─────────────────────────────────────────────────────────────
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useToast } from "../../components/shared/ui.jsx";
+import { auth } from "../../firebase.js";
+import { getMisionesAdmin, createMision, updateMision, deleteMision } from "../../services/api.js";
 import {
   Search, Plus, RefreshCw, Eye, Edit2, Trash2,
   ChevronUp, ChevronDown, ChevronLeft, ChevronRight,
@@ -13,15 +16,8 @@ import {
   BarChart2, Calendar, Clock, Flame, Trophy, Gift,
   Users, Shield, Repeat,
 } from "lucide-react";
+import { C, px, raj, orb } from "../../components/admin/config/shared.jsx";
 
-const C = {
-  bg:"#050C18", side:"#080F1C", card:"#0C1826", panel:"#091220",
-  navy:"#1A3354", navyL:"#1E3A5F",
-  orange:"#E85D04", orangeL:"#FF9F1C", gold:"#FFD700",
-  blue:"#4CC9F0", teal:"#0A9396", green:"#2ecc71",
-  red:"#E74C3C", purple:"#9B59B6",
-  white:"#F0F4FF", muted:"#5A7A9A", mutedL:"#7A9AB8",
-};
 
 const CSS = `
   @keyframes m-slideU  { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
@@ -33,6 +29,10 @@ const CSS = `
   @keyframes m-glow    { 0%,100%{box-shadow:0 0 8px #FFD70033} 50%{box-shadow:0 0 22px #FFD70066} }
   @keyframes m-bounce  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
   @keyframes m-fill    { from{width:0} to{width:var(--fw)} }
+  @keyframes m-toastIn { from{opacity:0;transform:translateX(120%)} to{opacity:1;transform:translateX(0)} }
+  @keyframes m-toastOut{ from{opacity:1;transform:translateX(0)} to{opacity:0;transform:translateX(120%)} }
+  @keyframes m-slideE  { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes mi-skel-shimmer { 0%{background-position:-400px 0} 100%{background-position:400px 0} }
 
   .m-row    { transition:background .15s; }
   .m-row:hover { background:${C.navyL}18 !important; }
@@ -45,20 +45,18 @@ const CSS = `
   .m-sort   { cursor:pointer; user-select:none; transition:color .2s; }
   .m-sort:hover { color:${C.orange} !important; }
   .m-card   { transition:all .22s; }
-  .m-card:hover { transform:translateY(-3px); box-shadow:0 12px 36px rgba(0,0,0,.45) !important; }
   .m-type-tab { transition:all .2s; cursor:pointer; }
   .m-req-row { transition:background .15s; }
   .m-req-row:hover { background:${C.navyL}18 !important; }
+  .mi-skel { background:linear-gradient(90deg,${C.card} 25%,${C.navy}55 50%,${C.card} 75%); background-size:400px 100%; animation:mi-skel-shimmer 1.5s infinite linear; }
 `;
 
-const px  = s => ({ fontFamily:"'Press Start 2P'", fontSize:s });
-const raj = (s,w=600) => ({ fontFamily:"'Rajdhani',sans-serif", fontSize:s, fontWeight:w });
-const orb = (s,w=700) => ({ fontFamily:"'Orbitron',sans-serif", fontSize:s, fontWeight:w });
 
 // ── Taxonomía de tipos ────────────────────────────────────────
 const TIPOS = {
   Diaria:  { color:C.orange,  icon:"☀️",  bg:"#E85D0414", desc:"Se reinicia cada día a las 00:00" },
   Semanal: { color:C.blue,    icon:"📅",  bg:"#4CC9F014", desc:"Se reinicia cada lunes a las 00:00" },
+  Mente:   { color:C.teal,    icon:"🧘",  bg:"#0A939614", desc:"Actividades de psicología positiva" },
   Evento:  { color:C.purple,  icon:"🎉",  bg:"#9B59B614", desc:"Disponible durante un período especial" },
   Desafío: { color:C.gold,    icon:"🏆",  bg:"#FFD70014", desc:"Reto permanente de alta dificultad" },
 };
@@ -135,11 +133,11 @@ function MiniBar({val,color,height=5}) {
 }
 function TipoBadge({tipo}) {
   const m=TIPOS[tipo]||{color:C.muted,icon:"?",bg:C.panel};
-  return <span style={{...raj(10,700),color:m.color,background:m.bg,border:`1px solid ${m.color}33`,padding:"2px 8px",display:"inline-flex",alignItems:"center",gap:4,whiteSpace:"nowrap"}}>{m.icon} {tipo}</span>;
+  return <span style={{...raj(10,700),color:m.color,background:m.bg,border:`1px solid ${m.color}33`,padding:"2px 8px",display:"inline-flex",alignItems:"center",gap:4,whiteSpace:"nowrap",borderRadius:20}}>{m.icon} {tipo}</span>;
 }
 function DifBadge({dif}) {
   const c=DIFICULTAD_COLOR[dif]||C.muted;
-  return <span style={{...raj(10,700),color:c,background:`${c}14`,border:`1px solid ${c}33`,padding:"2px 8px",whiteSpace:"nowrap"}}>{dif}</span>;
+  return <span style={{...raj(10,700),color:c,background:`${c}14`,border:`1px solid ${c}33`,padding:"2px 8px",whiteSpace:"nowrap",borderRadius:20}}>{dif}</span>;
 }
 function Spinner({color=C.orange}) {
   return <div style={{width:13,height:13,border:`2px solid ${C.muted}`,borderTop:`2px solid ${color}`,borderRadius:"50%",animation:"m-spin .8s linear infinite"}}/>;
@@ -173,7 +171,7 @@ function ViewModal({mision,onClose,onEdit}) {
   return (
     <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,.78)",display:"flex",alignItems:"center",justifyContent:"center",padding:16}}
       onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{width:"100%",maxWidth:580,background:C.card,border:`1px solid ${c}44`,boxShadow:`0 0 60px ${c}11,0 24px 60px rgba(0,0,0,.6)`,animation:"m-modalIn .25s ease both",overflow:"hidden"}}>
+      <div style={{width:"100%",maxWidth:580,background:C.card,border:`1px solid ${c}44`,boxShadow:`0 0 60px ${c}11,0 24px 60px rgba(0,0,0,.6)`,animation:"m-modalIn .25s ease both",overflow:"hidden",borderRadius:16}}>
         <div style={{height:3,background:`linear-gradient(90deg,transparent,${c},transparent)`}}/>
 
         {/* header */}
@@ -196,7 +194,7 @@ function ViewModal({mision,onClose,onEdit}) {
               {l:"COMPLETADAS",v:mision.completadas.toLocaleString(),c:C.blue},
               {l:"ESTADO",     v:mision.activo?"ACTIVA":"INACTIVA",c:mision.activo?C.green:C.red},
             ].map((s,i)=>(
-              <div key={i} style={{background:C.panel,border:`1px solid ${s.c}22`,padding:"12px 10px",textAlign:"center"}}>
+              <div key={i} style={{background:C.panel,border:`1px solid ${s.c}22`,padding:"12px 10px",textAlign:"center",borderRadius:14}}>
                 <div style={{...orb(15,900),color:s.c,marginBottom:3}}>{s.v}</div>
                 <div style={{...px(5),color:C.muted}}>{s.l}</div>
               </div>
@@ -258,7 +256,7 @@ function ViewModal({mision,onClose,onEdit}) {
               <span style={{...raj(13,700),color:mision.activo?C.green:C.red}}>{mision.activo?"ACTIVA":"INACTIVA"}</span>
             </div>
             <button onClick={()=>{onClose();onEdit(mision);}} className="m-btn"
-              style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:8,...px(7),color:C.bg,background:C.orange,border:"none",padding:"10px",cursor:"pointer",boxShadow:`0 3px 14px ${C.orange}44`}}>
+              style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:8,...px(7),color:C.bg,background:C.orange,border:"none",padding:"10px",cursor:"pointer",boxShadow:`0 3px 14px ${C.orange}44`,borderRadius:8}}>
               <Edit2 size={13}/> EDITAR
             </button>
           </div>
@@ -278,32 +276,40 @@ function FormModal({mision,onClose,onSave}) {
   const [errors,  setErrors]  = useState({});
   const [shake,   setShake]   = useState(false);
   const [tab,     setTab]     = useState("info");
+  const [dirty,   setDirty]   = useState(new Set());
 
-  const set=(k,v)=>setForm(f=>({...f,[k]:v}));
+  const set=(k,v)=>setForm(f=>{const next={...f,[k]:v};if(dirty.has(k))setErrors(validate(next));return next;});
+  const touch=k=>setDirty(d=>{const n=new Set(d);n.add(k);return n;});
+  const blur=(k)=>{touch(k);setErrors(validate(form));};
   const tipoMeta=TIPOS[form.tipo]||{};
   const bc=isEdit?C.orange:C.green;
 
-  const validate=()=>{
+  const validate=(f=form)=>{
     const e={};
-    if(!form.titulo.trim())      e.titulo="Título requerido";
-    if(!form.descripcion.trim()) e.descripcion="Descripción requerida";
-    if(!form.requisitos.length)  e.requisitos="Añade al menos un requisito";
-    if(form.xpRecompensa<1)      e.xp="Mínimo 1 XP";
+    if(!f.titulo.trim())      e.titulo="Título requerido";
+    if(!f.descripcion.trim()) e.descripcion="Descripción requerida";
+    if(!f.requisitos.length)  e.requisitos="Añade al menos un requisito";
+    if(f.xpRecompensa<1)      e.xp="Mínimo 1 XP";
     return e;
   };
 
   const save=async()=>{
+    ["titulo","descripcion","xpRecompensa"].forEach(touch);
     const e=validate();
     if(Object.keys(e).length){setErrors(e);setShake(true);setTimeout(()=>setShake(false),500);return;}
     setLoading(true);
-    await new Promise(r=>setTimeout(r,900));
-    setLoading(false);
-    onSave({...form,id:mision?.id||`m${Date.now()}`,completadas:mision?.completadas||0,usosActuales:mision?.usosActuales||0,
-      xpRecompensa:Number(form.xpRecompensa),
-      limiteUsos:form.limiteUsos?Number(form.limiteUsos):null,
-      fechaInicio:form.fechaInicio||null, fechaFin:form.fechaFin||null,
-    });
-    onClose();
+    try {
+      await onSave({...form,id:mision?.id||undefined,completadas:mision?.completadas||0,usosActuales:mision?.usosActuales||0,
+        xpRecompensa:Number(form.xpRecompensa),
+        limiteUsos:form.limiteUsos?Number(form.limiteUsos):null,
+        fechaInicio:form.fechaInicio||null, fechaFin:form.fechaFin||null,
+      });
+      onClose();
+    } catch(err) {
+      setErrors(prev=>({...prev,_api:err.message||"Error al guardar"}));
+    } finally {
+      setLoading(false);
+    }
   };
 
   // requisitos
@@ -324,14 +330,14 @@ function FormModal({mision,onClose,onSave}) {
     setRec(i,"tipo",tipoId); setRec(i,"icon",rt.icon); setRec(i,"label",rt.label);
   };
 
-  const inpSt=(err)=>({width:"100%",padding:"11px 14px",background:C.panel,border:`1px solid ${err?C.red:C.navy}`,color:C.white,...raj(14,500)});
+  const inpSt=(err)=>({width:"100%",padding:"11px 14px",background:C.panel,border:`1px solid ${err?C.red:C.navy}`,color:C.white,...raj(14,500),borderRadius:6});
   const lbl={display:"block",...px(6),color:C.muted,marginBottom:7,letterSpacing:".06em"};
   const TABS=[{id:"info",l:"INFO"},{id:"requisitos",l:`REQUISITOS (${form.requisitos.length})`},{id:"recompensas",l:`RECOMPENSAS (${form.recompensas.length})`}];
 
   return (
     <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,.78)",display:"flex",alignItems:"center",justifyContent:"center",padding:16,overflowY:"auto"}}
       onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{width:"100%",maxWidth:680,background:C.card,border:`1px solid ${bc}44`,boxShadow:`0 0 60px ${bc}0E,0 24px 60px rgba(0,0,0,.6)`,animation:"m-modalIn .25s ease both",overflow:"hidden",display:"flex",flexDirection:"column",maxHeight:"93vh"}}>
+      <div style={{width:"100%",maxWidth:680,background:C.card,border:`1px solid ${bc}44`,boxShadow:`0 0 60px ${bc}0E,0 24px 60px rgba(0,0,0,.6)`,animation:"m-modalIn .25s ease both",overflow:"hidden",display:"flex",flexDirection:"column",maxHeight:"93vh",borderRadius:16}}>
         <div style={{height:3,background:`linear-gradient(90deg,transparent,${bc},transparent)`,flexShrink:0}}/>
 
         {/* header */}
@@ -375,11 +381,11 @@ function FormModal({mision,onClose,onSave}) {
                 </div>
                 <div>
                   <label style={lbl}>📝 TÍTULO</label>
-                  <input className="m-input" value={form.titulo} onChange={e=>set("titulo",e.target.value)} placeholder="Ej: Guerrero Diario" style={inpSt(errors.titulo)}/>
-                  {errors.titulo&&<p style={{...raj(11),color:C.red,marginTop:4}}>⚠ {errors.titulo}</p>}
+                  <input className="m-input" value={form.titulo} onChange={e=>set("titulo",e.target.value)} onBlur={()=>blur("titulo")} placeholder="Ej: Guerrero Diario" style={inpSt(errors.titulo&&dirty.has("titulo"))}/>
+                  {errors.titulo&&dirty.has("titulo")&&<p style={{...raj(11),color:C.red,marginTop:4,animation:"m-slideE .2s ease both"}}>⚠ {errors.titulo}</p>}
                   <label style={{...lbl,marginTop:12}}>📋 DESCRIPCIÓN</label>
-                  <textarea className="m-input" value={form.descripcion} onChange={e=>set("descripcion",e.target.value)} rows={3} placeholder="Describe el objetivo de la misión..." style={{...inpSt(errors.descripcion),resize:"vertical"}}/>
-                  {errors.descripcion&&<p style={{...raj(11),color:C.red,marginTop:4}}>⚠ {errors.descripcion}</p>}
+                  <textarea className="m-input" value={form.descripcion} onChange={e=>set("descripcion",e.target.value)} onBlur={()=>blur("descripcion")} rows={3} placeholder="Describe el objetivo de la misión..." style={{...inpSt(errors.descripcion&&dirty.has("descripcion")),resize:"vertical"}}/>
+                  {errors.descripcion&&dirty.has("descripcion")&&<p style={{...raj(11),color:C.red,marginTop:4,animation:"m-slideE .2s ease both"}}>⚠ {errors.descripcion}</p>}
                 </div>
               </div>
 
@@ -479,7 +485,7 @@ function FormModal({mision,onClose,onSave}) {
                         <div>
                           <label style={{...lbl,marginBottom:6}}>TIPO DE REQUISITO</label>
                           <select className="m-input" value={req.tipo} onChange={e=>changeReqTipo(i,e.target.value)}
-                            style={{width:"100%",padding:"9px 12px",background:C.card,border:`1px solid ${C.navy}`,color:C.white,...raj(13,500),appearance:"none",cursor:"pointer"}}>
+                            style={{width:"100%",padding:"9px 12px",background:C.card,border:`1px solid ${C.navy}`,color:C.white,...raj(13,500),appearance:"none",cursor:"pointer",borderRadius:6}}>
                             {REQ_TIPOS.map(rt=><option key={rt.id} value={rt.id}>{rt.icon} {rt.label}</option>)}
                           </select>
                         </div>
@@ -487,7 +493,7 @@ function FormModal({mision,onClose,onSave}) {
                         <div>
                           <label style={{...lbl,marginBottom:6}}>CANTIDAD ({req.unidad})</label>
                           <input className="m-input" type="number" min={1} value={req.cantidad} onChange={e=>setReq(i,"cantidad",Number(e.target.value))}
-                            style={{width:"100%",padding:"9px 12px",background:C.card,border:`1px solid ${C.navy}`,color:C.white,...raj(14,600)}}
+                            style={{width:"100%",padding:"9px 12px",background:C.card,border:`1px solid ${C.navy}`,color:C.white,...raj(14,600),borderRadius:6}}
                             placeholder={REQ_TIPOS.find(r=>r.id===req.tipo)?.placeholder}/>
                         </div>
                         {/* remove */}
@@ -545,7 +551,7 @@ function FormModal({mision,onClose,onSave}) {
                     <div>
                       <label style={{...lbl,marginBottom:6}}>TIPO DE RECOMPENSA</label>
                       <select className="m-input" value={rec.tipo} onChange={e=>changeRecTipo(i,e.target.value)}
-                        style={{width:"100%",padding:"9px 12px",background:C.card,border:`1px solid ${C.navy}`,color:C.white,...raj(13,500),appearance:"none",cursor:"pointer"}}>
+                        style={{width:"100%",padding:"9px 12px",background:C.card,border:`1px solid ${C.navy}`,color:C.white,...raj(13,500),appearance:"none",cursor:"pointer",borderRadius:6}}>
                         {RECOMPENSA_TIPOS.map(rt=><option key={rt.id} value={rt.id}>{rt.icon} {rt.label}</option>)}
                       </select>
                     </div>
@@ -555,7 +561,7 @@ function FormModal({mision,onClose,onSave}) {
                       </label>
                       <input className="m-input" value={rec.valor} onChange={e=>setRec(i,"valor",e.target.value)}
                         placeholder={rec.tipo==="xp"?"Ej: 200 XP":rec.tipo==="badge"?"Ej: Guerrero Semanal":rec.tipo==="titulo"?"Ej: Maestro del Fuego":"Ej: Poción XP"}
-                        style={{width:"100%",padding:"9px 12px",background:C.card,border:`1px solid ${C.navy}`,color:C.white,...raj(14,600)}}/>
+                        style={{width:"100%",padding:"9px 12px",background:C.card,border:`1px solid ${C.navy}`,color:C.white,...raj(14,600),borderRadius:6}}/>
                     </div>
                     {form.recompensas.length>1&&(
                       <button type="button" onClick={()=>removeRecompensa(i)} className="m-icon-btn"
@@ -583,10 +589,11 @@ function FormModal({mision,onClose,onSave}) {
         </div>
 
         {/* footer */}
+        {errors._api&&<div style={{...raj(12,600),color:C.red,padding:"0 22px 10px",display:"flex",alignItems:"center",gap:8}}><AlertTriangle size={13}/>{errors._api}</div>}
         <div style={{display:"flex",gap:10,padding:"15px 22px",borderTop:`1px solid ${C.navy}`,flexShrink:0}}>
-          <button onClick={onClose} className="m-btn" style={{flex:"0 0 auto",...raj(13,600),color:C.muted,background:C.panel,border:`1px solid ${C.navy}`,padding:"12px 20px",cursor:"pointer"}}>CANCELAR</button>
+          <button onClick={onClose} className="m-btn" style={{flex:"0 0 auto",...raj(13,600),color:C.muted,background:C.panel,border:`1px solid ${C.navy}`,padding:"12px 20px",cursor:"pointer",borderRadius:8}}>CANCELAR</button>
           <button onClick={save} disabled={loading} className="m-btn"
-            style={{flex:1,...px(8),color:loading?C.muted:C.bg,background:loading?`${bc}55`:bc,border:"none",padding:"12px",cursor:loading?"not-allowed":"pointer",boxShadow:`0 4px 20px ${bc}44`,display:"flex",alignItems:"center",justifyContent:"center",gap:10}}>
+            style={{flex:1,...px(8),color:loading?C.muted:C.bg,background:loading?`${bc}55`:bc,border:"none",padding:"12px",cursor:loading?"not-allowed":"pointer",boxShadow:`0 4px 20px ${bc}44`,display:"flex",alignItems:"center",justifyContent:"center",gap:10,borderRadius:8}}>
             {loading?<><Spinner color={bc}/> GUARDANDO...</>:<><Check size={14}/> {isEdit?"GUARDAR CAMBIOS":"CREAR MISIÓN"}</>}
           </button>
         </div>
@@ -601,35 +608,50 @@ function FormModal({mision,onClose,onSave}) {
 function DeleteModal({mision,onClose,onConfirm}) {
   const [typed,setTyped]=useState("");
   const [loading,setLoading]=useState(false);
+  const [delError,setDelError]=useState("");
   const match=typed===mision.titulo;
-  const confirm=async()=>{if(!match)return;setLoading(true);await new Promise(r=>setTimeout(r,700));setLoading(false);onConfirm(mision.id);onClose();};
+  const confirm=async()=>{
+    if(!match)return;
+    setLoading(true);
+    try{await onConfirm(mision.id);onClose();}
+    catch(e){setDelError(e.message||"Error al eliminar");setLoading(false);}
+  };
   const c=TIPOS[mision.tipo]?.color||C.orange;
   return (
     <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,.8)",display:"flex",alignItems:"center",justifyContent:"center",padding:16}}
       onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{width:"100%",maxWidth:420,background:C.card,border:`1px solid ${C.red}44`,boxShadow:`0 0 60px ${C.red}14,0 24px 60px rgba(0,0,0,.6)`,animation:"m-modalIn .25s ease both",overflow:"hidden"}}>
+      <div style={{width:"100%",maxWidth:420,background:C.card,border:`1px solid ${C.red}44`,boxShadow:`0 0 60px ${C.red}14,0 24px 60px rgba(0,0,0,.6)`,animation:"m-modalIn .25s ease both",overflow:"hidden",borderRadius:16}}>
         <div style={{height:3,background:`linear-gradient(90deg,transparent,${C.red},transparent)`}}/>
         <div style={{padding:"22px 24px 26px"}}>
           <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:18}}>
             <div style={{background:`${C.red}18`,border:`1px solid ${C.red}44`,padding:10,display:"flex"}}><AlertTriangle size={22} color={C.red}/></div>
             <div><div style={{...orb(13,900),color:C.red,marginBottom:3}}>ELIMINAR MISIÓN</div><div style={{...raj(12,500),color:C.muted}}>Esta acción no se puede deshacer</div></div>
           </div>
-          <div style={{background:`${C.red}0A`,border:`1px solid ${C.red}22`,padding:"12px 16px",marginBottom:18,display:"flex",gap:12,alignItems:"center"}}>
+          <div style={{background:`${C.red}0A`,border:`1px solid ${C.red}22`,padding:"12px 16px",marginBottom:12,display:"flex",gap:12,alignItems:"center"}}>
             <span style={{fontSize:26}}>{mision.imagen}</span>
             <div>
               <div style={{...raj(14,700),color:C.red}}>{mision.titulo}</div>
               <div style={{...raj(12,400),color:C.muted}}>{mision.tipo} · {mision.completadas.toLocaleString()} completadas · +{mision.xpRecompensa} XP</div>
             </div>
           </div>
+          {mision.completadas > 0 && (
+            <div style={{background:"#FF9F1C14",border:"1px solid #FF9F1C55",padding:"10px 14px",borderRadius:4,display:"flex",gap:10,alignItems:"flex-start",marginBottom:14}}>
+              <AlertTriangle size={14} color="#FF9F1C" style={{flexShrink:0,marginTop:2}}/>
+              <div style={{...raj(12,500),color:"#FF9F1C",lineHeight:1.5}}>
+                ⚠️ <strong>{mision.completadas.toLocaleString()} usuarios</strong> han completado esta misión. Sus progresos y registros históricos quedarán huérfanos.
+              </div>
+            </div>
+          )}
           <div style={{marginBottom:18}}>
             <label style={{display:"block",...px(6),color:C.muted,marginBottom:8,letterSpacing:".06em"}}>ESCRIBE <span style={{color:C.red}}>{mision.titulo}</span> PARA CONFIRMAR</label>
             <input className="m-input" value={typed} onChange={e=>setTyped(e.target.value)} placeholder={mision.titulo}
-              style={{width:"100%",padding:"12px 14px",background:C.panel,border:`1px solid ${match?C.red:C.navy}`,color:C.white,...raj(14,600)}}/>
+              style={{width:"100%",padding:"12px 14px",background:C.panel,border:`1px solid ${match?C.green:C.navy}`,color:C.white,...raj(14,600),borderRadius:6}}/>
           </div>
+          {delError&&<div style={{...raj(11,600),color:C.red,marginBottom:10,display:"flex",gap:6,alignItems:"center"}}><AlertTriangle size={12}/>{delError}</div>}
           <div style={{display:"flex",gap:10}}>
-            <button onClick={onClose} className="m-btn" style={{flex:"0 0 auto",...raj(13,600),color:C.muted,background:C.panel,border:`1px solid ${C.navy}`,padding:"12px 18px",cursor:"pointer"}}>CANCELAR</button>
+            <button onClick={onClose} className="m-btn" style={{flex:"0 0 auto",...raj(13,600),color:C.muted,background:C.panel,border:`1px solid ${C.navy}`,padding:"12px 18px",cursor:"pointer",borderRadius:8}}>CANCELAR</button>
             <button onClick={confirm} disabled={!match||loading} className="m-btn"
-              style={{flex:1,...px(7),color:(match&&!loading)?C.white:C.muted,background:(match&&!loading)?C.red:`${C.red}22`,border:`1px solid ${C.red}55`,padding:"12px",cursor:match?"pointer":"not-allowed",display:"flex",alignItems:"center",justifyContent:"center",gap:10,transition:"all .2s"}}>
+              style={{flex:1,...px(7),color:(match&&!loading)?C.white:C.muted,background:(match&&!loading)?C.red:`${C.red}22`,border:`1px solid ${C.red}55`,padding:"12px",cursor:match?"pointer":"not-allowed",display:"flex",alignItems:"center",justifyContent:"center",gap:10,transition:"all .2s",borderRadius:8}}>
               {loading?<><Spinner color={C.red}/> ELIMINANDO...</>:<><Trash2 size={13}/> ELIMINAR</>}
             </button>
           </div>
@@ -640,24 +662,119 @@ function DeleteModal({mision,onClose,onConfirm}) {
 }
 
 // ══════════════════════════════════════════════════════════════
+// SKELETON
+// ══════════════════════════════════════════════════════════════
+function SkeletonMisiones() {
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:18}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12}}>
+        {Array.from({length:4}).map((_,i)=>(
+          <div key={i} className="mi-skel" style={{borderRadius:14,height:90,animationDelay:`${i*.08}s`}}/>
+        ))}
+      </div>
+      <div className="mi-skel" style={{borderRadius:12,height:52}}/>
+      <div className="mi-skel" style={{borderRadius:10,height:50}}/>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:14}}>
+        {Array.from({length:6}).map((_,i)=>(
+          <div key={i} className="mi-skel" style={{borderRadius:14,height:220,animationDelay:`${i*.07}s`}}/>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
 // MAIN
 // ══════════════════════════════════════════════════════════════
 export default function AdminMisiones() {
-  const [misiones,   setMisiones]   = useState(MOCK_MISIONES);
-  const [tipoTab,    setTipoTab]    = useState("Todas");
-  const [search,     setSearch]     = useState("");
-  const [filterDif,  setFilterDif]  = useState("all");
-  const [filterAct,  setFilterAct]  = useState("all");
-  const [sortKey,    setSortKey]    = useState("completadas");
-  const [sortDir,    setSortDir]    = useState("desc");
-  const [view,       setView]       = useState("grid");
-  const [page,       setPage]       = useState(1);
-  const [pageSize,   setPageSize]   = useState(12);
-  const [selected,   setSelected]   = useState(new Set());
-  const [modal,      setModal]      = useState(null);
+  const [misiones, setMisiones] = useState([]);
+  const [tipoTab, setTipoTab] = useState("Todas");
+  const [search, setSearch] = useState("");
+  const [filterDif, setFilterDif] = useState("all");
+  const [filterAct, setFilterAct] = useState("all");
+  const [sortKey, setSortKey] = useState("completadas");
+  const [sortDir, setSortDir] = useState("desc");
+  const [view, setView] = useState("grid");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(12);
+  const [selected, setSelected] = useState(new Set());
+  const [modal, setModal] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const { push } = useToast();
 
-  const refresh=async()=>{setRefreshing(true);await new Promise(r=>setTimeout(r,800));setRefreshing(false);};
+  const loadMisiones = async () => {
+    setLoading(true);
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) throw new Error("No auth token");
+      const resp = await getMisionesAdmin(token);
+      setMisiones(Array.isArray(resp.missions) ? resp.missions : []);
+    } catch (error) {
+      console.error("Error cargando misiones:", error);
+      setMisiones(MOCK_MISIONES);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => { loadMisiones(); }, []);
+
+  const refresh = async () => {
+    setRefreshing(true);
+    await loadMisiones();
+  };
+
+  const handleSave = async (saved) => {
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) throw new Error("No auth token");
+
+      if (saved.id && misiones.find((m) => m.id === saved.id)) {
+        const resp = await updateMision(token, saved.id, saved);
+        setMisiones((prev) => prev.map((m) => (m.id === saved.id ? (resp.mission||saved) : m)));
+        push("Misión actualizada correctamente");
+      } else {
+        const resp = await createMision(token, saved);
+        setMisiones((prev) => [resp.mission||saved, ...prev]);
+        push("Misión creada correctamente");
+      }
+    } catch (error) {
+      push(error.message || "Error al guardar misión", "error");
+      throw error;
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) throw new Error("No auth token");
+      await deleteMision(token, id);
+      setMisiones((prev) => prev.filter((m) => m.id !== id));
+      setSelected((prev) => { const next = new Set(prev); next.delete(id); return next; });
+      push("Misión eliminada");
+    } catch (error) {
+      push(error.message || "Error al eliminar misión", "error");
+      throw error;
+    }
+  };
+
+  const bulkDelete = async () => {
+    const token = await auth.currentUser?.getIdToken();
+    if (!token) return;
+    await Promise.all(Array.from(selected).map((id) => deleteMision(token, id).catch((e) => console.error(e))));
+    setMisiones((prev) => prev.filter((m) => !selected.has(m.id)));
+    setSelected(new Set());
+  };
+
+  const bulkToggle = async (activo) => {
+    const token = await auth.currentUser?.getIdToken();
+    if (!token) return;
+    setMisiones((prev) => prev.map((m) => (selected.has(m.id) ? { ...m, activo } : m)));
+    await Promise.all(Array.from(selected).map((id) => updateMision(token, id, { activo }).catch((e) => console.error(e))));
+    setSelected(new Set());
+  };
 
   const filtered=useMemo(()=>{
     let list=[...misiones];
@@ -674,10 +791,6 @@ export default function AdminMisiones() {
   const sort=(k)=>{if(sortKey===k)setSortDir(d=>d==="asc"?"desc":"asc");else{setSortKey(k);setSortDir("asc");}};
   const toggleSelect=(id)=>setSelected(s=>{const n=new Set(s);n.has(id)?n.delete(id):n.add(id);return n;});
   const toggleAll=()=>setSelected(s=>s.size===paginated.length?new Set():new Set(paginated.map(m=>m.id)));
-  const handleSave=(saved)=>setMisiones(ms=>{const i=ms.findIndex(m=>m.id===saved.id);if(i>=0){const a=[...ms];a[i]=saved;return a;}return[saved,...ms];});
-  const handleDelete=(id)=>{setMisiones(ms=>ms.filter(m=>m.id!==id));setSelected(s=>{const n=new Set(s);n.delete(id);return n;});};
-  const bulkDelete=()=>{setMisiones(ms=>ms.filter(m=>!selected.has(m.id)));setSelected(new Set());};
-  const bulkToggle=(activo)=>setMisiones(ms=>ms.map(m=>selected.has(m.id)?{...m,activo}:m));
 
   const kpis=useMemo(()=>({
     total:      misiones.length,
@@ -686,12 +799,13 @@ export default function AdminMisiones() {
     xpTotal:    misiones.reduce((s,m)=>s+m.xpRecompensa,0),
   }),[misiones]);
 
-  const fBtn=(on,c=C.orange)=>({...raj(11,on?700:600),color:on?c:C.muted,background:on?`${c}18`:"transparent",border:`1px solid ${on?c:C.navy}`,padding:"5px 12px",cursor:"pointer",transition:"all .18s"});
+  const fBtn=(on,c=C.orange)=>({...raj(11,on?700:600),color:on?c:C.muted,background:on?`${c}18`:"transparent",border:`1px solid ${on?c:C.navy}`,padding:"5px 12px",cursor:"pointer",transition:"all .18s",borderRadius:20});
+
+  if (loading) return <><style>{CSS}</style><SkeletonMisiones/></>;
 
   return (
     <>
       <style>{CSS}</style>
-
       {modal?.type==="view"   && <ViewModal   mision={modal.m} onClose={()=>setModal(null)} onEdit={m=>setModal({type:"form",m})}/>}
       {modal?.type==="form"   && <FormModal   mision={modal.m} onClose={()=>setModal(null)} onSave={handleSave}/>}
       {modal?.type==="delete" && <DeleteModal mision={modal.m} onClose={()=>setModal(null)} onConfirm={handleDelete}/>}
@@ -706,7 +820,7 @@ export default function AdminMisiones() {
             {label:"COMPLETADAS", value:kpis.completadas.toLocaleString(),icon:<Trophy size={18}/>,color:C.blue},
             {label:"XP EN JUEGO", value:`${(kpis.xpTotal/1000).toFixed(1)}K`,icon:<Star size={18}/>,color:C.gold},
           ].map((k,i)=>(
-            <div key={i} style={{background:C.card,border:`1px solid ${k.color}33`,padding:"18px 16px",position:"relative",overflow:"hidden",animation:`m-cardIn .4s ease ${i*.07}s both`,transition:"transform .2s,box-shadow .2s"}}
+            <div key={i} style={{background:C.card,border:`1px solid ${k.color}33`,padding:"18px 16px",position:"relative",overflow:"hidden",animation:`m-cardIn .4s ease ${i*.07}s both`,transition:"transform .2s,box-shadow .2s",borderRadius:14}}
               onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.boxShadow=`0 10px 32px rgba(0,0,0,.4)`;}}
               onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="none";}}>
               <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:`linear-gradient(90deg,transparent,${k.color},transparent)`}}/>
@@ -718,17 +832,17 @@ export default function AdminMisiones() {
         </div>
 
         {/* Tipo tabs */}
-        <div style={{background:C.card,border:`1px solid ${C.navy}`,overflow:"hidden"}}>
-          <div style={{display:"flex",borderBottom:`1px solid ${C.navy}`}}>
+        <div style={{background:C.card,border:`1px solid ${C.navy}`,overflow:"hidden",borderRadius:12,padding:"10px 12px"}}>
+          <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
             {["Todas",...TIPO_KEYS].map(tipo=>{
               const m=TIPOS[tipo]; const on=tipoTab===tipo; const cc=m?.color||C.orange;
               const count=tipo==="Todas"?misiones.length:misiones.filter(x=>x.tipo===tipo).length;
               return (
                 <button key={tipo} onClick={()=>{setTipoTab(tipo);setPage(1);}} className="m-type-tab"
-                  style={{flex:1,padding:"14px 8px",background:on?`${cc}12`:"transparent",border:"none",borderBottom:`3px solid ${on?cc:"transparent"}`,color:on?cc:C.muted,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:5,transition:"all .22s"}}>
+                  style={{flex:1,padding:"14px 8px",background:on?`${cc}12`:"transparent",border:`1px solid ${on?cc:C.navy}`,borderRadius:20,color:on?cc:C.muted,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:5,transition:"all .22s",boxShadow:on?`0 0 10px ${cc}33`:"none"}}>
                   <div style={{fontSize:20,filter:on?`drop-shadow(0 0 6px ${cc})`:"none"}}>{m?.icon||"🌐"}</div>
                   <span style={{...raj(12,on?700:500),letterSpacing:".04em"}}>{tipo}</span>
-                  <span style={{...raj(10,700),color:on?cc:C.navy,background:on?`${cc}22`:`${C.navy}44`,padding:"1px 7px"}}>{count}</span>
+                  <span style={{...raj(10,700),color:on?cc:C.navy,background:on?`${cc}22`:`${C.navy}44`,padding:"1px 7px",borderRadius:20}}>{count}</span>
                 </button>
               );
             })}
@@ -736,12 +850,12 @@ export default function AdminMisiones() {
         </div>
 
         {/* Toolbar */}
-        <div style={{background:C.card,border:`1px solid ${C.navy}`,padding:"13px 16px"}}>
+        <div style={{background:C.card,border:`1px solid ${C.navy}`,padding:"13px 16px",borderRadius:10}}>
           <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
             <div style={{position:"relative",flex:"1 1 200px"}}>
               <Search size={13} color={C.muted} style={{position:"absolute",left:11,top:"50%",transform:"translateY(-50%)"}}/>
               <input className="m-input" value={search} onChange={e=>{setSearch(e.target.value);setPage(1);}} placeholder="Buscar misión..."
-                style={{width:"100%",padding:"8px 12px 8px 30px",background:C.panel,border:`1px solid ${C.navy}`,color:C.white,...raj(13,500)}}/>
+                style={{width:"100%",padding:"8px 12px 8px 30px",background:C.panel,border:`1px solid ${C.navy}`,color:C.white,...raj(13,500),borderRadius:6}}/>
               {search&&<button onClick={()=>setSearch("")} style={{position:"absolute",right:9,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:C.muted,display:"flex"}}><X size={12}/></button>}
             </div>
             <div style={{display:"flex",gap:4}}>
@@ -784,7 +898,9 @@ export default function AdminMisiones() {
               const tm=TIPOS[m.tipo]||{}; const c=tm.color||C.orange; const sel=selected.has(m.id);
               const dc=DIFICULTAD_COLOR[m.dificultad]||C.muted;
               return (
-                <div key={m.id} className="m-card" style={{background:C.card,border:`1px solid ${sel?C.orange:c}33`,boxShadow:sel?`0 0 16px ${C.orange}22`:"0 4px 16px rgba(0,0,0,.3)",overflow:"hidden",animation:`m-cardIn .4s ease ${i*.05}s both`,position:"relative"}}>
+                <div key={m.id} className="m-card" style={{background:C.card,border:`1px solid ${sel?C.orange:c}33`,boxShadow:sel?`0 0 16px ${C.orange}22`:"0 4px 16px rgba(0,0,0,.3)",overflow:"hidden",animation:`m-cardIn .4s ease ${i*.05}s both`,position:"relative",borderRadius:14}}
+                  onMouseEnter={e=>{ e.currentTarget.style.transform="translateY(-4px)"; e.currentTarget.style.boxShadow="0 16px 40px rgba(0,0,0,.5)"; }}
+                  onMouseLeave={e=>{ e.currentTarget.style.transform="translateY(0)"; e.currentTarget.style.boxShadow="none"; }}>
                   <input type="checkbox" checked={sel} onChange={()=>toggleSelect(m.id)} style={{position:"absolute",top:10,left:10,accentColor:C.orange,width:14,height:14,cursor:"pointer",zIndex:2}}/>
                   <div style={{height:3,background:`linear-gradient(90deg,transparent,${c},transparent)`}}/>
                   <div style={{padding:"16px 16px 12px"}}>
@@ -793,7 +909,7 @@ export default function AdminMisiones() {
                       <div style={{fontSize:36,filter:`drop-shadow(0 0 10px ${c}88)`,animation:"m-bounce 3s ease-in-out infinite"}}>{m.imagen}</div>
                       <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:5}}>
                         <TipoBadge tipo={m.tipo}/>
-                        <span style={{...raj(10,600),color:m.activo?C.green:C.red,background:m.activo?`${C.green}14`:`${C.red}14`,border:`1px solid ${m.activo?C.green:C.red}33`,padding:"2px 8px"}}>{m.activo?"● ACTIVA":"● INACTIVA"}</span>
+                        <span style={{...raj(10,600),color:m.activo?C.green:C.red,background:m.activo?`${C.green}14`:`${C.red}14`,border:`1px solid ${m.activo?C.green:C.red}33`,padding:"2px 8px",borderRadius:20}}>{m.activo?"● ACTIVA":"● INACTIVA"}</span>
                       </div>
                     </div>
 
@@ -858,7 +974,7 @@ export default function AdminMisiones() {
 
         {/* TABLE */}
         {view==="table"&&(
-          <div style={{background:C.card,border:`1px solid ${C.navy}`,overflow:"hidden"}}>
+          <div style={{background:C.card,border:`1px solid ${C.navy}`,overflow:"hidden",borderRadius:10}}>
             <div style={{display:"grid",gridTemplateColumns:"34px 2fr 0.9fr 0.9fr 0.8fr 0.7fr 0.7fr 0.6fr 95px",padding:"10px 14px",background:`${C.panel}88`,borderBottom:`1px solid ${C.navy}`,gap:8,alignItems:"center"}}>
               <input type="checkbox" checked={selected.size===paginated.length&&paginated.length>0} onChange={toggleAll} style={{accentColor:C.orange,width:14,height:14,cursor:"pointer"}}/>
               {[{l:"MISIÓN",k:"titulo"},{l:"TIPO",k:"tipo"},{l:"DIFICULD.",k:"dificultad"},{l:"REQUISITOS",k:null},{l:"XP",k:"xpRecompensa"},{l:"COMPL.",k:"completadas"},{l:"ESTADO",k:"activo"}].map((h,i)=>(
@@ -914,21 +1030,21 @@ export default function AdminMisiones() {
           <div style={{display:"flex",alignItems:"center",gap:10}}>
             <span style={{...raj(13,500),color:C.muted}}>{Math.min((page-1)*pageSize+1,filtered.length)}–{Math.min(page*pageSize,filtered.length)} de {filtered.length}</span>
             <select value={pageSize} onChange={e=>{setPageSize(Number(e.target.value));setPage(1);}} className="m-input"
-              style={{padding:"6px 10px",background:C.panel,border:`1px solid ${C.navy}`,color:C.muted,...raj(12,500),cursor:"pointer"}}>
+              style={{padding:"6px 10px",background:C.panel,border:`1px solid ${C.navy}`,color:C.muted,...raj(12,500),cursor:"pointer",borderRadius:6}}>
               {PAGE_SIZE_OPTIONS.map(n=><option key={n} value={n}>{n} por página</option>)}
             </select>
           </div>
           <div style={{display:"flex",gap:5}}>
-            <button onClick={()=>setPage(1)} disabled={page===1} className="m-btn" style={{background:C.panel,border:`1px solid ${C.navy}`,color:page===1?C.navy:C.muted,padding:"6px 11px",cursor:page===1?"not-allowed":"pointer"}}>«</button>
-            <button onClick={()=>setPage(p=>p-1)} disabled={page===1} className="m-btn" style={{background:C.panel,border:`1px solid ${C.navy}`,color:page===1?C.navy:C.muted,padding:"6px 10px",cursor:page===1?"not-allowed":"pointer",display:"flex",alignItems:"center"}}><ChevronLeft size={13}/></button>
+            <button onClick={()=>setPage(1)} disabled={page===1} className="m-btn" style={{background:C.panel,border:`1px solid ${C.navy}`,color:page===1?C.navy:C.muted,padding:"6px 11px",cursor:page===1?"not-allowed":"pointer",borderRadius:6}}>«</button>
+            <button onClick={()=>setPage(p=>p-1)} disabled={page===1} className="m-btn" style={{background:C.panel,border:`1px solid ${C.navy}`,color:page===1?C.navy:C.muted,padding:"6px 10px",cursor:page===1?"not-allowed":"pointer",display:"flex",alignItems:"center",borderRadius:6}}><ChevronLeft size={13}/></button>
             {Array.from({length:totalPages},(_,i)=>i+1).filter(n=>Math.abs(n-page)<=2).map(n=>(
               <button key={n} onClick={()=>setPage(n)} className="m-btn"
-                style={{background:n===page?C.orange:C.panel,border:`1px solid ${n===page?C.orange:C.navy}`,color:n===page?C.bg:C.muted,padding:"6px 13px",cursor:"pointer",...raj(13,n===page?700:500)}}>
+                style={{background:n===page?C.orange:C.panel,border:`1px solid ${n===page?C.orange:C.navy}`,color:n===page?C.bg:C.muted,padding:"6px 13px",cursor:"pointer",...raj(13,n===page?700:500),borderRadius:6}}>
                 {n}
               </button>
             ))}
-            <button onClick={()=>setPage(p=>p+1)} disabled={page===totalPages} className="m-btn" style={{background:C.panel,border:`1px solid ${C.navy}`,color:page===totalPages?C.navy:C.muted,padding:"6px 10px",cursor:page===totalPages?"not-allowed":"pointer",display:"flex",alignItems:"center"}}><ChevronRight size={13}/></button>
-            <button onClick={()=>setPage(totalPages)} disabled={page===totalPages} className="m-btn" style={{background:C.panel,border:`1px solid ${C.navy}`,color:page===totalPages?C.navy:C.muted,padding:"6px 11px",cursor:page===totalPages?"not-allowed":"pointer"}}>»</button>
+            <button onClick={()=>setPage(p=>p+1)} disabled={page===totalPages} className="m-btn" style={{background:C.panel,border:`1px solid ${C.navy}`,color:page===totalPages?C.navy:C.muted,padding:"6px 10px",cursor:page===totalPages?"not-allowed":"pointer",display:"flex",alignItems:"center",borderRadius:6}}><ChevronRight size={13}/></button>
+            <button onClick={()=>setPage(totalPages)} disabled={page===totalPages} className="m-btn" style={{background:C.panel,border:`1px solid ${C.navy}`,color:page===totalPages?C.navy:C.muted,padding:"6px 11px",cursor:page===totalPages?"not-allowed":"pointer",borderRadius:6}}>»</button>
           </div>
         </div>
 
