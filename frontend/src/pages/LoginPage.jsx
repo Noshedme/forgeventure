@@ -1389,121 +1389,51 @@ const LeftPanel = memo(function LeftPanel({ onGoToDashboard, onGoBack, onGoRegis
           <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(8,8,16,0.18), rgba(8,8,16,0.68)), url('${LOGIN_SCENE.hero}') center / cover no-repeat` }} />
           <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(9,8,18,0.02), rgba(9,8,18,0.44)), radial-gradient(circle at 18% 16%, ${HOME_PUBLIC_COLORS.warrior}12 0%, transparent 24%), radial-gradient(circle at 84% 12%, ${HOME_PUBLIC_COLORS.mage}12 0%, transparent 22%)` }} />
 
-          <div style={{ position: "relative", zIndex: 1, height: "100%", padding: "20px 20px 18px", display: "grid", alignContent: "space-between" }}>
-            <div style={{ ...makeHomePanel({ radius: 18, surface: "rgba(8,9,18,0.72)", outerGlow: "rgba(0,0,0,0.18)" }), maxWidth: 340, padding: "14px 15px" }}>
-              <div style={{ ...mono(7, 700), color: HOME_PUBLIC_COLORS.neutral, letterSpacing: ".12em", marginBottom: 8 }}>
-                {activeHeroState.kicker}
+          <div style={{ position: "relative", zIndex: 1, height: "100%", padding: "20px 20px 18px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <div style={{ ...makeHomePill(activeHeroState.accent), ...mono(7, 700), color: activeHeroState.accent, padding: "5px 10px", letterSpacing: ".1em" }}>
+                {currentUser ? "SESION ACTIVA" : "ACCESO LISTO"}
               </div>
-              <div style={{ ...homeHeading(22, 700), color: "#f5f2ff", marginBottom: 8, lineHeight: 1.08 }}>
-                {activeHeroState.title}
-              </div>
-              <p style={{ ...sans(12, 500), color: "#c7d1e5", lineHeight: 1.6 }}>
-                {activeHeroState.copy}
-              </p>
             </div>
 
-            <div style={{ position: "relative", minHeight: 184, display: "grid", justifyItems: "center", alignItems: "end" }}>
+            <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-end", flex: 1, paddingBlock: 16 }}>
               <SpriteIdle size={220} fps={8} />
             </div>
 
-            <div style={{ display: "grid", gap: 12 }}>
-              <div>
-                <div style={{ ...homeHeading("clamp(24px,2.4vw,34px)", 700), color: "#f7f3ff", marginBottom: 8, lineHeight: 1.02 }}>
-                  {currentUser ? "Tu progreso sigue vivo" : "Cruza el portal con lectura clara"}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8 }}>
+              {(currentUser
+                ? ["Dashboard listo", "Racha guardada", "Ruta esperandote"]
+                : activeHeroState.chips
+              ).map((bullet) => (
+                <div key={bullet} style={{ ...makeHomePanel({ radius: 12, surface: "rgba(8,9,18,0.72)", outerGlow: "rgba(0,0,0,0.14)" }), padding: "9px 10px", ...sans(11, 600), color: "#f3f6ff", textAlign: "center" }}>
+                  {bullet}
                 </div>
-                <p style={{ ...sans(13, 500), color: "#d0d8ea", lineHeight: 1.6, maxWidth: 520 }}>
-                  {currentUser
-                    ? "Dashboard, ejercicios, rutinas y misiones quedan listos apenas pases este portal."
-                    : "La entrada usa el mismo tono visual del home y deja una lectura mas viva del regreso."}
-                </p>
-                {(lastLoginMethod || lastLoginEmail) && (
-                  <div style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 8 }}>
-                    {lastLoginMethod && (
-                      <div style={{ ...makeHomePill(activeHeroState.accent, true), padding: "7px 10px", ...sans(11, 600), color: "#eef3ff" }}>
-                        Ultimo acceso: {lastLoginMethod === "google" ? "Google" : "correo"}
-                      </div>
-                    )}
-                    {lastLoginEmail && (
-                      <div style={{ ...makeHomePill(HOME_PUBLIC_COLORS.neutral), padding: "7px 10px", ...sans(11, 600), color: "#eef3ff" }}>
-                        {lastLoginEmail}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 10 }}>
-                {(currentUser
-                  ? ["Dashboard listo", "Racha guardada", "Ruta esperandote"]
-                  : activeHeroState.chips
-                ).map((bullet) => (
-                  <div key={bullet} style={{ ...makeHomePanel({ radius: 14, surface: "rgba(8,9,18,0.72)", outerGlow: "rgba(0,0,0,0.14)" }), padding: "10px 12px", ...sans(11, 600), color: "#f3f6ff" }}>
-                    {bullet}
-                  </div>
-                ))}
-              </div>
+              ))}
             </div>
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.35fr) minmax(220px, 0.95fr)", gap: 12 }}>
-          <div style={{ ...makeHomePanel({ radius: 18, surface: "rgba(11,13,22,0.72)", outerGlow: "rgba(0,0,0,0.16)" }), padding: "12px 14px" }}>
-            <div style={{ ...mono(8, 700), color: HOME_PUBLIC_COLORS.neutral, letterSpacing: ".1em", marginBottom: 10 }}>
-              DESPUES DE ENTRAR
-            </div>
-            <div style={{ display: "grid", gap: 8 }}>
-              {LOGIN_SUPPORT_STEPS.map((item, index) => (
-                <div key={item.title} style={{ ...makeHomePanel({ radius: 14, surface: "rgba(255,255,255,0.03)", outerGlow: "rgba(0,0,0,0.10)" }), padding: "10px 12px", display: "grid", gridTemplateColumns: "28px 1fr", gap: 10, alignItems: "start" }}>
-                  <div style={{ display: "grid", placeItems: "center", width: 28, height: 28, borderRadius: 999, background: `${HOME_PUBLIC_COLORS.mage}16`, border: `1px solid ${HOME_PUBLIC_COLORS.mage}2a`, ...mono(8, 700), color: HOME_PUBLIC_COLORS.mage }}>
-                    {index + 1}
-                  </div>
-                  <div>
-                    <div style={{ ...sans(12, 700), color: "#f4f1ff", marginBottom: 2 }}>{item.title}</div>
-                    <div style={{ ...sans(11, 500), color: "#cad4e7", lineHeight: 1.45 }}>{item.copy}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-              <motion.button
-                type="button"
-                onClick={onGoBack}
-                whileHover={{ y: -2, borderColor: `${HOME_PUBLIC_COLORS.neutral}66`, color: HOME_PUBLIC_COLORS.neutral }}
-                whileTap={{ scale: 0.98 }}
-                style={{ ...sans(12, 700), ...makeHomePill(HOME_PUBLIC_COLORS.neutral), minHeight: 44, flex: 1, color: P.muted, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", letterSpacing: ".06em" }}
-              >
-                Volver al portal
-              </motion.button>
-              {!currentUser && (
-                <motion.button
-                  type="button"
-                  onClick={onGoRegister}
-                  whileHover={{ y: -2, borderColor: `${HOME_PUBLIC_COLORS.archer}66`, color: HOME_PUBLIC_COLORS.archer }}
-                  whileTap={{ scale: 0.98 }}
-                  style={{ ...sans(12, 700), ...makeHomePill(HOME_PUBLIC_COLORS.archer), minHeight: 44, flex: 1, color: P.muted, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", letterSpacing: ".06em" }}
-                >
-                  Crear cuenta
-                </motion.button>
-              )}
-            </div>
-          </div>
-
-          <div style={{ display: "grid", gap: 8 }}>
-            {LOGIN_TRUST_BAND.map((item) => (
-              <div key={item.title} style={{ ...makeHomePanel({ radius: 16, surface: "rgba(14,16,28,0.72)", outerGlow: "rgba(0,0,0,0.10)" }), padding: "10px 12px" }}>
-                <div style={{ ...mono(8, 700), color: HOME_PUBLIC_COLORS.neutral, letterSpacing: ".08em", marginBottom: 4 }}>{item.title}</div>
-                <div style={{ ...sans(11, 500), color: "#cfd7e8", lineHeight: 1.45 }}>{item.copy}</div>
-              </div>
-            ))}
-
-            <div style={{ ...makeHomePanel({ radius: 16, surface: "rgba(14,16,28,0.72)", outerGlow: "rgba(0,0,0,0.10)" }), padding: "10px 12px" }}>
-              <div style={{ ...mono(8, 700), color: HOME_PUBLIC_COLORS.archer, letterSpacing: ".08em", marginBottom: 4 }}>GREMIO ACTIVO</div>
-              <div style={{ ...sans(11, 500), color: "#cfd7e8", lineHeight: 1.45 }}>
-                {online.toLocaleString()} heroes en linea recorriendo el mapa ahora mismo.
-              </div>
-            </div>
-          </div>
+        <div style={{ display: "flex", gap: 10 }}>
+          <motion.button
+            type="button"
+            onClick={onGoBack}
+            whileHover={{ y: -2, borderColor: `${HOME_PUBLIC_COLORS.neutral}66`, color: HOME_PUBLIC_COLORS.neutral }}
+            whileTap={{ scale: 0.98 }}
+            style={{ ...sans(12, 700), ...makeHomePill(HOME_PUBLIC_COLORS.neutral), minHeight: 44, flex: 1, color: P.muted, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", letterSpacing: ".06em" }}
+          >
+            Volver al portal
+          </motion.button>
+          {!currentUser && (
+            <motion.button
+              type="button"
+              onClick={onGoRegister}
+              whileHover={{ y: -2, borderColor: `${HOME_PUBLIC_COLORS.archer}66`, color: HOME_PUBLIC_COLORS.archer }}
+              whileTap={{ scale: 0.98 }}
+              style={{ ...sans(12, 700), ...makeHomePill(HOME_PUBLIC_COLORS.archer), minHeight: 44, flex: 1, color: P.muted, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", letterSpacing: ".06em" }}
+            >
+              Crear cuenta
+            </motion.button>
+          )}
         </div>
       </div>
     </motion.div>
@@ -1759,40 +1689,11 @@ export default function LoginPage({ onGoRegister, onGoBack, onSuccess }) {
           progressLabel="SINTONIZANDO ACCESO"
         />
       )}
-      <CustomCursor />
-      {loaded && <Particles count={14} />}
       {success && <SuccessOverlay mode="login" />}
 
       <AnimatePresence>{googleRedirecting && <GoogleRedirectOverlay onCancel={() => setGoogleRedirecting(false)} />}</AnimatePresence>
       <AnimatePresence>{showForgot && <ForgotPasswordModal onClose={() => setShowForgot(false)} initialEmail={email} onEmailSent={e => setEmailSentTo(e)} />}</AnimatePresence>
 
-      {/* Achievement toast */}
-      <AnimatePresence>
-        {loaded && showToast && (
-          <motion.div
-            initial={{ x: 140, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: 140, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 260, damping: 24 }}
-            onAnimationComplete={() => setTimeout(() => setShowToast(false), 2200)}
-            style={{ position: "fixed", top: 72, right: 18, zIndex: 8000, background: P.bg1, border: `1px solid ${P.gold}55`,
-              padding: "12px 16px", maxWidth: 240, boxShadow: `0 16px 48px rgba(0,0,0,0.5), 0 0 20px ${P.gold}22` }}>
-            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-              <span style={{ fontSize: 20 }}>ðŸ†</span>
-              <div>
-                <div style={{ ...mono(8, 700), color: P.gold, marginBottom: 2, letterSpacing: ".1em" }}>LOGRO DESBLOQUEADO</div>
-                <div style={{ ...sans(12, 600), color: P.text }}>Ya puedes volver al mapa</div>
-                <div style={{ ...sans(11, 400), color: P.muted, marginTop: 1 }}>+100 XP de fidelidad</div>
-              </div>
-            </div>
-            <motion.div initial={{ scaleX: 1 }} animate={{ scaleX: 0 }} transition={{ duration: 2.2, ease: "linear" }}
-              style={{ marginTop: 8, height: 2, background: P.gold, boxShadow: `0 0 6px ${P.gold}`, transformOrigin: "left" }} />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Global scan line */}
-      <motion.div animate={{ top: ["-2px", "100%"] }} transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-        style={{ position: "fixed", left: 0, right: 0, height: 2, zIndex: 5, pointerEvents: "none",
-          background: `linear-gradient(90deg, transparent, ${HOME_PUBLIC_COLORS.archer}2f, ${HOME_PUBLIC_COLORS.mage}66, ${HOME_PUBLIC_COLORS.warrior}2f, transparent)` }} />
 
       {/* â”€â”€ MAIN LAYOUT â”€â”€ */}
       <motion.div
@@ -1817,13 +1718,6 @@ export default function LoginPage({ onGoRegister, onGoBack, onSuccess }) {
           <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, zIndex: 20,
             background: `linear-gradient(90deg, ${HOME_PUBLIC_COLORS.archer}, ${HOME_PUBLIC_COLORS.mage}, ${HOME_PUBLIC_COLORS.warrior}, transparent)`,
             boxShadow: `0 0 12px ${HOME_PUBLIC_COLORS.mage}44` }} />
-
-          {/* Title bar */}
-          <div style={{ position: "absolute", top: 2, left: 0, right: 0, zIndex: 15, height: 22,
-            background: `linear-gradient(90deg, rgba(9,8,18,0.96), rgba(9,8,18,0.8) 42%, rgba(9,8,18,0.58))`, borderBottom: `1px solid rgba(255,255,255,0.08)`,
-            display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <span style={{ ...mono(7, 600), color: P.muted, letterSpacing: ".18em" }}>[ PORTAL DE ACCESO DEL GREMIO ]</span>
-          </div>
 
           {/* Left panel */}
           <LeftPanel
@@ -1864,44 +1758,22 @@ export default function LoginPage({ onGoRegister, onGoBack, onSuccess }) {
               </div>
 
               {/* Header */}
-              <motion.div variants={FV.stagger} initial="hidden" animate="show" style={{ marginBottom: 24 }}>
-                <motion.div variants={FV.up} style={{ ...makeHomePanel({ radius: 26, surface: "rgba(9,10,19,0.7)", outerGlow: "rgba(0,0,0,0.20)" }), padding: "18px 20px 16px", display: "grid", gap: 16 }}>
-                  <div style={{ display: "flex", alignItems: "start", justifyContent: "space-between", gap: 14, flexWrap: "wrap" }}>
-                  <div style={{ display: "grid", gap: 10 }}>
-                      <div style={{ display: "inline-flex", alignItems: "center", gap: 8, ...makeHomePill(HOME_PUBLIC_COLORS.neutral), width: "fit-content", color: HOME_PUBLIC_COLORS.neutral }}>
-                        <span style={{ width: 6, height: 6, borderRadius: 999, background: HOME_PUBLIC_COLORS.neutral, boxShadow: `0 0 10px ${HOME_PUBLIC_COLORS.neutral}66` }} />
-                        <span style={{ ...mono(7, 700), letterSpacing: ".12em" }}>PORTAL DE INGRESO</span>
-                      </div>
-                      <div>
-                        <h1 style={{ ...homeHeading("clamp(28px,3vw,44px)", 700), color: "#f7f3ff", marginBottom: 10, lineHeight: 1.02 }}>
-                          Vuelve al mapa con una entrada clara y sin ruido.
-                        </h1>
-                        <p style={{ ...sans(14, 500), color: "#ccd5e7", lineHeight: 1.65, maxWidth: 560 }}>
-                          Accede con correo o Google y vuelve al home con tu racha, tus rutas activas y tus misiones listas para retomarse.
-                        </p>
-                        {lastLoginMethod && (
-                          <div style={{ marginTop: 10, ...sans(11, 600), color: "#c9d2e6" }}>
-                            Ultimo acceso usado: {lastLoginMethod === "google" ? "Google" : "correo del gremio"}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
+              <motion.div variants={FV.up} initial="hidden" animate="show" style={{ marginBottom: 28 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
+                  <div style={{ ...makeHomePanel({ radius: 14, surface: "rgba(10,12,20,0.8)", outerGlow: "rgba(0,0,0,0.18)" }), width: 44, height: 44, display: "grid", placeItems: "center", flexShrink: 0 }}>
+                    <img src="/logo.png" alt="ForgeVenture" style={{ width: 26, height: 26, objectFit: "contain" }} />
                   </div>
-
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 10 }}>
-                    {LOGIN_STATS.map((stat) => (
-                      <div key={stat.label} style={{ ...makeHomePanel({ radius: 16, surface: "rgba(255,255,255,0.03)", outerGlow: "rgba(0,0,0,0.10)" }), padding: "12px 14px", minHeight: 84 }}>
-                        <div style={{ ...mono(8, 700), color: stat.color, letterSpacing: ".1em", marginBottom: 8 }}>{stat.label}</div>
-                        <div style={{ ...homeHeading(24, 700), color: "#f7f4ff", marginBottom: 4, lineHeight: 1 }}>{stat.value}</div>
-                        <div style={{ ...sans(11, 500), color: "#cad3e6", lineHeight: 1.45 }}>{stat.copy}</div>
-                      </div>
-                    ))}
+                  <div>
+                    <div style={{ ...homeHeading(14, 700), color: "#f5f1ff" }}>ForgeVenture</div>
+                    <div style={{ ...mono(7, 600), color: HOME_PUBLIC_COLORS.neutral, letterSpacing: ".12em" }}>PORTAL DE ACCESO</div>
                   </div>
-                  <div style={{ ...sans(11, 500), color: "#aeb8cc", lineHeight: 1.5 }}>
-                    Snapshot del gremio: este bloque resume el portal y sus rutas de acceso, no el estado exacto de tu personaje.
-                  </div>
-                </motion.div>
+                </div>
+                <h1 style={{ ...homeHeading("clamp(28px,3vw,42px)", 700), color: "#f7f3ff", marginBottom: 10, lineHeight: 1.04 }}>
+                  Vuelve a tu camino.
+                </h1>
+                <p style={{ ...sans(14, 500), color: "#ccd5e7", lineHeight: 1.65, maxWidth: 480 }}>
+                  Entra con Google o correo. Tu racha, rutinas y misiones te esperan donde las dejaste.
+                </p>
               </motion.div>
             {/* Email-sent confirmation banner â€” persists after modal closes */}
             <AnimatePresence>
@@ -2054,97 +1926,13 @@ export default function LoginPage({ onGoRegister, onGoBack, onSuccess }) {
               <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2,
                 background: `linear-gradient(90deg, ${HOME_PUBLIC_COLORS.archer}, ${HOME_PUBLIC_COLORS.mage}, ${HOME_PUBLIC_COLORS.warrior}, transparent)` }} />
 
-            <div style={{ display: "grid", gap: 6, marginBottom: 16 }}>
-              <div style={{ display: "inline-flex", alignItems: "center", gap: 8, ...makeHomePill(HOME_PUBLIC_COLORS.mage), width: "fit-content", color: HOME_PUBLIC_COLORS.mage }}>
-                <span style={{ width: 6, height: 6, borderRadius: 999, background: HOME_PUBLIC_COLORS.mage, boxShadow: `0 0 10px ${HOME_PUBLIC_COLORS.mage}66` }} />
-                <span style={{ ...mono(7, 700), letterSpacing: ".12em" }}>ACCESO RÁPIDO</span>
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ ...homeHeading(18, 700), color: "#f7f3ff", lineHeight: 1.1, marginBottom: 4 }}>
+                Iniciar sesion
               </div>
-              <div style={{ ...homeHeading(24, 700), color: "#f7f3ff", lineHeight: 1.05 }}>
-                Inicia sesión y vuelve a tu ruta.
-              </div>
-              <p style={{ ...sans(12, 500), color: "#c8d1e4", lineHeight: 1.55, margin: 0 }}>
-                Puedes entrar con Google o con tu correo del gremio. Si dejaste algo a medias, aquí retomas sin perder el hilo.
+              <p style={{ ...sans(12, 500), color: "#b8c4d8", lineHeight: 1.5, margin: 0 }}>
+                Google o correo — mismo perfil, misma ruta.
               </p>
-              {(lastLoginMethod || lastLoginEmail) && (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
-                  {lastLoginMethod && (
-                    <div style={{ ...makeHomePill(googleRecommended ? HOME_PUBLIC_COLORS.mage : HOME_PUBLIC_COLORS.neutral), padding: "7px 10px", ...sans(11, 600), color: "#eef3ff" }}>
-                      Último acceso con {lastLoginMethod === "google" ? "Google" : "correo del héroe"}
-                    </div>
-                  )}
-                  {lastLoginEmail && (
-                    <div style={{ ...makeHomePill(HOME_PUBLIC_COLORS.archer), padding: "7px 10px", ...sans(11, 600), color: "#eef3ff" }}>
-                      {lastLoginEmail}
-                    </div>
-                  )}
-                </div>
-              )}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 8, marginTop: 4 }}>
-                {LOGIN_SECURITY_NOTES.map((note) => (
-                  <div
-                    key={note.label}
-                    style={{
-                      ...makeHomePanel({
-                        radius: 14,
-                        surface: `linear-gradient(135deg, color-mix(in srgb, ${note.accent} 10%, rgba(11,14,26,0.88)) 0%, rgba(11,14,26,0.88) 100%)`,
-                        border: `color-mix(in srgb, ${note.accent} 30%, rgba(255,255,255,0.08))`,
-                        outerGlow: "rgba(0,0,0,0.12)",
-                      }),
-                      padding: "8px 10px",
-                      display: "grid",
-                      gridTemplateColumns: "24px 1fr",
-                      gap: 8,
-                      alignItems: "center",
-                    }}
-                  >
-                    <img
-                      src={note.icon}
-                      alt=""
-                      aria-hidden="true"
-                      style={{ width: 24, height: 24, objectFit: "contain", filter: `drop-shadow(0 0 10px color-mix(in srgb, ${note.accent} 44%, transparent))` }}
-                    />
-                    <div style={{ ...sans(10, 700), color: "#e8eefc", lineHeight: 1.4 }}>{note.label}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div style={{ ...makeHomePanel({ radius: 18, surface: "rgba(9,12,22,0.72)", outerGlow: "rgba(0,0,0,0.16)" }), padding: "12px 12px", marginBottom: 16, display: "grid", gap: 10 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-                <div>
-                  <div style={{ ...mono(7, 700), color: googleRecommended ? HOME_PUBLIC_COLORS.mage : HOME_PUBLIC_COLORS.archer, letterSpacing: ".1em", marginBottom: 4 }}>
-                    METODO RECOMENDADO
-                  </div>
-                  <div style={{ ...sans(12, 600), color: "#eef3ff", lineHeight: 1.4 }}>{entryRecommendation}</div>
-                </div>
-                <div style={{ ...makeHomePill(googleRecommended ? HOME_PUBLIC_COLORS.mage : HOME_PUBLIC_COLORS.neutral), padding: "7px 10px", ...sans(11, 700), color: "#eef3ff" }}>
-                  {googleRecommended ? "Google sugerido" : "Correo sugerido"}
-                </div>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8 }}>
-                {LOGIN_METHOD_BAND.map((item) => (
-                  <div
-                    key={item.title}
-                    title={item.copy}
-                    style={{
-                      background: `linear-gradient(135deg, color-mix(in srgb, ${item.accent} 10%, rgba(10,12,21,0.92)) 0%, rgba(10,12,21,0.92) 100%)`,
-                      border: `1px solid color-mix(in srgb, ${item.accent} 26%, rgba(255,255,255,0.08))`,
-                      borderRadius: 14,
-                      padding: "9px 10px",
-                      display: "grid",
-                      gridTemplateColumns: "24px 1fr",
-                      gap: 8,
-                      alignItems: "center",
-                    }}
-                  >
-                    <img src={item.icon} alt="" aria-hidden="true" style={{ width: 24, height: 24, objectFit: "contain", filter: `drop-shadow(0 0 10px color-mix(in srgb, ${item.accent} 38%, transparent))` }} />
-                    <div>
-                      <div style={{ ...sans(11, 700), color: "#f4f7ff", lineHeight: 1.2, marginBottom: 2 }}>{item.title}</div>
-                      <div style={{ ...sans(10, 500), color: "#aeb9d4", lineHeight: 1.4 }}>{item.copy}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
 
             {/* Google button */}
@@ -2155,33 +1943,24 @@ export default function LoginPage({ onGoRegister, onGoBack, onSuccess }) {
               initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.45, ease }}
               aria-label="Continuar con Google"
               title="Entrada rápida del portal"
-              style={{ width: "100%", padding: "14px 16px", marginBottom: 18,
+              style={{ width: "100%", padding: "13px 16px", marginBottom: 18,
                 background: `linear-gradient(135deg, rgba(10,14,26,0.9), rgba(12,18,34,0.86))`, border: `1px solid rgba(66,133,244,0.25)`,
-                borderRadius: 16,
-                boxShadow: "0 10px 24px rgba(0,0,0,0.3)", backdropFilter: "blur(8px)",
+                borderRadius: 14,
+                boxShadow: "0 8px 20px rgba(0,0,0,0.28)", backdropFilter: "blur(8px)",
                 cursor: loadingGoogle ? "not-allowed" : "pointer",
-                display: "grid", gridTemplateColumns: "auto 1fr auto", alignItems: "center", gap: 12,
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 12,
                 opacity: loadingGoogle ? 0.7 : 1, transition: "box-shadow .2s, border-color .2s, background .2s" }}>
               {loadingGoogle ? (
-                <><div style={{ width: 16, height: 16, border: `2px solid ${P.line}`, borderTop: "2px solid #4285F4", borderRadius: "50%", animation: "fv6-spin 0.7s linear infinite" }} /><span style={{ ...sans(13, 600), color: P.muted }}>{isSyncingProfile ? "Sincronizando perfil..." : "Conectando..."}</span><span /></>
+                <><div style={{ width: 16, height: 16, border: `2px solid ${P.line}`, borderTop: "2px solid #4285F4", borderRadius: "50%", animation: "fv6-spin 0.7s linear infinite" }} /><span style={{ ...sans(13, 600), color: P.muted }}>{isSyncingProfile ? "Sincronizando perfil..." : "Conectando..."}</span></>
               ) : (
                 <>
-                  <div style={{ ...makeHomePanel({ radius: 12, surface: "rgba(13,18,30,0.88)", outerGlow: "rgba(0,0,0,0.12)" }), width: 42, height: 42, display: "grid", placeItems: "center" }}>
                   <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
                     <path fill="#FFC107" d="M43.6 20H24v8h11.3C33.7 32.6 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 20-8 20-20 0-1.3-.1-2.7-.4-4z"/>
                     <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 16 18.9 12 24 12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4c-7.7 0-14.4 4.4-17.7 10.7z"/>
                     <path fill="#4CAF50" d="M24 44c5.2 0 9.9-1.9 13.5-5l-6.2-5.2C29.5 35.6 26.9 36 24 36c-5.2 0-9.6-3.3-11.2-7.9l-6.6 5.1C9.7 39.7 16.4 44 24 44z"/>
                     <path fill="#1976D2" d="M43.6 20H24v8h11.3c-.8 2.3-2.3 4.3-4.3 5.8l6.2 5.2C41 35.6 44 30.2 44 24c0-1.3-.1-2.7-.4-4z"/>
                   </svg>
-                  </div>
-                  <div style={{ textAlign: "left" }}>
-                    <div style={{ ...mono(7, 700), color: HOME_PUBLIC_COLORS.mage, letterSpacing: ".12em", marginBottom: 4 }}>ENTRADA RAPIDA</div>
-                    <div style={{ ...sans(14, 700), color: P.text, letterSpacing: ".02em", marginBottom: 2 }}>Continuar con Google</div>
-                    <div style={{ ...sans(11, 500), color: "#aeb9d4", lineHeight: 1.35 }}>{googleEntryCopy}</div>
-                  </div>
-                  <div style={{ ...makeHomePill(HOME_PUBLIC_COLORS.mage, true), padding: "6px 10px", ...mono(7, 700), color: "#eef6ff" }}>
-                    Portal ágil
-                  </div>
+                  <span style={{ ...sans(14, 700), color: P.text }}>Continuar con Google</span>
                 </>
               )}
             </motion.button>
@@ -2278,9 +2057,6 @@ export default function LoginPage({ onGoRegister, onGoBack, onSuccess }) {
                 {loading ? <><Spinner size={13} /> {isSyncingProfile ? "Sincronizando perfil..." : "Entrando..."}</> : rateLimitSecs > 0 ? `Espera ${rateLimitSecs}s` : "Entrar al mapa"}
               </motion.button>
 
-              <motion.div variants={FV.up} style={{ textAlign: "center", marginTop: 8 }}>
-                <span className="fv6-blink" style={{ ...mono(7, 600), color: P.muted, letterSpacing: ".12em" }}>[ ENTER ] PARA CONFIRMAR</span>
-              </motion.div>
             </motion.form>
 
             {/* Register link */}
@@ -2304,15 +2080,6 @@ export default function LoginPage({ onGoRegister, onGoBack, onSuccess }) {
             </div>{/* /form card */}
             </div>
 
-            {/* Corner pixel dots */}
-            <div style={{ position: "absolute", bottom: 14, right: 16, display: "flex", gap: 5, opacity: 0.35 }}>
-              {[P.accent, P.blue, P.gold].map((c, i) => (
-                <motion.div key={i}
-                  animate={{ scale: [1, 1.15, 1], opacity: [0.8, 1, 0.8] }}
-                  transition={{ duration: 1.2 + i * 0.4, delay: i * 0.2, repeat: Infinity }}
-                  style={{ width: 4, height: 4, background: c, boxShadow: `0 0 4px ${c}`, imageRendering: "pixelated" }} />
-              ))}
-            </div>
           </div>
         </motion.div>
       </motion.div>
