@@ -1,42 +1,94 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   App.css  —  ForgeVenture v3.1 · Pixel RPG Shell
+   ─────────────────────────────────────────────────────────────────────────────
+   FIXES v3.1:
+   - cursor: none solo en hover:hover (no elimina cursor en mobile/a11y)
+   - Añadidas aria / focus utilities
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Override Vite defaults — full-width app */
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-align: left !important;
+  display: block !important;
+  width: 100%;
+  min-height: 100%;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* ── Pixel utility classes ── */
+.pixel-font  { font-family: 'Press Start 2P', monospace !important; }
+.orb-font    { font-family: 'Orbitron', sans-serif !important; }
+.raj-font    { font-family: 'Rajdhani', sans-serif !important; }
+
+/* ── Pixel-perfect shadow ── */
+.px-shadow-sm  { box-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
+.px-shadow-md  { box-shadow: 2px 2px 0 rgba(0,0,0,0.5); }
+.px-shadow-lg  { box-shadow: 4px 4px 0 rgba(0,0,0,0.5); }
+
+/* ── Pixel text shadow ── */
+.px-text-sm   { text-shadow: 1px 1px 0 #000, -1px -1px 0 rgba(0,0,0,0.3); }
+.px-text-md   { text-shadow: 2px 2px 0 #000, -1px -1px 0 rgba(0,0,0,0.4); }
+
+/* ── Orange glow text ── */
+.glow-orange { text-shadow: 0 0 8px #E85D04, 0 0 20px #E85D0455, 2px 2px 0 rgba(0,0,0,0.5); }
+.glow-gold   { text-shadow: 0 0 8px #FFD700, 0 0 20px #FFD70055, 2px 2px 0 rgba(0,0,0,0.5); }
+.glow-blue   { text-shadow: 0 0 8px #4CC9F0, 0 0 20px #4CC9F055, 2px 2px 0 rgba(0,0,0,0.5); }
+
+/* ── Pixelated image rendering ── */
+.pixel-render {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+/* ── Pixel border variants ── */
+.border-px-orange { border: 2px solid #E85D04; box-shadow: 2px 2px 0 rgba(0,0,0,0.4); }
+.border-px-blue   { border: 2px solid #4CC9F0; box-shadow: 2px 2px 0 rgba(0,0,0,0.4); }
+.border-px-gold   { border: 2px solid #FFD700; box-shadow: 2px 2px 0 rgba(0,0,0,0.4); }
+
+/* ── No-select for game UI elements ── */
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ── Pixel button reset ── */
+.px-btn {
+  border: none;
+  cursor: pointer;
+  font-family: 'Press Start 2P', monospace;
+  image-rendering: pixelated;
+  box-shadow: 3px 3px 0 rgba(0,0,0,0.5);
+  transition: transform 0.08s, box-shadow 0.08s;
+}
+.px-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+}
+
+/* ── FIX: cursor none SOLO en desktop con mouse real ── */
+@media (hover: hover) and (pointer: fine) {
+  .cursor-game { cursor: none !important; }
+}
+
+/* ── FIX: Focus visible para navegación con teclado ── */
+button:focus-visible,
+a:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid #E85D04 !important;
+  outline-offset: 3px !important;
+}
+
+/* ── Overflow fix ── */
+body { overflow-x: hidden !important; }
+
+/* ── prefers-reduced-motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
 }

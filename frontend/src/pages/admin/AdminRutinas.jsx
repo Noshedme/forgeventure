@@ -1,477 +1,835 @@
-// src/pages/admin/AdminRutinas.jsx
-// ─────────────────────────────────────────────────────────────
-//  Gestión completa de rutinas para el Admin de ForgeVenture.
-//  Categorías: Fuerza | Cardio | Flexibilidad (con subcategorías)
-// ─────────────────────────────────────────────────────────────
-import { useState, useMemo } from "react";
+// src/pages/admin/AdminRutinas.jsx — v2 · Config aesthetic
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { auth } from "../../firebase.js";
+import { getRutinas, createRutina, updateRutina, deleteRutina } from "../../services/api.js";
+import { C, px, raj, orb } from "../../components/admin/config/shared.jsx";
+import { useToast } from "../../components/shared/ui.jsx";
 import {
-  Search, Plus, RefreshCw, Eye, Edit2, Trash2,
-  ChevronUp, ChevronDown, ChevronLeft, ChevronRight,
-  X, Check, AlertTriangle, ClipboardList, Zap,
-  Star, BarChart2,
+  Search, Plus, RefreshCw, Eye, Edit2, Trash2, X, Check,
+  AlertTriangle, BookOpen, Dumbbell, Activity, Sparkles,
+  Clock, Zap, BarChart2, Users, ChevronRight, Shield,
 } from "lucide-react";
 
-const C = {
-  bg:"#050C18", side:"#080F1C", card:"#0C1826", panel:"#091220",
-  navy:"#1A3354", navyL:"#1E3A5F",
-  orange:"#E85D04", orangeL:"#FF9F1C", gold:"#FFD700",
-  blue:"#4CC9F0", teal:"#0A9396", green:"#2ecc71",
-  red:"#E74C3C", purple:"#9B59B6",
-  white:"#F0F4FF", muted:"#5A7A9A", mutedL:"#7A9AB8",
+// ── Taxonomy + colour mapping ─────────────────────────────────
+const TAXONOMIA = {
+  Fuerza:       { color:C.orange, Icon:Dumbbell,  subs:["Calistenia","Pesas","Funcional","Explosiva","Hipertrofia","Resistencia"] },
+  Cardio:       { color:C.blue,   Icon:Activity,  subs:["HIIT","Continuo","Intervalos","Aeróbico","Anaeróbico","Deportivo"]       },
+  Flexibilidad: { color:C.purple, Icon:Sparkles,  subs:["Yoga","Pilates","Stretching","Movilidad","Balance","Recuperación"]       },
 };
+const CATEGORIAS_OPT = Object.keys(TAXONOMIA);
+const DIFICULTADES   = ["Principiante","Intermedio","Avanzado","Élite"];
+const DIFF_COLOR     = { Principiante:C.green, Intermedio:C.teal, Avanzado:C.orange, Élite:C.red };
+const DIAS_SEMANA    = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
 
+// ── CSS ───────────────────────────────────────────────────────
 const CSS = `
-  @keyframes r-slideU  { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
-  @keyframes r-cardIn  { from{opacity:0;transform:scale(.97)} to{opacity:1;transform:scale(1)} }
-  @keyframes r-spin    { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-  @keyframes r-modalIn { from{opacity:0;transform:scale(.93) translateY(14px)} to{opacity:1;transform:scale(1) translateY(0)} }
-  @keyframes r-shake   { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-5px)} 40%,80%{transform:translateX(5px)} }
-  @keyframes r-pulse   { 0%,100%{opacity:1} 50%{opacity:.45} }
+  @keyframes rn-modalIn  { from{opacity:0;transform:scale(.95) translateY(14px)} to{opacity:1;transform:scale(1) translateY(0)} }
+  @keyframes rn-spin      { to{transform:rotate(360deg)} }
+  @keyframes rn-slideIn   { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes rn-skelPulse { 0%,100%{opacity:.5} 50%{opacity:.2} }
 
-  .r-row { transition:background .15s; }
-  .r-row:hover { background:${C.navyL}18 !important; }
-  .r-btn { transition:all .18s; cursor:pointer; }
-  .r-btn:hover:not(:disabled) { transform:translateY(-2px); }
-  .r-icon-btn { transition:all .2s; cursor:pointer; }
-  .r-input { transition:border-color .2s,box-shadow .2s; outline:none; }
-  .r-input:focus { border-color:${C.orange} !important; box-shadow:0 0 0 2px ${C.orange}22; }
-  .r-input::placeholder { color:${C.navy}; }
-  .r-sort { cursor:pointer; user-select:none; transition:color .2s; }
-  .r-sort:hover { color:${C.orange} !important; }
-  .r-card { transition:all .22s; }
-  .r-card:hover { border-color:${C.orange}55 !important; transform:translateY(-3px); box-shadow:0 12px 36px rgba(0,0,0,.4) !important; }
-  .r-step-row { transition:background .15s; }
-  .r-step-row:hover { background:${C.navyL}18 !important; }
-  .r-cat-tab { transition:all .2s; cursor:pointer; }
-  .r-cat-tab:hover { opacity:.85; }
+  .rn-skel  { background:${C.navy}66; animation:rn-skelPulse 1.4s ease infinite; border-radius:14px; }
+  .rn-input { transition:border-color .2s,box-shadow .2s; outline:none; }
+  .rn-input:focus { border-color:${C.orange} !important; box-shadow:0 0 0 2px ${C.orange}22,0 0 14px ${C.orange}12; }
+  .rn-input::placeholder { color:${C.navy}; }
+  .rn-btn   { transition:all .18s; cursor:pointer; }
+  .rn-btn:hover:not(:disabled) { transform:translateY(-2px); }
+  .rn-card  { transition:transform .22s,box-shadow .22s,border-color .2s; cursor:default; }
+  .rn-card:hover { transform:translateY(-4px) !important; }
 `;
 
-const px  = s => ({ fontFamily:"'Press Start 2P'", fontSize:s });
-const raj = (s,w=600) => ({ fontFamily:"'Rajdhani',sans-serif", fontSize:s, fontWeight:w });
-const orb = (s,w=700) => ({ fontFamily:"'Orbitron',sans-serif", fontSize:s, fontWeight:w });
-
-// ── Taxonomía ─────────────────────────────────────────────────
-const TAXONOMIA = {
-  Fuerza:       { color:C.orange, icon:"⚔️", bg:"#E85D0414", subs:["Calistenia","Pesas","Funcional","Explosiva","Hipertrofia","Resistencia Muscular"] },
-  Cardio:       { color:C.blue,   icon:"🏃", bg:"#4CC9F014", subs:["HIIT","Continuo","Intervalos","Aeróbico","Anaeróbico","Deportivo"] },
-  Flexibilidad: { color:C.purple, icon:"🧘", bg:"#9B59B614", subs:["Yoga","Pilates","Stretching","Movilidad","Balance","Recuperación"] },
+const EMPTY = {
+  nombre:"", categoria:"Fuerza", subcategoria:"Calistenia",
+  dificultad:"Principiante", duracionMin:30, diasSemana:[],
+  descripcion:"", xpTotal:0, sesiones:0, activo:true, pasos:[],
 };
-const CATEGORIAS   = Object.keys(TAXONOMIA);
-const DIFICULTADES = ["Principiante","Intermedio","Avanzado","Élite"];
-const DIAS_SEMANA  = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
-const OBJETIVOS    = ["Perder peso","Ganar músculo","Mejorar resistencia","Aumentar flexibilidad","Tonificar","Mejorar postura","Rendimiento deportivo"];
-const DIFICULTAD_COLOR = { Principiante:C.green, Intermedio:C.gold, Avanzado:C.orange, Élite:C.red };
 
-const EJERCICIOS_DISP = [
-  {id:"e1",nombre:"Flexiones",       imagen:"💪",xpBase:30,cat:"Fuerza"},
-  {id:"e2",nombre:"Sentadillas",     imagen:"🦵",xpBase:35,cat:"Fuerza"},
-  {id:"e3",nombre:"Cardio Libre",    imagen:"🏃",xpBase:60,cat:"Cardio"},
-  {id:"e4",nombre:"Plancha",         imagen:"🏋️",xpBase:40,cat:"Funcional"},
-  {id:"e5",nombre:"Dominadas",       imagen:"🔝",xpBase:55,cat:"Fuerza"},
-  {id:"e6",nombre:"Yoga Matutino",   imagen:"🧘",xpBase:45,cat:"Flexibilidad"},
-  {id:"e7",nombre:"HIIT Explosivo",  imagen:"⚡",xpBase:90,cat:"Cardio"},
-  {id:"e8",nombre:"Press Militar",   imagen:"🏋️",xpBase:45,cat:"Fuerza"},
-  {id:"e9",nombre:"Burpees",         imagen:"💥",xpBase:70,cat:"Cardio"},
-  {id:"e10",nombre:"Estiramiento",   imagen:"🤸",xpBase:20,cat:"Flexibilidad"},
-  {id:"e11",nombre:"Fondos",         imagen:"💪",xpBase:55,cat:"Fuerza"},
-  {id:"e12",nombre:"Pilates Core",   imagen:"🧘",xpBase:35,cat:"Flexibilidad"},
-];
-
-const MOCK_RUTINAS = [
-  { id:"r1",nombre:"Guerrero del Hierro", categoria:"Fuerza",       subcategoria:"Hipertrofia", dificultad:"Avanzado",     duracionMin:55,diasSemana:["Lun","Mié","Vie"],objetivo:"Ganar músculo",     xpTotal:220,activo:true, sesiones:89,descripcion:"Rutina de hipertrofia de 3 días para máximo crecimiento muscular.",imagen:"⚔️",creadoEn:"2024-10-05",
-    pasos:[{ejercicioId:"e4",nombre:"Plancha",   imagen:"🏋️",series:3,reps:null,duracion:60,descanso:30,orden:1},{ejercicioId:"e1",nombre:"Flexiones",imagen:"💪",series:4,reps:15,duracion:null,descanso:60,orden:2},{ejercicioId:"e8",nombre:"Press Militar",imagen:"🏋️",series:4,reps:10,duracion:null,descanso:90,orden:3},{ejercicioId:"e2",nombre:"Sentadillas",imagen:"🦵",series:4,reps:12,duracion:null,descanso:90,orden:4},{ejercicioId:"e5",nombre:"Dominadas",imagen:"🔝",series:3,reps:8,duracion:null,descanso:90,orden:5}]},
-  { id:"r2",nombre:"Sprint y Fuego",      categoria:"Cardio",       subcategoria:"HIIT",        dificultad:"Avanzado",     duracionMin:30,diasSemana:["Mar","Jue","Sáb"],objetivo:"Perder peso",       xpTotal:310,activo:true, sesiones:67,descripcion:"Cardio HIIT de alta intensidad para quema de grasa máxima.",imagen:"⚡",creadoEn:"2024-10-12",
-    pasos:[{ejercicioId:"e7",nombre:"HIIT Explosivo",imagen:"⚡",series:6,reps:null,duracion:20,descanso:10,orden:1},{ejercicioId:"e9",nombre:"Burpees",imagen:"💥",series:4,reps:10,duracion:null,descanso:30,orden:2},{ejercicioId:"e3",nombre:"Cardio Libre",imagen:"🏃",series:1,reps:null,duracion:10,descanso:0,orden:3}]},
-  { id:"r3",nombre:"Alma Zen",            categoria:"Flexibilidad", subcategoria:"Yoga",        dificultad:"Principiante", duracionMin:40,diasSemana:["Lun","Mié","Vie","Dom"],objetivo:"Mejorar flexibilidad",xpTotal:130,activo:true, sesiones:54,descripcion:"Rutina de yoga para mejorar flexibilidad y calmar la mente.",imagen:"🧘",creadoEn:"2024-11-01",
-    pasos:[{ejercicioId:"e6",nombre:"Yoga Matutino",imagen:"🧘",series:1,reps:null,duracion:20,descanso:0,orden:1},{ejercicioId:"e10",nombre:"Estiramiento",imagen:"🤸",series:1,reps:null,duracion:15,descanso:0,orden:2},{ejercicioId:"e12",nombre:"Pilates Core",imagen:"🧘",series:1,reps:null,duracion:5,descanso:0,orden:3}]},
-  { id:"r4",nombre:"Calistenia Total",    categoria:"Fuerza",       subcategoria:"Calistenia",  dificultad:"Intermedio",   duracionMin:45,diasSemana:["Mar","Jue","Sáb"],objetivo:"Tonificar",         xpTotal:185,activo:true, sesiones:42,descripcion:"Rutina completa de calistenia usando solo el peso corporal.",imagen:"💪",creadoEn:"2024-11-15",
-    pasos:[{ejercicioId:"e1",nombre:"Flexiones",imagen:"💪",series:4,reps:15,duracion:null,descanso:60,orden:1},{ejercicioId:"e5",nombre:"Dominadas",imagen:"🔝",series:3,reps:8,duracion:null,descanso:90,orden:2},{ejercicioId:"e11",nombre:"Fondos",imagen:"💪",series:3,reps:12,duracion:null,descanso:60,orden:3},{ejercicioId:"e2",nombre:"Sentadillas",imagen:"🦵",series:4,reps:15,duracion:null,descanso:60,orden:4}]},
-  { id:"r5",nombre:"Movilidad Diaria",    categoria:"Flexibilidad", subcategoria:"Movilidad",   dificultad:"Principiante", duracionMin:25,diasSemana:["Lun","Mar","Mié","Jue","Vie"],objetivo:"Mejorar postura",   xpTotal:80, activo:false,sesiones:18,descripcion:"Rutina diaria de movilidad articular para mejorar la postura.",imagen:"🤸",creadoEn:"2024-12-01",
-    pasos:[{ejercicioId:"e10",nombre:"Estiramiento",imagen:"🤸",series:1,reps:null,duracion:15,descanso:0,orden:1},{ejercicioId:"e6",nombre:"Yoga Matutino",imagen:"🧘",series:1,reps:null,duracion:10,descanso:0,orden:2}]},
-  { id:"r6",nombre:"Cardio Matutino",     categoria:"Cardio",       subcategoria:"Aeróbico",    dificultad:"Principiante", duracionMin:35,diasSemana:["Lun","Mié","Vie"],objetivo:"Mejorar resistencia",xpTotal:100,activo:true, sesiones:31,descripcion:"Cardio suave para comenzar el día con energía.",imagen:"🌅",creadoEn:"2024-12-10",
-    pasos:[{ejercicioId:"e3",nombre:"Cardio Libre",imagen:"🏃",series:1,reps:null,duracion:30,descanso:0,orden:1},{ejercicioId:"e10",nombre:"Estiramiento",imagen:"🤸",series:1,reps:null,duracion:5,descanso:0,orden:2}]},
-];
-
-const EMPTY_FORM = { nombre:"",categoria:"Fuerza",subcategoria:"Calistenia",dificultad:"Principiante",duracionMin:30,diasSemana:[],objetivo:"Ganar músculo",xpTotal:0,activo:true,descripcion:"",imagen:"⚔️",pasos:[] };
-const EMOJIS = ["⚔️","🏃","🧘","💪","⚡","🔥","💥","🤸","🏆","🎯","🦵","🌅","🌟","💨","🏋️"];
-const PAGE_SIZE_OPTIONS = [6,12,24];
-
-// ── UI atoms ──────────────────────────────────────────────────
-function MiniBar({val,color,height=5}) {
-  return (<div style={{height,background:C.panel,border:`1px solid ${color}22`,overflow:"hidden",width:"100%"}}><div style={{height:"100%",width:`${Math.min(val,100)}%`,background:color,boxShadow:`0 0 5px ${color}66`,transition:"width .6s"}}/></div>);
-}
-function CatBadge({cat}) {
-  const m=TAXONOMIA[cat]||{color:C.muted,icon:"?",bg:C.panel};
-  return <span style={{...raj(10,700),color:m.color,background:m.bg,border:`1px solid ${m.color}33`,padding:"2px 8px",display:"inline-flex",alignItems:"center",gap:4,whiteSpace:"nowrap"}}>{m.icon} {cat}</span>;
-}
-function SubBadge({sub,cat}) {
-  const c=TAXONOMIA[cat]?.color||C.muted;
-  return <span style={{...raj(10,600),color:c,background:`${c}0D`,border:`1px solid ${c}22`,padding:"1px 7px",whiteSpace:"nowrap"}}>{sub}</span>;
-}
-function DifBadge({dif}) {
-  const c=DIFICULTAD_COLOR[dif]||C.muted;
-  return <span style={{...raj(10,700),color:c,background:`${c}14`,border:`1px solid ${c}33`,padding:"2px 8px",whiteSpace:"nowrap"}}>{dif}</span>;
-}
-function Spinner({color=C.orange}) {
-  return <div style={{width:13,height:13,border:`2px solid ${C.muted}`,borderTop:`2px solid ${color}`,borderRadius:"50%",animation:"r-spin .8s linear infinite"}}/>;
-}
-function SortIcon({active,dir}) {
-  if(!active) return <ChevronDown size={11} color={C.navy}/>;
-  return dir==="asc"?<ChevronUp size={11} color={C.orange}/>:<ChevronDown size={11} color={C.orange}/>;
-}
-function DiaChips({dias,color}) {
-  return (<div style={{display:"flex",gap:3,flexWrap:"wrap"}}>{DIAS_SEMANA.map(d=>{const on=dias.includes(d);return <span key={d} style={{...raj(9,on?700:500),color:on?color:C.navy,background:on?`${color}18`:"transparent",border:`1px solid ${on?color:C.navy}`,padding:"1px 5px"}}>{d}</span>;})}</div>);
+// ── Validation ────────────────────────────────────────────────
+function validateForm(form) {
+  const e = {};
+  if (!form.nombre?.trim())                      e.nombre       = "Requerido";
+  else if (form.nombre.trim().length < 3)        e.nombre       = "Mín. 3 caracteres";
+  if (!CATEGORIAS_OPT.includes(form.categoria))  e.categoria    = "Categoría inválida";
+  const subs = TAXONOMIA[form.categoria]?.subs || [];
+  if (!subs.includes(form.subcategoria))         e.subcategoria = "Subcategoría inválida";
+  if (!DIFICULTADES.includes(form.dificultad))   e.dificultad   = "Dificultad inválida";
+  const dur = Number(form.duracionMin);
+  if (isNaN(dur) || dur < 5 || dur > 480)        e.duracionMin  = "5–480 min";
+  const xp = Number(form.xpTotal);
+  if (isNaN(xp) || xp < 0)                       e.xpTotal      = "≥ 0";
+  return e;
 }
 
-// ══════════════════════════════════════════════════════════════
-// MODAL — VER
-// ══════════════════════════════════════════════════════════════
-function ViewModal({rutina,onClose,onEdit}) {
-  const m=TAXONOMIA[rutina.categoria]||{};
-  const c=m.color||C.orange;
+function FieldError({ msg }) {
+  if (!msg) return null;
   return (
-    <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,.78)",display:"flex",alignItems:"center",justifyContent:"center",padding:16,overflowY:"auto"}}
-      onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{width:"100%",maxWidth:620,background:C.card,border:`1px solid ${c}44`,boxShadow:`0 0 60px ${c}11,0 24px 60px rgba(0,0,0,.6)`,animation:"r-modalIn .25s ease both",overflow:"hidden"}}>
-        <div style={{height:3,background:`linear-gradient(90deg,transparent,${c},transparent)`}}/>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"18px 22px",borderBottom:`1px solid ${C.navy}`}}>
-          <div style={{display:"flex",alignItems:"center",gap:12}}>
-            <div style={{width:48,height:48,background:`${c}18`,border:`2px solid ${c}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24}}>{rutina.imagen}</div>
-            <div>
-              <div style={{...orb(14,900),color:C.white,marginBottom:5}}>{rutina.nombre}</div>
-              <div style={{display:"flex",gap:6,flexWrap:"wrap"}}><CatBadge cat={rutina.categoria}/><SubBadge sub={rutina.subcategoria} cat={rutina.categoria}/><DifBadge dif={rutina.dificultad}/></div>
-            </div>
-          </div>
-          <button onClick={onClose} className="r-icon-btn" style={{background:"transparent",border:`1px solid ${C.navy}`,padding:7,color:C.muted,display:"flex"}}><X size={15}/></button>
-        </div>
-        <div style={{padding:22,display:"flex",flexDirection:"column",gap:16,maxHeight:"70vh",overflowY:"auto"}}>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10}}>
-            {[{l:"XP TOTAL",v:`+${rutina.xpTotal}`,c:C.gold},{l:"DURACIÓN",v:`${rutina.duracionMin}min`,c:C.orange},{l:"EJERCICIOS",v:rutina.pasos.length,c:C.blue},{l:"SESIONES",v:rutina.sesiones,c:C.teal}].map((s,i)=>(
-              <div key={i} style={{background:C.panel,border:`1px solid ${s.c}22`,padding:"12px 10px",textAlign:"center"}}>
-                <div style={{...orb(14,900),color:s.c,marginBottom:3}}>{s.v}</div><div style={{...px(5),color:C.muted}}>{s.l}</div>
-              </div>
-            ))}
-          </div>
-          <div style={{background:C.panel,border:`1px solid ${C.navy}`,padding:"14px 16px"}}>
-            <p style={{...raj(13,400),color:C.white,lineHeight:1.7,marginBottom:10}}>{rutina.descripcion}</p>
-            <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap",marginBottom:8}}>
-              <span style={{...raj(11,600),color:C.muted}}>🎯 {rutina.objetivo}</span>
-            </div>
-            <DiaChips dias={rutina.diasSemana} color={c}/>
-          </div>
-          <div>
-            <div style={{...px(6),color:C.muted,marginBottom:10,letterSpacing:".05em"}}>📋 EJERCICIOS</div>
-            <div style={{display:"flex",flexDirection:"column",gap:8}}>
-              {rutina.pasos.map((p,i)=>(
-                <div key={i} style={{display:"flex",alignItems:"center",gap:12,background:C.panel,border:`1px solid ${C.navy}`,padding:"10px 14px"}}>
-                  <div style={{...orb(12,900),color:c,minWidth:22,textAlign:"center"}}>#{p.orden}</div>
-                  <div style={{fontSize:20}}>{p.imagen}</div>
-                  <div style={{flex:1}}>
-                    <div style={{...raj(13,700),color:C.white}}>{p.nombre}</div>
-                    <div style={{...raj(11,500),color:C.muted}}>{p.duracion?`${p.series}s × ${p.duracion}seg`:`${p.series}×${p.reps} reps`}{p.descanso>0?` · ⏱ ${p.descanso}s descanso`:""}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div style={{display:"flex",gap:10}}>
-            <div style={{flex:1,display:"flex",alignItems:"center",gap:8,background:C.panel,border:`1px solid ${rutina.activo?C.green:C.red}33`,padding:"10px 14px"}}>
-              <div style={{width:8,height:8,borderRadius:"50%",background:rutina.activo?C.green:C.red,animation:rutina.activo?"r-pulse 1.5s infinite":"none"}}/>
-              <span style={{...raj(13,700),color:rutina.activo?C.green:C.red}}>{rutina.activo?"ACTIVA":"INACTIVA"}</span>
-            </div>
-            <button onClick={()=>{onClose();onEdit(rutina);}} className="r-btn" style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:8,...px(7),color:C.bg,background:C.orange,border:"none",padding:"10px",cursor:"pointer",boxShadow:`0 3px 14px ${C.orange}44`}}>
-              <Edit2 size={13}/> EDITAR
-            </button>
-          </div>
-        </div>
+    <div style={{ display:"flex", alignItems:"center", gap:5, marginTop:5,
+      ...raj(11,700), color:C.red, animation:"rn-slideIn .2s ease both" }}>
+      <AlertTriangle size={11} style={{flexShrink:0}}/>{msg}
+    </div>
+  );
+}
+
+// ── Shared modal overlay ──────────────────────────────────────
+function ModalOverlay({ children, onClose, maxWidth=620 }) {
+  return (
+    <div
+      onClick={e => e.target === e.currentTarget && onClose()}
+      style={{
+        position:"fixed", inset:0, zIndex:200,
+        background:"rgba(0,0,0,.72)",
+        backdropFilter:"blur(4px)", WebkitBackdropFilter:"blur(4px)",
+        display:"flex", alignItems:"center", justifyContent:"center", padding:16,
+      }}>
+      <div style={{
+        width:"100%", maxWidth,
+        background:"rgba(20,26,42,0.96)",
+        backdropFilter:"blur(16px)", WebkitBackdropFilter:"blur(16px)",
+        border:`1px solid ${C.navy}`,
+        borderRadius:16,
+        boxShadow:"0 24px 64px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,0.04)",
+        overflow:"hidden",
+        animation:"rn-modalIn .25s ease both",
+        maxHeight:"92vh", overflowY:"auto",
+      }}>
+        {children}
       </div>
     </div>
   );
 }
 
-// ══════════════════════════════════════════════════════════════
-// MODAL — FORM (Crear / Editar)
-// ══════════════════════════════════════════════════════════════
-function FormModal({rutina,onClose,onSave}) {
-  const isEdit=!!rutina;
-  const [form,    setForm]    = useState(rutina?{...rutina,pasos:[...rutina.pasos]}:{...EMPTY_FORM});
-  const [loading, setLoading] = useState(false);
-  const [errors,  setErrors]  = useState({});
-  const [shake,   setShake]   = useState(false);
-  const [tab,     setTab]     = useState("info");
-  const [exSearch,setExSearch]= useState("");
-
-  const set=(k,v)=>setForm(f=>({...f,[k]:v}));
-  const catMeta=TAXONOMIA[form.categoria]||{};
-  const xpCalc=form.pasos.reduce((s,p)=>{const ej=EJERCICIOS_DISP.find(e=>e.id===p.ejercicioId);return s+(ej?.xpBase||0)*p.series;},0);
-
-  const validate=()=>{const e={};if(!form.nombre.trim())e.nombre="Requerido";if(!form.descripcion.trim())e.descripcion="Requerido";if(!form.diasSemana.length)e.dias="Selecciona días";if(!form.pasos.length)e.pasos="Añade ejercicios";return e;};
-
-  const save=async()=>{const e=validate();if(Object.keys(e).length){setErrors(e);setShake(true);setTimeout(()=>setShake(false),500);return;}setLoading(true);await new Promise(r=>setTimeout(r,900));setLoading(false);onSave({...form,xpTotal:xpCalc,id:rutina?.id||`r${Date.now()}`,sesiones:rutina?.sesiones||0,creadoEn:rutina?.creadoEn||new Date().toISOString().slice(0,10)});onClose();};
-
-  const addPaso=(ej)=>{const o=form.pasos.length+1;setForm(f=>({...f,pasos:[...f.pasos,{ejercicioId:ej.id,nombre:ej.nombre,imagen:ej.imagen,series:3,reps:10,duracion:null,descanso:60,orden:o}]}));};
-  const removePaso=(idx)=>setForm(f=>({...f,pasos:f.pasos.filter((_,i)=>i!==idx).map((p,i)=>({...p,orden:i+1}))}));
-  const movePaso=(idx,dir)=>{const a=[...form.pasos];const to=idx+dir;if(to<0||to>=a.length)return;[a[idx],a[to]]=[a[to],a[idx]];setForm(f=>({...f,pasos:a.map((p,i)=>({...p,orden:i+1}))}));};
-  const setPF=(idx,k,v)=>setForm(f=>({...f,pasos:f.pasos.map((p,i)=>i===idx?{...p,[k]:v}:p)}));
-
-  const dispEj=EJERCICIOS_DISP.filter(e=>!form.pasos.find(p=>p.ejercicioId===e.id)&&(exSearch?e.nombre.toLowerCase().includes(exSearch.toLowerCase()):true));
-  const inpSt=(err)=>({width:"100%",padding:"11px 14px",background:C.panel,border:`1px solid ${err?C.red:C.navy}`,color:C.white,...raj(14,500)});
-  const lbl={display:"block",...px(6),color:C.muted,marginBottom:7,letterSpacing:".06em"};
-  const bc=isEdit?C.orange:C.green;
-  const TABS=[{id:"info",l:"INFO"},{id:"dias",l:"DÍAS & OBJETIVO"},{id:"pasos",l:`EJERCICIOS (${form.pasos.length})`}];
-
+// ── Modal header ──────────────────────────────────────────────
+function ModalHeader({ icon:Icon, title, color, onClose }) {
   return (
-    <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,.78)",display:"flex",alignItems:"center",justifyContent:"center",padding:16,overflowY:"auto"}}
-      onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{width:"100%",maxWidth:700,background:C.card,border:`1px solid ${bc}44`,boxShadow:`0 0 60px ${bc}0E,0 24px 60px rgba(0,0,0,.6)`,animation:"r-modalIn .25s ease both",overflow:"hidden",display:"flex",flexDirection:"column",maxHeight:"93vh"}}>
-        <div style={{height:3,background:`linear-gradient(90deg,transparent,${bc},transparent)`,flexShrink:0}}/>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"15px 22px",borderBottom:`1px solid ${C.navy}`,flexShrink:0}}>
-          <div style={{display:"flex",alignItems:"center",gap:10}}>
-            {isEdit?<Edit2 size={15} color={C.orange}/>:<Plus size={15} color={C.green}/>}
-            <span style={{...orb(12,700),color:C.white}}>{isEdit?"EDITAR RUTINA":"NUEVA RUTINA"}</span>
-            {isEdit&&<span style={{...raj(12,500),color:C.muted}}>— {rutina.nombre}</span>}
-          </div>
-          <button onClick={onClose} className="r-icon-btn" style={{background:"transparent",border:`1px solid ${C.navy}`,padding:7,color:C.muted,display:"flex"}}><X size={15}/></button>
+    <div style={{
+      display:"flex", alignItems:"center", justifyContent:"space-between",
+      padding:"18px 22px", borderBottom:`1px solid ${C.navy}44`,
+      background:`${color}08`,
+    }}>
+      <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+        <div style={{
+          background:`${color}18`, border:`1px solid ${color}33`, borderRadius:8,
+          padding:9, display:"flex",
+        }}>
+          <Icon size={16} color={color}/>
         </div>
-        <div style={{display:"flex",borderBottom:`1px solid ${C.navy}`,flexShrink:0}}>
-          {TABS.map(t=>(
-            <button key={t.id} onClick={()=>setTab(t.id)} className="r-btn"
-              style={{flex:1,padding:"11px 0",...raj(12,tab===t.id?700:500),color:tab===t.id?bc:C.muted,background:"transparent",border:"none",borderBottom:`2px solid ${tab===t.id?bc:"transparent"}`,cursor:"pointer",position:"relative"}}>
-              {t.l}
-              {t.id==="pasos"&&errors.pasos&&<span style={{position:"absolute",top:7,right:"20%",width:6,height:6,background:C.red,borderRadius:"50%"}}/>}
-              {t.id==="dias"&&errors.dias&&<span style={{position:"absolute",top:7,right:"20%",width:6,height:6,background:C.red,borderRadius:"50%"}}/>}
+        <div>
+          <div style={{ ...orb(12,700), color:C.white }}>{title}</div>
+          <div style={{ height:2, marginTop:4, width:40,
+            background:`linear-gradient(90deg,${color},transparent)` }}/>
+        </div>
+      </div>
+      <button onClick={onClose} className="rn-btn"
+        style={{ background:"transparent", border:`1px solid ${C.navy}`, borderRadius:7,
+          padding:7, color:C.muted, cursor:"pointer", display:"flex" }}>
+        <X size={14}/>
+      </button>
+    </div>
+  );
+}
+
+// ── Shared input style ────────────────────────────────────────
+const inpStyle = (err=false) => ({
+  width:"100%", padding:"10px 13px",
+  background:C.panel,
+  border:`1px solid ${err ? C.red+"88" : C.navy}`,
+  borderRadius:8, color:C.white,
+  boxShadow: err ? `0 0 0 2px ${C.red}14` : undefined,
+  ...raj(13,500),
+});
+const lbl = { display:"block", ...px(6), color:C.muted, marginBottom:7, letterSpacing:".06em" };
+
+// ── Paso (exercise step) inline editor ───────────────────────
+function PasoEditor({ paso, idx, total, onChange, onDelete, onMoveUp, onMoveDown }) {
+  const showReps  = paso.verif === "Cámara" || paso.verif === "Ambos" || !paso.verif;
+  const showTimer = paso.verif === "Timer"  || paso.verif === "Ambos";
+  const fLbl = { ...px(4), color:C.muted, display:"block", marginBottom:3, letterSpacing:".03em" };
+  const numSt = { ...inpStyle(), padding:"6px 8px", minWidth:0, width:"100%" };
+  return (
+    <div style={{
+      background:C.panel, border:`1px solid ${C.navy}`,
+      borderLeft:`3px solid ${C.orange}66`, borderRadius:8,
+      padding:"10px 12px", display:"flex", flexDirection:"column", gap:8,
+    }}>
+      {/* Row 1: index + emoji + name + reorder + delete */}
+      <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+        <span style={{ ...px(6), color:C.orange, minWidth:20, flexShrink:0 }}>#{idx+1}</span>
+        <input
+          value={paso.imagen || "💪"}
+          onChange={e => onChange({ ...paso, imagen: e.target.value.slice(0,2) || "💪" })}
+          style={{ width:36, background:C.panel, border:`1px solid ${C.navy}`, borderRadius:6,
+            color:C.white, textAlign:"center", fontSize:18, padding:"4px", outline:"none" }}
+        />
+        <input className="rn-input"
+          value={paso.nombre}
+          onChange={e => onChange({ ...paso, nombre: e.target.value })}
+          placeholder="Nombre del ejercicio"
+          style={{ ...inpStyle(), flex:1 }}
+        />
+        <div style={{ display:"flex", gap:3, flexShrink:0 }}>
+          {[
+            { label:"▲", onClick:onMoveUp,  disabled:idx===0         },
+            { label:"▼", onClick:onMoveDown, disabled:idx>=total-1   },
+          ].map(({ label, onClick, disabled }, i) => (
+            <button key={i} type="button" onClick={onClick} disabled={disabled}
+              style={{ width:24, height:24, background:"transparent", border:`1px solid ${C.navy}`,
+                borderRadius:4, cursor:disabled?"not-allowed":"pointer",
+                color:C.muted, opacity:disabled?.35:1,
+                display:"flex", alignItems:"center", justifyContent:"center",
+                padding:0, fontSize:11 }}>
+              {label}
             </button>
           ))}
-        </div>
-
-        <div style={{flex:1,overflowY:"auto",padding:22}} className={shake?"r-shake":""}>
-
-          {/* ── INFO ── */}
-          {tab==="info"&&(
-            <div style={{display:"flex",flexDirection:"column",gap:16}}>
-              <div style={{display:"grid",gridTemplateColumns:"110px 1fr",gap:14}}>
-                <div>
-                  <label style={lbl}>🎨 ICONO</label>
-                  <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:4}}>
-                    {EMOJIS.map(e=><button key={e} type="button" onClick={()=>set("imagen",e)} className="r-btn" style={{fontSize:17,background:form.imagen===e?`${bc}22`:"transparent",border:`1px solid ${form.imagen===e?bc:C.navy}`,padding:"5px",cursor:"pointer"}}>{e}</button>)}
-                  </div>
-                </div>
-                <div>
-                  <label style={lbl}>📝 NOMBRE</label>
-                  <input className="r-input" value={form.nombre} onChange={e=>set("nombre",e.target.value)} placeholder="Ej: Guerrero del Hierro" style={inpSt(errors.nombre)}/>
-                  {errors.nombre&&<p style={{...raj(11),color:C.red,marginTop:4}}>⚠ {errors.nombre}</p>}
-                </div>
-              </div>
-
-              {/* categoria */}
-              <div>
-                <label style={lbl}>🗂️ CATEGORÍA PRINCIPAL</label>
-                <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
-                  {CATEGORIAS.map(cat=>{const m=TAXONOMIA[cat];const on=form.categoria===cat;return(
-                    <button key={cat} type="button" onClick={()=>{set("categoria",cat);set("subcategoria",m.subs[0]);}} className="r-btn"
-                      style={{background:on?m.bg:"transparent",border:`2px solid ${on?m.color:C.navy}`,padding:"14px 10px",cursor:"pointer",textAlign:"center",boxShadow:on?`0 0 16px ${m.color}33`:"none",transition:"all .22s"}}>
-                      <div style={{fontSize:28,marginBottom:6,filter:on?`drop-shadow(0 0 8px ${m.color})`:"none"}}>{m.icon}</div>
-                      <div style={{...px(8),color:on?m.color:C.muted,marginBottom:3}}>{cat.toUpperCase()}</div>
-                      <div style={{...raj(10,400),color:C.muted}}>{m.subs.length} subcat.</div>
-                    </button>
-                  );} )}
-                </div>
-              </div>
-
-              {/* subcategoría */}
-              <div>
-                <label style={lbl}>🏷️ SUBCATEGORÍA</label>
-                <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                  {(TAXONOMIA[form.categoria]?.subs||[]).map(sub=>{const cc=TAXONOMIA[form.categoria]?.color||C.orange;const on=form.subcategoria===sub;return(
-                    <button key={sub} type="button" onClick={()=>set("subcategoria",sub)} className="r-btn"
-                      style={{...raj(12,on?700:500),color:on?cc:C.muted,background:on?`${cc}18`:"transparent",border:`1px solid ${on?cc:C.navy}`,padding:"7px 14px",cursor:"pointer",transition:"all .18s",boxShadow:on?`0 0 8px ${cc}22`:"none"}}>
-                      {sub}
-                    </button>
-                  );} )}
-                </div>
-              </div>
-
-              {/* dificultad + duración + descripción */}
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14}}>
-                <div>
-                  <label style={lbl}>⚡ DIFICULTAD</label>
-                  {DIFICULTADES.map(d=>{const dc=DIFICULTAD_COLOR[d];const on=form.dificultad===d;return(
-                    <button key={d} type="button" onClick={()=>set("dificultad",d)} className="r-btn"
-                      style={{width:"100%",marginBottom:6,...raj(12,on?700:500),color:on?dc:C.muted,background:on?`${dc}18`:"transparent",border:`1px solid ${on?dc:C.navy}`,padding:"8px 12px",cursor:"pointer",textAlign:"left",transition:"all .18s"}}>
-                      {d}
-                    </button>
-                  );})}
-                </div>
-                <div>
-                  <label style={lbl}>⏱️ DURACIÓN (min)</label>
-                  <input className="r-input" type="number" min={5} value={form.duracionMin} onChange={e=>set("duracionMin",Number(e.target.value))} style={inpSt(false)}/>
-                  <label style={{...lbl,marginTop:14}}>● ESTADO</label>
-                  {[{v:true,l:"ACTIVA",c:C.green},{v:false,l:"INACTIVA",c:C.red}].map(o=>(
-                    <button key={String(o.v)} type="button" onClick={()=>set("activo",o.v)} className="r-btn"
-                      style={{width:"100%",marginBottom:6,...raj(12,form.activo===o.v?700:500),color:form.activo===o.v?o.c:C.muted,background:form.activo===o.v?`${o.c}18`:"transparent",border:`1px solid ${form.activo===o.v?o.c:C.navy}`,padding:"9px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:8,transition:"all .18s"}}>
-                      <div style={{width:8,height:8,borderRadius:"50%",background:form.activo===o.v?o.c:C.navy}}/>{o.l}
-                    </button>
-                  ))}
-                </div>
-                <div>
-                  <label style={lbl}>📋 DESCRIPCIÓN</label>
-                  <textarea className="r-input" value={form.descripcion} onChange={e=>set("descripcion",e.target.value)} rows={7} placeholder="Describe la rutina..." style={{...inpSt(errors.descripcion),resize:"vertical"}}/>
-                  {errors.descripcion&&<p style={{...raj(11),color:C.red,marginTop:4}}>⚠ {errors.descripcion}</p>}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ── DÍAS & OBJETIVO ── */}
-          {tab==="dias"&&(
-            <div style={{display:"flex",flexDirection:"column",gap:20}}>
-              <div>
-                <label style={lbl}>📅 DÍAS DE LA SEMANA</label>
-                <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:8}}>
-                  {DIAS_SEMANA.map(d=>{const on=form.diasSemana.includes(d);const cc=catMeta.color||C.orange;return(
-                    <button key={d} type="button" onClick={()=>set("diasSemana",on?form.diasSemana.filter(x=>x!==d):[...form.diasSemana,d])} className="r-btn"
-                      style={{...raj(13,on?700:600),color:on?cc:C.muted,background:on?`${cc}18`:"transparent",border:`2px solid ${on?cc:C.navy}`,padding:"12px 18px",cursor:"pointer",minWidth:60,textAlign:"center",transition:"all .22s",boxShadow:on?`0 0 12px ${cc}33`:"none"}}>
-                      {d}
-                    </button>
-                  );})}
-                </div>
-                {errors.dias&&<p style={{...raj(11),color:C.red}}>⚠ {errors.dias}</p>}
-                {form.diasSemana.length>0&&<div style={{...raj(12,600),color:C.muted,marginTop:6}}>{form.diasSemana.length} día{form.diasSemana.length!==1?"s":""}: <span style={{color:catMeta.color||C.orange}}>{form.diasSemana.join(", ")}</span></div>}
-              </div>
-              <div>
-                <label style={lbl}>🎯 OBJETIVO PRINCIPAL</label>
-                <div style={{display:"flex",flexDirection:"column",gap:7}}>
-                  {OBJETIVOS.map(o=>{const on=form.objetivo===o;const cc=catMeta.color||C.orange;return(
-                    <button key={o} type="button" onClick={()=>set("objetivo",o)} className="r-btn"
-                      style={{display:"flex",alignItems:"center",gap:10,...raj(13,on?700:500),color:on?cc:C.muted,background:on?`${cc}14`:"transparent",border:`1px solid ${on?cc:C.navy}`,padding:"11px 16px",cursor:"pointer",textAlign:"left",transition:"all .18s"}}>
-                      <div style={{width:8,height:8,borderRadius:"50%",background:on?cc:C.navy,flexShrink:0}}/>{o}
-                    </button>
-                  );})}
-                </div>
-              </div>
-              <div style={{background:C.panel,border:`1px solid ${C.gold}33`,padding:"16px 18px"}}>
-                <div style={{...px(6),color:C.muted,marginBottom:8,letterSpacing:".05em"}}>⚡ XP ESTIMADO</div>
-                <div style={{...orb(30,900),color:C.gold,marginBottom:4}}>+{xpCalc}</div>
-                <div style={{...raj(12,500),color:C.muted}}>Basado en {form.pasos.length} ejercicio{form.pasos.length!==1?"s":""} añadidos</div>
-              </div>
-            </div>
-          )}
-
-          {/* ── PASOS ── */}
-          {tab==="pasos"&&(
-            <div style={{display:"flex",flexDirection:"column",gap:16}}>
-              {errors.pasos&&<p style={{...raj(12),color:C.red}}>⚠ {errors.pasos}</p>}
-
-              {form.pasos.length>0&&(
-                <div>
-                  <div style={{...px(6),color:C.muted,marginBottom:10,letterSpacing:".05em"}}>ORDEN DE EJERCICIOS</div>
-                  <div style={{display:"flex",flexDirection:"column",gap:7}}>
-                    {form.pasos.map((p,idx)=>(
-                      <div key={idx} className="r-step-row" style={{background:C.panel,border:`1px solid ${C.navy}`,padding:"9px 12px",display:"grid",gridTemplateColumns:"22px 34px 1fr 72px 72px 72px 72px",gap:8,alignItems:"center"}}>
-                        <div style={{...orb(10,900),color:catMeta.color||C.orange,textAlign:"center"}}>#{p.orden}</div>
-                        <div style={{fontSize:19,textAlign:"center"}}>{p.imagen}</div>
-                        <div style={{...raj(12,700),color:C.white,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.nombre}</div>
-                        {[
-                          {l:"SERIES",k:"series",   v:p.series},
-                          {l:p.duracion?"SEG":"REPS",k:p.duracion?"duracion":"reps",v:p.duracion||p.reps||""},
-                          {l:"DESC(s)",k:"descanso",v:p.descanso},
-                        ].map(f=>(
-                          <div key={f.k}>
-                            <div style={{...px(4),color:C.muted,marginBottom:3,letterSpacing:".04em"}}>{f.l}</div>
-                            <input type="number" min={0} value={f.v} onChange={e=>setPF(idx,f.k,Number(e.target.value)||null)}
-                              className="r-input" style={{width:"100%",padding:"5px 8px",background:C.card,border:`1px solid ${C.navy}`,color:C.white,...raj(13,600)}}/>
-                          </div>
-                        ))}
-                        <div style={{display:"flex",gap:3}}>
-                          <button type="button" onClick={()=>movePaso(idx,-1)} disabled={idx===0} className="r-icon-btn" style={{background:"transparent",border:`1px solid ${C.navy}`,padding:5,color:idx===0?C.navy:C.muted,display:"flex"}}><ChevronUp size={11}/></button>
-                          <button type="button" onClick={()=>movePaso(idx,1)} disabled={idx===form.pasos.length-1} className="r-icon-btn" style={{background:"transparent",border:`1px solid ${C.navy}`,padding:5,color:idx===form.pasos.length-1?C.navy:C.muted,display:"flex"}}><ChevronDown size={11}/></button>
-                          <button type="button" onClick={()=>removePaso(idx)} className="r-icon-btn" style={{background:"transparent",border:`1px solid ${C.red}33`,padding:5,color:C.red,display:"flex"}}
-                            onMouseEnter={e=>{e.currentTarget.style.background=`${C.red}18`;e.currentTarget.style.borderColor=C.red;}}
-                            onMouseLeave={e=>{e.currentTarget.style.background="transparent";e.currentTarget.style.borderColor=`${C.red}33`;}}><X size={11}/></button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div style={{background:C.panel,border:`1px solid ${C.navy}`,padding:"14px 16px"}}>
-                <div style={{...px(6),color:C.muted,marginBottom:10,letterSpacing:".05em"}}>➕ AÑADIR EJERCICIO</div>
-                <div style={{position:"relative",marginBottom:10}}>
-                  <Search size={13} color={C.muted} style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)"}}/>
-                  <input className="r-input" value={exSearch} onChange={e=>setExSearch(e.target.value)} placeholder="Buscar..."
-                    style={{width:"100%",padding:"8px 10px 8px 28px",background:C.card,border:`1px solid ${C.navy}`,color:C.white,...raj(13,500)}}/>
-                </div>
-                <div style={{display:"flex",flexDirection:"column",gap:6,maxHeight:200,overflowY:"auto"}}>
-                  {dispEj.length===0?<div style={{...raj(12,500),color:C.muted,padding:"6px 0"}}>Todos los ejercicios ya están añadidos.</div>
-                  :dispEj.map(ej=>(
-                    <button key={ej.id} type="button" onClick={()=>addPaso(ej)} className="r-btn"
-                      style={{display:"flex",alignItems:"center",gap:10,background:C.card,border:`1px solid ${C.navy}`,padding:"8px 12px",cursor:"pointer",textAlign:"left",transition:"all .18s"}}
-                      onMouseEnter={e=>{e.currentTarget.style.borderColor=catMeta.color||C.orange;e.currentTarget.style.background=`${catMeta.color||C.orange}0A`;}}
-                      onMouseLeave={e=>{e.currentTarget.style.borderColor=C.navy;e.currentTarget.style.background=C.card;}}>
-                      <span style={{fontSize:18}}>{ej.imagen}</span>
-                      <div style={{flex:1}}>
-                        <div style={{...raj(13,700),color:C.white}}>{ej.nombre}</div>
-                        <div style={{...raj(10,500),color:C.muted}}>{ej.cat}</div>
-                      </div>
-                      <span style={{...raj(11,600),color:C.gold}}>+{ej.xpBase} XP</span>
-                      <Plus size={14} color={catMeta.color||C.orange}/>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div style={{display:"flex",gap:10,padding:"15px 22px",borderTop:`1px solid ${C.navy}`,flexShrink:0}}>
-          <button onClick={onClose} className="r-btn" style={{flex:"0 0 auto",...raj(13,600),color:C.muted,background:C.panel,border:`1px solid ${C.navy}`,padding:"12px 20px",cursor:"pointer"}}>CANCELAR</button>
-          <button onClick={save} disabled={loading} className="r-btn" style={{flex:1,...px(8),color:loading?C.muted:C.bg,background:loading?`${bc}55`:bc,border:"none",padding:"12px",cursor:loading?"not-allowed":"pointer",boxShadow:`0 4px 20px ${bc}44`,display:"flex",alignItems:"center",justifyContent:"center",gap:10}}>
-            {loading?<><Spinner color={bc}/> GUARDANDO...</>:<><Check size={14}/> {isEdit?"GUARDAR CAMBIOS":"CREAR RUTINA"}</>}
+          <button type="button" onClick={onDelete}
+            style={{ width:24, height:24, background:`${C.red}14`, border:`1px solid ${C.red}33`,
+              borderRadius:4, cursor:"pointer", color:C.red,
+              display:"flex", alignItems:"center", justifyContent:"center", padding:0 }}>
+            <X size={11}/>
           </button>
         </div>
       </div>
+      {/* Row 2: series | verif | reps | seg | desc | xp */}
+      <div style={{ display:"grid", gridTemplateColumns:"56px 1fr 58px 58px 62px 52px", gap:6 }}>
+        <div>
+          <label style={fLbl}>SERIES</label>
+          <input type="number" min={1} max={20} className="rn-input"
+            value={paso.series || 3}
+            onChange={e => onChange({ ...paso, series: Math.max(1, Number(e.target.value)||1) })}
+            style={numSt}/>
+        </div>
+        <div>
+          <label style={fLbl}>VERIFICACIÓN</label>
+          <select className="rn-input"
+            value={paso.verif || "Cámara"}
+            onChange={e => onChange({ ...paso, verif: e.target.value })}
+            style={{ ...numSt, appearance:"none", cursor:"pointer" }}>
+            {["Cámara","Timer","Ambos"].map(v => <option key={v} value={v}>{v}</option>)}
+          </select>
+        </div>
+        <div style={{ opacity: showReps ? 1 : .3 }}>
+          <label style={fLbl}>REPS</label>
+          <input type="number" min={1} className="rn-input"
+            value={paso.reps ?? ""} placeholder="—"
+            disabled={!showReps}
+            onChange={e => onChange({ ...paso, reps: e.target.value ? Number(e.target.value) : null })}
+            style={numSt}/>
+        </div>
+        <div style={{ opacity: showTimer ? 1 : .3 }}>
+          <label style={fLbl}>SEG</label>
+          <input type="number" min={5} className="rn-input"
+            value={paso.duracion ?? ""} placeholder="—"
+            disabled={!showTimer}
+            onChange={e => onChange({ ...paso, duracion: e.target.value ? Number(e.target.value) : null })}
+            style={numSt}/>
+        </div>
+        <div>
+          <label style={fLbl}>DESC(s)</label>
+          <input type="number" min={0} className="rn-input"
+            value={paso.descanso ?? 60}
+            onChange={e => onChange({ ...paso, descanso: Number(e.target.value)||0 })}
+            style={numSt}/>
+        </div>
+        <div>
+          <label style={fLbl}>XP</label>
+          <input type="number" min={0} className="rn-input"
+            value={paso.xp || 0}
+            onChange={e => onChange({ ...paso, xp: Number(e.target.value)||0 })}
+            style={numSt}/>
+        </div>
+      </div>
     </div>
   );
 }
 
 // ══════════════════════════════════════════════════════════════
-// MODAL — ELIMINAR
+// FORM MODAL
 // ══════════════════════════════════════════════════════════════
-function DeleteModal({rutina,onClose,onConfirm}) {
-  const [typed,setTyped]=useState("");
-  const [loading,setLoading]=useState(false);
-  const match=typed===rutina.nombre;
-  const confirm=async()=>{if(!match)return;setLoading(true);await new Promise(r=>setTimeout(r,700));setLoading(false);onConfirm(rutina.id);onClose();};
+function FormModal({ mode, initial, onClose, onSaved }) {
+  const [form,  setForm]  = useState(() => {
+    const base = initial || EMPTY;
+    return { ...base, pasos: (base.pasos||[]).map((p,i) => ({ ...p, _key: p._key || `k${i}-${Date.now()}` })) };
+  });
+  const [dirty, setDirty] = useState(new Set());
+  const [errs,  setErrs]  = useState({});
+  const [saving,setSaving]= useState(false);
+  const { push }          = useToast();
+
+  const isEdit  = mode === "edit";
+  const accent  = isEdit ? C.orange : C.green;
+  const subs    = TAXONOMIA[form.categoria]?.subs || [];
+
+  const touch = k => setDirty(d => { const n=new Set(d); n.add(k); return n; });
+  const set   = (k, v) => setForm(f => {
+    const next = { ...f, [k]:v };
+    if (dirty.has(k)) setErrs(validateForm(next));
+    return next;
+  });
+  const blur  = k => { touch(k); setErrs(validateForm(form)); };
+
+  const handleSave = async () => {
+    const keys = ["nombre","categoria","subcategoria","dificultad","duracionMin","xpTotal"];
+    keys.forEach(touch);
+    const e = validateForm(form);
+    setErrs(e);
+    if (Object.keys(e).length) return;
+    setSaving(true);
+    try {
+      const token = await auth.currentUser.getIdToken();
+      const pasosSave = (form.pasos||[]).map(({ _key, ...p }) => p);
+      const xpFinal = pasosSave.reduce((s,p) => s+(Number(p.xp)||0), 0);
+      const payload  = { ...form, pasos:pasosSave, xpTotal:xpFinal > 0 ? xpFinal : (form.xpTotal||0) };
+      if (isEdit) await updateRutina(token, initial.id, payload);
+      else        await createRutina(token, payload);
+      onSaved();
+    } catch (err) { push(err.message||"Error al guardar","error"); }
+    finally { setSaving(false); }
+  };
+
+  const toggleDia = d => set("diasSemana",
+    form.diasSemana.includes(d)
+      ? form.diasSemana.filter(x => x !== d)
+      : [...form.diasSemana, d]
+  );
+
+  const addPaso = () => {
+    const p = { nombre:"", imagen:"💪", series:3, reps:10, duracion:null, descanso:60, verif:"Cámara", xp:25, _key:`k${Date.now()}` };
+    set("pasos", [...(form.pasos||[]), p]);
+  };
+  const updatePaso = (idx, updated) => {
+    const arr = [...form.pasos]; arr[idx] = updated; set("pasos", arr);
+  };
+  const deletePaso = (idx) => set("pasos", form.pasos.filter((_,i) => i !== idx));
+  const movePaso = (idx, dir) => {
+    const arr = [...form.pasos], tgt = idx + dir;
+    if (tgt < 0 || tgt >= arr.length) return;
+    [arr[idx], arr[tgt]] = [arr[tgt], arr[idx]]; set("pasos", arr);
+  };
+  const xpAutocalc = (form.pasos||[]).reduce((s,p) => s+(Number(p.xp)||0), 0);
+
   return (
-    <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,.8)",display:"flex",alignItems:"center",justifyContent:"center",padding:16}}
-      onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{width:"100%",maxWidth:420,background:C.card,border:`1px solid ${C.red}44`,boxShadow:`0 0 60px ${C.red}14,0 24px 60px rgba(0,0,0,.6)`,animation:"r-modalIn .25s ease both",overflow:"hidden"}}>
-        <div style={{height:3,background:`linear-gradient(90deg,transparent,${C.red},transparent)`}}/>
-        <div style={{padding:"22px 24px 26px"}}>
-          <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:18}}>
-            <div style={{background:`${C.red}18`,border:`1px solid ${C.red}44`,padding:10,display:"flex"}}><AlertTriangle size={22} color={C.red}/></div>
-            <div><div style={{...orb(13,900),color:C.red,marginBottom:3}}>ELIMINAR RUTINA</div><div style={{...raj(12,500),color:C.muted}}>Esta acción no se puede deshacer</div></div>
+    <ModalOverlay onClose={onClose} maxWidth={660}>
+      <div style={{ height:3, background:`linear-gradient(90deg,transparent,${accent},transparent)` }}/>
+      <ModalHeader
+        icon={isEdit ? Edit2 : Plus}
+        title={isEdit ? "EDITAR RUTINA" : "NUEVA RUTINA"}
+        color={accent}
+        onClose={onClose}
+      />
+
+      <div style={{ padding:"20px 22px", display:"flex", flexDirection:"column", gap:16 }}>
+
+        {/* Nombre */}
+        <div>
+          <label style={lbl}>NOMBRE</label>
+          <input className="rn-input" value={form.nombre}
+            onChange={e => set("nombre",e.target.value)} onBlur={() => blur("nombre")}
+            placeholder="Nombre de la rutina"
+            style={inpStyle(dirty.has("nombre")&&!!errs.nombre)}/>
+          <FieldError msg={dirty.has("nombre")?errs.nombre:null}/>
+        </div>
+
+        {/* Categoría grid */}
+        <div>
+          <label style={lbl}>CATEGORÍA</label>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:8 }}>
+            {CATEGORIAS_OPT.map(cat => {
+              const m = TAXONOMIA[cat]; const on = form.categoria === cat;
+              return (
+                <button key={cat} type="button" onClick={() => { set("categoria",cat); set("subcategoria",m.subs[0]); }} className="rn-btn"
+                  style={{
+                    display:"flex", flexDirection:"column", alignItems:"center", gap:6,
+                    padding:"12px 8px",
+                    background: on ? `${m.color}18` : "transparent",
+                    border:`1px solid ${on ? m.color+"44" : C.navy}`,
+                    borderRadius:10, cursor:"pointer", transition:"all .2s",
+                    boxShadow: on ? `0 0 16px ${m.color}22` : "none",
+                  }}>
+                  <m.Icon size={18} color={on ? m.color : C.muted}
+                    style={{ filter:on?`drop-shadow(0 0 4px ${m.color})`:"none" }}/>
+                  <span style={{ ...raj(11,on?700:500), color:on?m.color:C.muted }}>{cat}</span>
+                </button>
+              );
+            })}
           </div>
-          <div style={{background:`${C.red}0A`,border:`1px solid ${C.red}22`,padding:"12px 16px",marginBottom:18,display:"flex",gap:12,alignItems:"center"}}>
-            <span style={{fontSize:24}}>{rutina.imagen}</span>
-            <div><div style={{...raj(14,700),color:C.red}}>{rutina.nombre}</div><div style={{...raj(12,400),color:C.muted}}>{rutina.categoria} · {rutina.subcategoria} · {rutina.sesiones} sesiones</div></div>
+        </div>
+
+        {/* Subcategoría + Dificultad */}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+          <div>
+            <label style={lbl}>SUBCATEGORÍA</label>
+            <select className="rn-input" value={form.subcategoria}
+              onChange={e => { set("subcategoria",e.target.value); touch("subcategoria"); }}
+              style={{ ...inpStyle(dirty.has("subcategoria")&&!!errs.subcategoria), appearance:"none", cursor:"pointer" }}>
+              {subs.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+            <FieldError msg={dirty.has("subcategoria")?errs.subcategoria:null}/>
           </div>
-          <div style={{marginBottom:18}}>
-            <label style={{display:"block",...px(6),color:C.muted,marginBottom:8,letterSpacing:".06em"}}>ESCRIBE <span style={{color:C.red}}>{rutina.nombre}</span> PARA CONFIRMAR</label>
-            <input className="r-input" value={typed} onChange={e=>setTyped(e.target.value)} placeholder={rutina.nombre}
-              style={{width:"100%",padding:"12px 14px",background:C.panel,border:`1px solid ${match?C.red:C.navy}`,color:C.white,...raj(14,600)}}/>
+          <div>
+            <label style={lbl}>DIFICULTAD</label>
+            <div style={{ display:"flex", gap:5, flexWrap:"wrap" }}>
+              {DIFICULTADES.map(d => {
+                const on = form.dificultad === d; const dc = DIFF_COLOR[d];
+                return (
+                  <button key={d} type="button" onClick={() => { set("dificultad",d); touch("dificultad"); }}
+                    style={{
+                      ...raj(10,on?700:500), padding:"5px 10px", borderRadius:20, cursor:"pointer",
+                      background: on ? `${dc}22` : "transparent",
+                      border:`1px solid ${on ? dc+"55" : C.navy}`,
+                      color: on ? dc : C.muted, transition:"all .18s",
+                    }}>
+                    {d}
+                  </button>
+                );
+              })}
+            </div>
+            <FieldError msg={dirty.has("dificultad")?errs.dificultad:null}/>
           </div>
-          <div style={{display:"flex",gap:10}}>
-            <button onClick={onClose} className="r-btn" style={{flex:"0 0 auto",...raj(13,600),color:C.muted,background:C.panel,border:`1px solid ${C.navy}`,padding:"12px 18px",cursor:"pointer"}}>CANCELAR</button>
-            <button onClick={confirm} disabled={!match||loading} className="r-btn"
-              style={{flex:1,...px(7),color:(match&&!loading)?C.white:C.muted,background:(match&&!loading)?C.red:`${C.red}22`,border:`1px solid ${C.red}55`,padding:"12px",cursor:match?"pointer":"not-allowed",display:"flex",alignItems:"center",justifyContent:"center",gap:10,transition:"all .2s"}}>
-              {loading?<><Spinner color={C.red}/> ELIMINANDO...</>:<><Trash2 size={13}/> ELIMINAR</>}
+        </div>
+
+        {/* Duración + XP + Activo */}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12 }}>
+          <div>
+            <label style={lbl}>DURACIÓN (min)</label>
+            <input className="rn-input" type="number" min={5} max={480} value={form.duracionMin}
+              onChange={e => set("duracionMin",Number(e.target.value))} onBlur={() => blur("duracionMin")}
+              style={inpStyle(dirty.has("duracionMin")&&!!errs.duracionMin)}/>
+            <FieldError msg={dirty.has("duracionMin")?errs.duracionMin:null}/>
+          </div>
+          <div>
+            <label style={lbl}>XP TOTAL {xpAutocalc>0?<span style={{ color:C.muted, fontWeight:400 }}>(auto)</span>:""}</label>
+            <input className="rn-input" type="number" min={0}
+              value={xpAutocalc > 0 ? xpAutocalc : form.xpTotal}
+              onChange={e => set("xpTotal",Number(e.target.value))} onBlur={() => blur("xpTotal")}
+              readOnly={xpAutocalc > 0}
+              style={{ ...inpStyle(dirty.has("xpTotal")&&!!errs.xpTotal), opacity:xpAutocalc>0?.7:1 }}/>
+            {xpAutocalc > 0
+              ? <div style={{ ...px(4), color:C.muted, marginTop:4 }}>Calculado desde los pasos</div>
+              : <FieldError msg={dirty.has("xpTotal")?errs.xpTotal:null}/>
+            }
+          </div>
+          <div style={{ display:"flex", flexDirection:"column", justifyContent:"center" }}>
+            <label style={lbl}>ESTADO</label>
+            <button type="button" onClick={() => set("activo",!form.activo)}
+              style={{
+                display:"flex", alignItems:"center", gap:8, padding:"10px 12px",
+                ...raj(12,700), color:form.activo?C.green:C.red,
+                background:form.activo?`${C.green}14`:`${C.red}14`,
+                border:`1px solid ${form.activo?C.green:C.red}44`,
+                borderRadius:8, cursor:"pointer", transition:"all .2s",
+              }}>
+              <div style={{ width:8,height:8,borderRadius:"50%",background:form.activo?C.green:C.red }}/>
+              {form.activo?"ACTIVA":"INACTIVA"}
             </button>
           </div>
         </div>
+
+        {/* Días */}
+        <div>
+          <label style={lbl}>DÍAS DE LA SEMANA</label>
+          <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+            {DIAS_SEMANA.map(d => {
+              const on = form.diasSemana.includes(d);
+              return (
+                <button key={d} type="button" onClick={() => toggleDia(d)} className="rn-btn"
+                  style={{
+                    ...raj(11,on?700:600), padding:"6px 12px", borderRadius:20, cursor:"pointer",
+                    background: on ? `${C.orange}22` : "transparent",
+                    color: on ? C.orange : C.muted,
+                    border:`1px solid ${on?C.orange+"55":C.navy}`,
+                    boxShadow: on ? `0 0 8px ${C.orange}22` : "none",
+                    transition:"all .18s",
+                  }}>
+                  {d}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Descripción */}
+        <div>
+          <label style={lbl}>DESCRIPCIÓN</label>
+          <textarea className="rn-input" value={form.descripcion} rows={3}
+            onChange={e => set("descripcion",e.target.value)}
+            placeholder="Descripción breve de la rutina..."
+            style={{ ...inpStyle(), resize:"vertical", lineHeight:1.6 }}/>
+        </div>
+
+        {/* Pasos / Ejercicios */}
+        <div>
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
+            <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+              <label style={{ ...lbl, marginBottom:0 }}>PASOS / EJERCICIOS</label>
+              <span style={{ ...px(5), color:C.orange, background:`${C.orange}14`, border:`1px solid ${C.orange}33`, borderRadius:10, padding:"1px 7px" }}>
+                {(form.pasos||[]).length}
+              </span>
+              {xpAutocalc > 0 && (
+                <span style={{ ...px(5), color:C.gold }}>→ {xpAutocalc} XP auto</span>
+              )}
+            </div>
+            <button type="button" onClick={addPaso} className="rn-btn"
+              style={{ ...px(6), color:C.green, background:`${C.green}14`, border:`1px solid ${C.green}44`,
+                borderRadius:6, padding:"5px 12px", cursor:"pointer",
+                display:"flex", alignItems:"center", gap:5 }}>
+              <Plus size={11}/> AÑADIR PASO
+            </button>
+          </div>
+
+          {(form.pasos||[]).length === 0 ? (
+            <div style={{ background:C.panel, border:`1px dashed ${C.navy}`, borderRadius:8, padding:"20px", textAlign:"center" }}>
+              <div style={{ fontSize:24, marginBottom:6, opacity:.4 }}>💪</div>
+              <div style={{ ...px(5), color:C.muted }}>Sin ejercicios. Haz clic en AÑADIR PASO para configurar la rutina.</div>
+            </div>
+          ) : (
+            <div style={{ display:"flex", flexDirection:"column", gap:8, maxHeight:360, overflowY:"auto", paddingRight:2 }}>
+              {(form.pasos||[]).map((paso, pi) => (
+                <PasoEditor
+                  key={paso._key}
+                  paso={paso} idx={pi} total={(form.pasos||[]).length}
+                  onChange={updated => updatePaso(pi, updated)}
+                  onDelete={() => deletePaso(pi)}
+                  onMoveUp={() => movePaso(pi, -1)}
+                  onMoveDown={() => movePaso(pi, 1)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Footer buttons */}
+        <div style={{ display:"flex", gap:10, justifyContent:"flex-end", paddingTop:4, borderTop:`1px solid ${C.navy}33` }}>
+          <button onClick={onClose} className="rn-btn"
+            style={{ ...raj(13,600), background:C.panel, border:`1px solid ${C.navy}`, borderRadius:8,
+              color:C.muted, padding:"11px 18px", cursor:"pointer" }}>
+            CANCELAR
+          </button>
+          <button onClick={handleSave} disabled={saving} className="rn-btn"
+            style={{
+              ...px(8), background:saving?`${accent}55`:accent, color:saving?C.muted:C.bg,
+              border:"none", borderRadius:8, padding:"11px 22px", cursor:saving?"not-allowed":"pointer",
+              display:"flex", alignItems:"center", gap:10,
+              boxShadow: saving?"none":`0 4px 20px ${accent}44`,
+            }}>
+            {saving
+              ? <><div style={{ width:12,height:12,border:`2px solid ${C.muted}`,borderTop:`2px solid ${accent}`,borderRadius:"50%",animation:"rn-spin .8s linear infinite" }}/> GUARDANDO...</>
+              : <><Check size={14}/> {isEdit?"GUARDAR CAMBIOS":"CREAR RUTINA"}</>
+            }
+          </button>
+        </div>
+      </div>
+    </ModalOverlay>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
+// DELETE MODAL
+// ══════════════════════════════════════════════════════════════
+function DeleteModal({ rutina, onClose, onDeleted }) {
+  const [typed,   setTyped]   = useState("");
+  const [loading, setLoading] = useState(false);
+  const [err,     setErr]     = useState("");
+  const match = typed.trim() === rutina.nombre.trim();
+
+  const handleDelete = async () => {
+    if (!match) return;
+    setLoading(true);
+    try {
+      const token = await auth.currentUser.getIdToken();
+      await deleteRutina(token, rutina.id);
+      onDeleted();
+    } catch (e) { setErr(e.message||"Error al eliminar"); setLoading(false); }
+  };
+
+  return (
+    <ModalOverlay onClose={onClose} maxWidth={440}>
+      <div style={{ height:3, background:`linear-gradient(90deg,transparent,${C.red},transparent)` }}/>
+      <ModalHeader icon={Trash2} title="ELIMINAR RUTINA" color={C.red} onClose={onClose}/>
+      <div style={{ padding:"20px 22px", display:"flex", flexDirection:"column", gap:14 }}>
+
+        <div style={{ display:"flex", gap:12, padding:"12px 16px",
+          background:`${C.red}0A`, border:`1px solid ${C.red}22`, borderRadius:10 }}>
+          <AlertTriangle size={16} color={C.red} style={{ flexShrink:0, marginTop:2 }}/>
+          <p style={{ ...raj(12,500), color:`${C.red}CC`, lineHeight:1.6, margin:0 }}>
+            Esta rutina puede estar referenciada en historiales de usuarios. Esta acción es <strong>irreversible</strong>.
+          </p>
+        </div>
+
+        <div style={{ background:C.panel, border:`1px solid ${C.navy}`, borderRadius:8, padding:"10px 14px" }}>
+          <p style={{ ...raj(11,600), color:C.muted, marginBottom:4 }}>NOMBRE A CONFIRMAR</p>
+          <p style={{ ...orb(12,800), color:C.white, letterSpacing:".02em", margin:0 }}>{rutina.nombre}</p>
+        </div>
+
+        <div>
+          <label style={lbl}>ESCRIBE EL NOMBRE EXACTO</label>
+          <input className="rn-input" value={typed} onChange={e => setTyped(e.target.value)}
+            placeholder={rutina.nombre}
+            style={{ ...inpStyle(), border:`1px solid ${match?C.green+"55":C.navy}` }}/>
+        </div>
+
+        {err && <div style={{ ...raj(11,600), color:C.red, display:"flex", gap:6, alignItems:"center" }}><AlertTriangle size={12}/>{err}</div>}
+
+        <div style={{ display:"flex", gap:10, justifyContent:"flex-end", paddingTop:4, borderTop:`1px solid ${C.navy}33` }}>
+          <button onClick={onClose} className="rn-btn"
+            style={{ ...raj(13,600), background:C.panel, border:`1px solid ${C.navy}`, borderRadius:8,
+              color:C.muted, padding:"11px 18px", cursor:"pointer" }}>
+            CANCELAR
+          </button>
+          <button onClick={handleDelete} disabled={!match||loading} className="rn-btn"
+            style={{
+              ...px(7), background:(match&&!loading)?C.red:`${C.red}22`,
+              color:(match&&!loading)?C.white:C.muted,
+              border:`1px solid ${C.red}55`, borderRadius:8, padding:"11px 20px",
+              cursor:match?"pointer":"not-allowed",
+              display:"flex", alignItems:"center", gap:10, transition:"all .2s",
+            }}>
+            {loading
+              ? <><div style={{ width:12,height:12,border:`2px solid ${C.muted}`,borderTop:`2px solid ${C.red}`,borderRadius:"50%",animation:"rn-spin .8s linear infinite" }}/> ELIMINANDO...</>
+              : <><Trash2 size={13}/> ELIMINAR</>
+            }
+          </button>
+        </div>
+      </div>
+    </ModalOverlay>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
+// VIEW MODAL
+// ══════════════════════════════════════════════════════════════
+function ViewModal({ rutina, onClose, onEdit, onDelete }) {
+  const tax = TAXONOMIA[rutina.categoria] || { color:C.orange, Icon:BookOpen };
+  const c   = tax.color;
+  const dc  = DIFF_COLOR[rutina.dificultad] || C.muted;
+
+  return (
+    <ModalOverlay onClose={onClose} maxWidth={520}>
+      <div style={{ height:3, background:`linear-gradient(90deg,transparent,${c},transparent)` }}/>
+      <ModalHeader icon={tax.Icon} title={rutina.nombre} color={c} onClose={onClose}/>
+
+      <div style={{ padding:"20px 22px", display:"flex", flexDirection:"column", gap:16 }}>
+
+        {/* Meta badges */}
+        <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+          {[
+            { l:rutina.categoria,    color:c          },
+            { l:rutina.subcategoria, color:C.blue      },
+            { l:rutina.dificultad,   color:dc          },
+          ].map((b,i) => (
+            <span key={i} style={{
+              ...raj(10,700), color:b.color,
+              background:`${b.color}18`, border:`1px solid ${b.color}33`,
+              borderRadius:20, padding:"3px 10px",
+            }}>{b.l}</span>
+          ))}
+          <span style={{
+            ...raj(10,600), color:rutina.activo?C.green:C.red,
+            background:rutina.activo?`${C.green}14`:`${C.red}14`,
+            border:`1px solid ${rutina.activo?C.green:C.red}33`,
+            borderRadius:20, padding:"3px 10px",
+          }}>{rutina.activo?"● ACTIVA":"● INACTIVA"}</span>
+        </div>
+
+        {/* Stat cards — 3 col */}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:10 }}>
+          {[
+            { icon:Clock,    label:"DURACIÓN",  value:`${rutina.duracionMin} min`, color:C.blue    },
+            { icon:Zap,      label:"XP TOTAL",  value:(rutina.xpTotal||0).toLocaleString(), color:C.gold },
+            { icon:BarChart2,label:"SESIONES",  value:(rutina.sesiones||0).toLocaleString(), color:C.teal },
+          ].map(({ icon:Icon, label, value, color }, i) => (
+            <div key={i} style={{
+              background:C.panel, border:`1px solid ${C.navy}`,
+              borderRadius:10, padding:"12px 10px",
+              borderLeft:`3px solid ${color}`,
+              textAlign:"center",
+            }}>
+              <Icon size={14} color={color} style={{ marginBottom:6 }}/>
+              <div style={{ ...orb(14,900), color, marginBottom:3 }}>{value}</div>
+              <div style={{ ...px(5), color:C.muted }}>{label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Descripción */}
+        {rutina.descripcion && (
+          <div style={{ background:C.panel, border:`1px solid ${C.navy}`, borderRadius:10, padding:"12px 14px" }}>
+            <p style={{ ...raj(12,400), color:C.mutedL, lineHeight:1.7, margin:0 }}>{rutina.descripcion}</p>
+          </div>
+        )}
+
+        {/* Días */}
+        {rutina.diasSemana?.length > 0 && (
+          <div>
+            <p style={{ ...px(6), color:C.muted, marginBottom:8, letterSpacing:".05em" }}>DÍAS</p>
+            <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+              {rutina.diasSemana.map(d => (
+                <span key={d} style={{
+                  ...raj(11,700), color:C.orange,
+                  background:`${C.orange}18`, border:`1px solid ${C.orange}33`,
+                  borderRadius:20, padding:"4px 12px",
+                }}>{d}</span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Action buttons */}
+        <div style={{ display:"flex", gap:10, paddingTop:4, borderTop:`1px solid ${C.navy}33` }}>
+          <button onClick={() => { onClose(); onEdit(); }} className="rn-btn"
+            style={{
+              flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+              ...px(8), color:C.bg, background:C.orange, border:"none", borderRadius:8,
+              padding:"11px", cursor:"pointer", boxShadow:`0 4px 20px ${C.orange}44`,
+            }}>
+            <Edit2 size={13}/> EDITAR
+          </button>
+          <button onClick={() => { onClose(); onDelete(); }} className="rn-btn"
+            style={{
+              flex:"0 0 auto", display:"flex", alignItems:"center", gap:8,
+              ...raj(12,700), color:C.red, background:`${C.red}14`,
+              border:`1px solid ${C.red}44`, borderRadius:8,
+              padding:"11px 18px", cursor:"pointer",
+            }}>
+            <Trash2 size={13}/> BORRAR
+          </button>
+        </div>
+      </div>
+    </ModalOverlay>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
+// SKELETON
+// ══════════════════════════════════════════════════════════════
+function SkeletonRutinas() {
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:18 }}>
+      {/* KPIs */}
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12 }}>
+        {[0,1,2,3].map(i => <div key={i} className="rn-skel" style={{ height:90, animationDelay:`${i*.08}s` }}/>)}
+      </div>
+      {/* Tabs + toolbar */}
+      <div className="rn-skel" style={{ height:52 }}/>
+      <div className="rn-skel" style={{ height:44 }}/>
+      {/* Cards */}
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))", gap:14 }}>
+        {[0,1,2,3,4,5].map(i => <div key={i} className="rn-skel" style={{ height:220, animationDelay:`${i*.07}s` }}/>)}
       </div>
     </div>
+  );
+}
+
+// ── Rutina card ───────────────────────────────────────────────
+function RutinaCard({ rutina, onView, onEdit, onDelete }) {
+  const tax = TAXONOMIA[rutina.categoria] || { color:C.orange, Icon:BookOpen };
+  const c   = tax.color;
+  const dc  = DIFF_COLOR[rutina.dificultad] || C.muted;
+
+  return (
+    <motion.div
+      className="rn-card"
+      whileHover={{ y:-4, boxShadow:`0 16px 40px rgba(0,0,0,.5), 0 0 20px ${c}18, inset 0 1px 0 rgba(255,255,255,.07)` }}
+      transition={{ duration:0.2, ease:"easeOut" }}
+      style={{
+        background:"rgba(20,26,42,0.78)",
+        backdropFilter:"blur(12px)", WebkitBackdropFilter:"blur(12px)",
+        border:`1px solid ${C.navy}`,
+        borderLeft:`3px solid ${c}`,
+        borderRadius:14,
+        boxShadow:"0 4px 24px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.04)",
+        overflow:"hidden",
+        display:"flex", flexDirection:"column",
+      }}>
+
+      {/* Top gradient bar */}
+      <div style={{ height:2, background:`linear-gradient(90deg,${c},${c}22,transparent)` }}/>
+
+      <div style={{ padding:"16px 16px 0" }}>
+        {/* Header */}
+        <div style={{ display:"flex", alignItems:"flex-start", gap:12, marginBottom:12 }}>
+          <div style={{
+            width:44, height:44, borderRadius:10, flexShrink:0,
+            background:`${c}18`, border:`1px solid ${c}33`,
+            display:"flex", alignItems:"center", justifyContent:"center",
+            boxShadow:`inset 0 0 14px ${c}0E`,
+          }}>
+            <tax.Icon size={20} color={c}/>
+          </div>
+          <div style={{ flex:1, minWidth:0 }}>
+            <div style={{ ...orb(12,800), color:C.white, marginBottom:5, lineHeight:1.3,
+              overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+              {rutina.nombre}
+            </div>
+            <div style={{ display:"flex", gap:5, flexWrap:"wrap" }}>
+              <span style={{ ...raj(9,700), color:c, background:`${c}14`, border:`1px solid ${c}22`, borderRadius:20, padding:"2px 8px" }}>{rutina.categoria}</span>
+              <span style={{ ...raj(9,700), color:dc, background:`${dc}14`, border:`1px solid ${dc}22`, borderRadius:20, padding:"2px 8px" }}>{rutina.dificultad}</span>
+            </div>
+          </div>
+          {/* Active dot */}
+          <div style={{ width:9, height:9, borderRadius:"50%", background:rutina.activo?C.green:C.red,
+            boxShadow:rutina.activo?`0 0 6px ${C.green}`:"none", flexShrink:0, marginTop:4 }}/>
+        </div>
+
+        {/* Description */}
+        <p style={{ ...raj(11,400), color:C.muted, lineHeight:1.6, marginBottom:12,
+          display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" }}>
+          {rutina.descripcion || "Sin descripción."}
+        </p>
+
+        {/* Stats row */}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:6, marginBottom:12 }}>
+          {[
+            { icon:Clock,     v:`${rutina.duracionMin}m`,             color:C.blue },
+            { icon:Zap,       v:(rutina.xpTotal||0).toLocaleString(), color:C.gold },
+            { icon:BarChart2, v:(rutina.sesiones||0).toLocaleString(),color:C.teal },
+          ].map(({ icon:Icon, v, color }, i) => (
+            <div key={i} style={{ background:C.panel, border:`1px solid ${C.navy}33`,
+              borderRadius:7, padding:"6px 8px", textAlign:"center" }}>
+              <Icon size={11} color={color} style={{ marginBottom:2 }}/>
+              <div style={{ ...raj(11,700), color }}>{v}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Day pills */}
+        {rutina.diasSemana?.length > 0 && (
+          <div style={{ display:"flex", gap:4, flexWrap:"wrap", marginBottom:12 }}>
+            {rutina.diasSemana.map(d => (
+              <span key={d} style={{
+                ...raj(9,700), color:C.orange,
+                background:`${C.orange}14`, border:`1px solid ${C.orange}22`,
+                borderRadius:20, padding:"2px 7px",
+              }}>{d}</span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Action footer */}
+      <div style={{ marginTop:"auto", borderTop:`1px solid ${C.navy}33`,
+        display:"grid", gridTemplateColumns:"1fr 1fr 1fr", overflow:"hidden",
+        borderRadius:"0 0 14px 14px" }}>
+        {[
+          { Icon:Eye,   c:C.blue,   fn:onView,   l:"Ver"    },
+          { Icon:Edit2, c:C.orange, fn:onEdit,   l:"Editar" },
+          { Icon:Trash2,c:C.red,    fn:onDelete, l:"Borrar" },
+        ].map(({ Icon, c:ic, fn, l }, j) => (
+          <button key={j} onClick={fn} className="rn-btn"
+            style={{
+              background:"transparent", border:"none",
+              borderRight:j<2?`1px solid ${C.navy}33`:"none",
+              padding:"10px 0", color:ic,
+              display:"flex", flexDirection:"column", alignItems:"center", gap:3,
+              cursor:"pointer", transition:"background .18s",
+            }}
+            onMouseEnter={e => e.currentTarget.style.background=`${ic}12`}
+            onMouseLeave={e => e.currentTarget.style.background="transparent"}>
+            <Icon size={13}/>
+            <span style={{ ...raj(9,600), color:C.muted }}>{l}</span>
+          </button>
+        ))}
+      </div>
+    </motion.div>
   );
 }
 
@@ -479,254 +837,266 @@ function DeleteModal({rutina,onClose,onConfirm}) {
 // MAIN
 // ══════════════════════════════════════════════════════════════
 export default function AdminRutinas() {
-  const [rutinas,   setRutinas]   = useState(MOCK_RUTINAS);
-  const [catTab,    setCatTab]    = useState("Todas");
-  const [search,    setSearch]    = useState("");
-  const [filterSub, setFilterSub] = useState("all");
-  const [filterDif, setFilterDif] = useState("all");
-  const [filterAct, setFilterAct] = useState("all");
-  const [sortKey,   setSortKey]   = useState("sesiones");
-  const [sortDir,   setSortDir]   = useState("desc");
-  const [view,      setView]      = useState("grid");
-  const [page,      setPage]      = useState(1);
-  const [pageSize,  setPageSize]  = useState(12);
-  const [selected,  setSelected]  = useState(new Set());
-  const [modal,     setModal]     = useState(null);
-  const [refreshing,setRefreshing]= useState(false);
+  const [rutinas,      setRutinas]      = useState([]);
+  const [loading,      setLoading]      = useState(true);
+  const [catTab,       setCatTab]       = useState("Todas");
+  const [search,       setSearch]       = useState("");
+  const [subfilter,    setSubfilter]    = useState("Todas");
+  const [difilter,     setDifilter]     = useState("Todas");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [modal,        setModal]        = useState(null);
+  const [refreshing,   setRefreshing]   = useState(false);
+  const { push } = useToast();
 
-  const refresh=async()=>{setRefreshing(true);await new Promise(r=>setTimeout(r,800));setRefreshing(false);};
-  const subsDisp = catTab!=="Todas"?(TAXONOMIA[catTab]?.subs||[]):[];
+  const loadAll = useCallback(async () => {
+    setLoading(true);
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) return;
+      const resp = await getRutinas(token);
+      setRutinas(resp.rutinas || []);
+    } catch { push("Error cargando rutinas","error"); }
+    finally   { setLoading(false); }
+  }, [push]);
 
-  const filtered=useMemo(()=>{
-    let list=[...rutinas];
-    if(catTab!=="Todas")  list=list.filter(r=>r.categoria===catTab);
-    if(search)            list=list.filter(r=>r.nombre.toLowerCase().includes(search.toLowerCase())||r.descripcion.toLowerCase().includes(search.toLowerCase()));
-    if(filterSub!=="all") list=list.filter(r=>r.subcategoria===filterSub);
-    if(filterDif!=="all") list=list.filter(r=>r.dificultad===filterDif);
-    if(filterAct!=="all") list=list.filter(r=>String(r.activo)===(filterAct==="active"?"true":"false"));
-    list.sort((a,b)=>{const av=a[sortKey]??"";const bv=b[sortKey]??"";return sortDir==="asc"?(av>bv?1:-1):(av<bv?1:-1);});
-    return list;
-  },[rutinas,catTab,search,filterSub,filterDif,filterAct,sortKey,sortDir]);
+  useEffect(() => { loadAll(); }, [loadAll]);
 
-  const totalPages=Math.max(1,Math.ceil(filtered.length/pageSize));
-  const paginated=filtered.slice((page-1)*pageSize,page*pageSize);
-  const sort=(k)=>{if(sortKey===k)setSortDir(d=>d==="asc"?"desc":"asc");else{setSortKey(k);setSortDir("asc");}};
-  const toggleSelect=(id)=>setSelected(s=>{const n=new Set(s);n.has(id)?n.delete(id):n.add(id);return n;});
-  const toggleAll=()=>setSelected(s=>s.size===paginated.length?new Set():new Set(paginated.map(r=>r.id)));
-  const handleSave=(saved)=>setRutinas(rs=>{const idx=rs.findIndex(r=>r.id===saved.id);if(idx>=0){const a=[...rs];a[idx]=saved;return a;}return[saved,...rs];});
-  const handleDelete=(id)=>{setRutinas(rs=>rs.filter(r=>r.id!==id));setSelected(s=>{const n=new Set(s);n.delete(id);return n;});};
-  const bulkDelete=()=>{setRutinas(rs=>rs.filter(r=>!selected.has(r.id)));setSelected(new Set());};
+  const refresh = async () => {
+    setRefreshing(true);
+    await loadAll();
+    setRefreshing(false);
+  };
 
-  const kpis=useMemo(()=>({
-    total:   rutinas.length,
-    activas: rutinas.filter(r=>r.activo).length,
-    sesiones:rutinas.reduce((s,r)=>s+r.sesiones,0),
-    avgXP:   Math.round(rutinas.reduce((s,r)=>s+r.xpTotal,0)/rutinas.length),
-  }),[rutinas]);
+  const stats = useMemo(() => ({
+    total:    rutinas.length,
+    activas:  rutinas.filter(r => r.activo).length,
+    xpTotal:  rutinas.reduce((s,r) => s+(r.xpTotal||0),0),
+    sesiones: rutinas.reduce((s,r) => s+(r.sesiones||0),0),
+  }), [rutinas]);
 
-  const fBtn=(on,c=C.orange)=>({...raj(11,on?700:600),color:on?c:C.muted,background:on?`${c}18`:"transparent",border:`1px solid ${on?c:C.navy}`,padding:"5px 12px",cursor:"pointer",transition:"all .18s"});
+  const subcats = catTab !== "Todas" ? TAXONOMIA[catTab]?.subs || [] : [];
+
+  const filtered = useMemo(() => {
+    let arr = [...rutinas];
+    if (catTab !== "Todas")                       arr = arr.filter(r => r.categoria === catTab);
+    if (search.trim())                            arr = arr.filter(r => `${r.nombre} ${r.descripcion}`.toLowerCase().includes(search.toLowerCase()));
+    if (subfilter !== "Todas" && catTab !== "Todas") arr = arr.filter(r => r.subcategoria === subfilter);
+    if (difilter !== "Todas")                     arr = arr.filter(r => r.dificultad === difilter);
+    if (statusFilter === "activas")               arr = arr.filter(r =>  r.activo);
+    if (statusFilter === "inactivas")             arr = arr.filter(r => !r.activo);
+    return arr;
+  }, [rutinas, catTab, search, subfilter, difilter, statusFilter]);
+
+  const handleSaved = useCallback(() => {
+    push(`Rutina ${modal?.type==="create"?"creada":"actualizada"} correctamente`);
+    setModal(null); loadAll();
+  }, [modal, push, loadAll]);
+
+  const handleDeleted = useCallback(() => {
+    push("Rutina eliminada");
+    setModal(null); loadAll();
+  }, [push, loadAll]);
+
+  const pillBtn = (on, color=C.orange) => ({
+    ...raj(11,on?700:500),
+    color:on?color:C.muted,
+    background:on?`${color}18`:"transparent",
+    border:`1px solid ${on?color:C.navy}`,
+    borderRadius:20, padding:"5px 13px", cursor:"pointer",
+    boxShadow:on?`0 0 10px ${color}22`:"none",
+    transition:"all .18s",
+  });
+
+  if (loading) return <><style>{CSS}</style><SkeletonRutinas/></>;
 
   return (
     <>
       <style>{CSS}</style>
 
-      {modal?.type==="view"   && <ViewModal   rutina={modal.r} onClose={()=>setModal(null)} onEdit={r=>setModal({type:"form",r})}/>}
-      {modal?.type==="form"   && <FormModal   rutina={modal.r} onClose={()=>setModal(null)} onSave={handleSave}/>}
-      {modal?.type==="delete" && <DeleteModal rutina={modal.r} onClose={()=>setModal(null)} onConfirm={handleDelete}/>}
+      {/* Modals */}
+      {(modal?.type==="create"||modal?.type==="edit") && (
+        <FormModal mode={modal.type} initial={modal.type==="edit"?modal.data:null}
+          onClose={()=>setModal(null)} onSaved={handleSaved}/>
+      )}
+      {modal?.type==="view" && (
+        <ViewModal rutina={modal.data} onClose={()=>setModal(null)}
+          onEdit={()=>setModal({type:"edit",data:modal.data})}
+          onDelete={()=>setModal({type:"delete",data:modal.data})}/>
+      )}
+      {modal?.type==="delete" && (
+        <DeleteModal rutina={modal.data} onClose={()=>setModal(null)} onDeleted={handleDeleted}/>
+      )}
 
-      <div style={{display:"flex",flexDirection:"column",gap:18}}>
+      <div style={{ display:"flex", flexDirection:"column", gap:18 }}>
 
-        {/* KPIs */}
-        <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12}}>
+        {/* ── KPI CARDS ── */}
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12 }}>
           {[
-            {label:"RUTINAS",  value:kpis.total,   icon:<ClipboardList size={18}/>,color:C.orange},
-            {label:"ACTIVAS",  value:kpis.activas, icon:<Zap size={18}/>,           color:C.green },
-            {label:"SESIONES", value:kpis.sesiones.toLocaleString(),icon:<BarChart2 size={18}/>,color:C.blue},
-            {label:"XP PROM.", value:`+${kpis.avgXP}`,icon:<Star size={18}/>,       color:C.gold  },
-          ].map((k,i)=>(
-            <div key={i} style={{background:C.card,border:`1px solid ${k.color}33`,padding:"18px 16px",position:"relative",overflow:"hidden",animation:`r-cardIn .4s ease ${i*.07}s both`,transition:"transform .2s,box-shadow .2s"}}
-              onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.boxShadow=`0 10px 32px rgba(0,0,0,.4)`;}}
-              onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="none";}}>
-              <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:`linear-gradient(90deg,transparent,${k.color},transparent)`}}/>
-              <div style={{background:`${k.color}18`,border:`1px solid ${k.color}33`,padding:9,display:"inline-flex",color:k.color,marginBottom:10}}>{k.icon}</div>
-              <div style={{...orb(26,900),color:k.color,marginBottom:3}}>{k.value}</div>
-              <div style={{...px(6),color:C.muted,letterSpacing:".05em"}}>{k.label}</div>
-            </div>
+            { label:"RUTINAS",     value:stats.total,                    icon:BookOpen,  color:C.orange },
+            { label:"ACTIVAS",     value:stats.activas,                  icon:Shield,    color:C.green  },
+            { label:"XP TOTAL",    value:stats.xpTotal.toLocaleString(), icon:Zap,       color:C.gold   },
+            { label:"SESIONES",    value:stats.sesiones.toLocaleString(),icon:BarChart2, color:C.blue   },
+          ].map((k,i) => (
+            <motion.div key={i}
+              whileHover={{ y:-2, boxShadow:`0 10px 32px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.07)` }}
+              transition={{ duration:0.18, ease:"easeOut" }}
+              style={{
+                background:"rgba(20,26,42,0.78)",
+                backdropFilter:"blur(12px)", WebkitBackdropFilter:"blur(12px)",
+                border:`1px solid ${C.navy}`,
+                borderLeft:`4px solid ${k.color}`,
+                borderRadius:14, padding:"18px 16px",
+                boxShadow:"0 4px 24px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.04)",
+              }}>
+              <div style={{ background:`${k.color}18`, border:`1px solid ${k.color}33`,
+                borderRadius:8, padding:8, display:"inline-flex", color:k.color, marginBottom:10 }}>
+                <k.icon size={16}/>
+              </div>
+              <div style={{ ...orb(24,900), color:k.color, marginBottom:3 }}>{k.value}</div>
+              <div style={{ ...px(6), color:C.muted, letterSpacing:".05em" }}>{k.label}</div>
+            </motion.div>
           ))}
         </div>
 
-        {/* Category tabs */}
-        <div style={{background:C.card,border:`1px solid ${C.navy}`,overflow:"hidden"}}>
-          <div style={{display:"flex",borderBottom:`1px solid ${C.navy}`}}>
-            {["Todas",...CATEGORIAS].map(cat=>{
-              const m=TAXONOMIA[cat];const on=catTab===cat;const cc=m?.color||C.orange;
-              const count=cat==="Todas"?rutinas.length:rutinas.filter(r=>r.categoria===cat).length;
+        {/* ── CATEGORY TABS + NEW BUTTON ── */}
+        <div style={{
+          background:"rgba(20,26,42,0.78)",
+          backdropFilter:"blur(12px)", WebkitBackdropFilter:"blur(12px)",
+          border:`1px solid ${C.navy}`,
+          borderRadius:12, padding:"10px 14px",
+          display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, flexWrap:"wrap",
+        }}>
+          <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+            {/* All tab */}
+            <button onClick={() => { setCatTab("Todas"); setSubfilter("Todas"); }} className="rn-btn"
+              style={pillBtn(catTab==="Todas", C.orange)}>
+              Todas <span style={{ ...raj(9,700), color:catTab==="Todas"?C.bg:C.navy,
+                background:catTab==="Todas"?C.orange:`${C.navy}55`,
+                padding:"1px 7px", borderRadius:10, marginLeft:4 }}>{rutinas.length}</span>
+            </button>
+            {CATEGORIAS_OPT.map(cat => {
+              const m = TAXONOMIA[cat]; const on = catTab===cat;
+              const cnt = rutinas.filter(r => r.categoria===cat).length;
               return (
-                <button key={cat} onClick={()=>{setCatTab(cat);setFilterSub("all");setPage(1);}} className="r-cat-tab"
-                  style={{flex:1,padding:"14px 10px",background:on?`${cc}12`:"transparent",border:"none",borderBottom:`3px solid ${on?cc:"transparent"}`,color:on?cc:C.muted,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:5}}>
-                  <div style={{fontSize:20,filter:on?`drop-shadow(0 0 6px ${cc})`:"none"}}>{m?.icon||"🌐"}</div>
-                  <span style={{...raj(12,on?700:500),letterSpacing:".04em"}}>{cat}</span>
-                  <span style={{...raj(10,700),color:on?cc:C.navy,background:on?`${cc}22`:`${C.navy}44`,padding:"1px 7px"}}>{count}</span>
+                <button key={cat} onClick={() => { setCatTab(cat); setSubfilter("Todas"); }} className="rn-btn"
+                  style={{ ...pillBtn(on, m.color), display:"flex", alignItems:"center", gap:6 }}>
+                  <m.Icon size={13}/>
+                  {cat}
+                  <span style={{ ...raj(9,700), color:on?C.bg:C.navy,
+                    background:on?m.color:`${C.navy}55`, padding:"1px 7px", borderRadius:10 }}>{cnt}</span>
                 </button>
               );
             })}
           </div>
-          {catTab!=="Todas"&&subsDisp.length>0&&(
-            <div style={{padding:"10px 16px",display:"flex",gap:8,flexWrap:"wrap",borderBottom:`1px solid ${C.navy}`,background:C.panel}}>
-              <span style={{...raj(11,600),color:C.muted,alignSelf:"center"}}>Subcategoría:</span>
-              {["all",...subsDisp].map(s=>{const cc=TAXONOMIA[catTab]?.color||C.orange;return<button key={s} onClick={()=>{setFilterSub(s);setPage(1);}} className="r-btn" style={fBtn(filterSub===s,cc)}>{s==="all"?"Todas":s}</button>;})}
-            </div>
-          )}
+          <button onClick={() => setModal({type:"create",data:null})} className="rn-btn"
+            style={{
+              ...px(8), color:C.bg, background:C.green, border:"none", borderRadius:8,
+              padding:"8px 16px", cursor:"pointer", display:"flex", alignItems:"center", gap:7,
+              boxShadow:`0 3px 14px ${C.green}33`, flexShrink:0,
+            }}>
+            <Plus size={13}/> NUEVA
+          </button>
         </div>
 
-        {/* Toolbar */}
-        <div style={{background:C.card,border:`1px solid ${C.navy}`,padding:"13px 16px"}}>
-          <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
-            <div style={{position:"relative",flex:"1 1 200px"}}>
-              <Search size={13} color={C.muted} style={{position:"absolute",left:11,top:"50%",transform:"translateY(-50%)"}}/>
-              <input className="r-input" value={search} onChange={e=>{setSearch(e.target.value);setPage(1);}} placeholder="Buscar rutina..."
-                style={{width:"100%",padding:"8px 12px 8px 30px",background:C.panel,border:`1px solid ${C.navy}`,color:C.white,...raj(13,500)}}/>
-              {search&&<button onClick={()=>setSearch("")} style={{position:"absolute",right:9,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:C.muted,display:"flex"}}><X size={12}/></button>}
-            </div>
-            <div style={{display:"flex",gap:4}}>
-              {[{v:"grid",i:"⊞"},{v:"table",i:"≡"}].map(({v,i})=>(
-                <button key={v} onClick={()=>setView(v)} className="r-btn" style={{...raj(14,700),color:view===v?C.orange:C.muted,background:view===v?`${C.orange}18`:C.panel,border:`1px solid ${view===v?C.orange:C.navy}`,padding:"7px 12px",cursor:"pointer"}}>{i}</button>
-              ))}
-            </div>
-            <span style={{...raj(11,600),color:C.muted}}>Dificultad:</span>
-            {["all",...DIFICULTADES].map(v=><button key={v} onClick={()=>{setFilterDif(v);setPage(1);}} className="r-btn" style={fBtn(filterDif===v,DIFICULTAD_COLOR[v]||C.orange)}>{v==="all"?"Todas":v}</button>)}
-            <div style={{width:1,background:C.navy,alignSelf:"stretch",margin:"0 4px"}}/>
-            {[{v:"all",l:"Todas"},{v:"active",l:"● Activas"},{v:"inactive",l:"● Inactivas"}].map(o=><button key={o.v} onClick={()=>{setFilterAct(o.v);setPage(1);}} className="r-btn" style={fBtn(filterAct===o.v,o.v==="active"?C.green:C.red)}>{o.l}</button>)}
-            <div style={{display:"flex",gap:6,marginLeft:"auto"}}>
-              {selected.size>0&&<button onClick={bulkDelete} className="r-btn" style={{...raj(11,700),color:C.red,background:`${C.red}14`,border:`1px solid ${C.red}44`,padding:"7px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:5}}><Trash2 size={12}/> Eliminar ({selected.size})</button>}
-              <button onClick={refresh} className="r-btn" style={{...raj(12,600),color:C.muted,background:C.panel,border:`1px solid ${C.navy}`,padding:"7px 11px",cursor:"pointer",display:"flex",alignItems:"center",gap:5}}><RefreshCw size={12} style={{animation:refreshing?"r-spin .8s linear infinite":"none"}}/> Actualizar</button>
-              <button onClick={()=>setModal({type:"form",r:null})} className="r-btn" style={{...px(7),color:C.bg,background:C.green,border:"none",padding:"7px 14px",cursor:"pointer",boxShadow:`0 3px 14px ${C.green}33`,display:"flex",alignItems:"center",gap:6}}><Plus size={13}/> NUEVA</button>
-            </div>
+        {/* ── TOOLBAR ── */}
+        <div style={{
+          background:"rgba(20,26,42,0.78)",
+          backdropFilter:"blur(12px)", WebkitBackdropFilter:"blur(12px)",
+          border:`1px solid ${C.navy}`,
+          borderRadius:12, padding:"11px 14px",
+          display:"flex", alignItems:"center", gap:10, flexWrap:"wrap",
+        }}>
+          {/* Search */}
+          <div style={{ position:"relative", flex:"1 1 200px" }}>
+            <Search size={13} color={C.muted} style={{ position:"absolute", left:11, top:"50%", transform:"translateY(-50%)" }}/>
+            <input className="rn-input" value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Buscar rutinas..."
+              style={{ ...inpStyle(), padding:"8px 12px 8px 32px" }}/>
+            {search && <button onClick={() => setSearch("")} style={{ position:"absolute", right:9, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:C.muted, display:"flex" }}><X size={12}/></button>}
           </div>
-        </div>
 
-        <div style={{...raj(12,500),color:C.muted}}>
-          {filtered.length} rutina{filtered.length!==1?"s":""} · página {page}/{totalPages}
-          {selected.size>0&&<span style={{color:C.orange,marginLeft:12}}>{selected.size} seleccionada{selected.size!==1?"s":""}</span>}
-        </div>
-
-        {/* GRID */}
-        {view==="grid"&&(
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(270px,1fr))",gap:14}}>
-            {paginated.length===0?<div style={{gridColumn:"1/-1",padding:40,textAlign:"center",...raj(14,500),color:C.muted}}>Sin resultados.</div>
-            :paginated.map((r,i)=>{
-              const m=TAXONOMIA[r.categoria]||{};const c=m.color||C.orange;const sel=selected.has(r.id);
-              return (
-                <div key={r.id} className="r-card" style={{background:C.card,border:`1px solid ${sel?C.orange:c}33`,boxShadow:sel?`0 0 16px ${C.orange}22`:"0 4px 16px rgba(0,0,0,.3)",overflow:"hidden",animation:`r-cardIn .4s ease ${i*.05}s both`,position:"relative"}}>
-                  <input type="checkbox" checked={sel} onChange={()=>toggleSelect(r.id)} style={{position:"absolute",top:10,left:10,accentColor:C.orange,width:14,height:14,cursor:"pointer",zIndex:2}}/>
-                  <div style={{height:3,background:`linear-gradient(90deg,transparent,${c},transparent)`}}/>
-                  <div style={{padding:"16px 16px 12px"}}>
-                    <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:12}}>
-                      <div style={{fontSize:34,filter:`drop-shadow(0 0 8px ${c}88)`}}>{r.imagen}</div>
-                      <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:4}}>
-                        <CatBadge cat={r.categoria}/><SubBadge sub={r.subcategoria} cat={r.categoria}/>
-                      </div>
-                    </div>
-                    <div style={{...raj(14,700),color:C.white,marginBottom:5,lineHeight:1.3}}>{r.nombre}</div>
-                    <div style={{display:"flex",gap:6,marginBottom:10,flexWrap:"wrap"}}>
-                      <DifBadge dif={r.dificultad}/>
-                      <span style={{...raj(10,600),color:r.activo?C.green:C.red,background:r.activo?`${C.green}14`:`${C.red}14`,border:`1px solid ${r.activo?C.green:C.red}33`,padding:"2px 8px"}}>{r.activo?"● ACTIVA":"● INACTIVA"}</span>
-                    </div>
-                    <DiaChips dias={r.diasSemana} color={c}/>
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:12}}>
-                      {[{l:"XP",v:`+${r.xpTotal}`,c:C.gold},{l:"PASOS",v:r.pasos.length,c:c},{l:"MIN",v:r.duracionMin,c:C.orange},{l:"SESIONES",v:r.sesiones,c:C.blue}].map((s,idx)=>(
-                        <div key={idx} style={{background:C.panel,border:`1px solid ${s.c}18`,padding:"7px 8px"}}>
-                          <div style={{...raj(13,700),color:s.c}}>{s.v}</div><div style={{...px(5),color:C.muted}}>{s.l}</div>
-                        </div>
-                      ))}
-                    </div>
-                    <div style={{marginTop:10}}><MiniBar val={(r.sesiones/100)*100} color={c} height={4}/></div>
-                  </div>
-                  <div style={{borderTop:`1px solid ${C.navy}33`,display:"grid",gridTemplateColumns:"1fr 1fr 1fr"}}>
-                    {[{Icon:Eye,c:C.blue,fn:()=>setModal({type:"view",r}),l:"Ver"},{Icon:Edit2,c:C.orange,fn:()=>setModal({type:"form",r}),l:"Editar"},{Icon:Trash2,c:C.red,fn:()=>setModal({type:"delete",r}),l:"Borrar"}].map(({Icon,c:ic,fn,l},j)=>(
-                      <button key={j} onClick={fn} className="r-btn"
-                        style={{background:"transparent",border:"none",borderRight:j<2?`1px solid ${C.navy}33`:"none",padding:"10px 0",color:ic,display:"flex",flexDirection:"column",alignItems:"center",gap:3,cursor:"pointer",transition:"background .2s"}}
-                        onMouseEnter={e=>e.currentTarget.style.background=`${ic}14`}
-                        onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-                        <Icon size={13}/><span style={{...raj(9,600),color:C.muted}}>{l}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* TABLE */}
-        {view==="table"&&(
-          <div style={{background:C.card,border:`1px solid ${C.navy}`,overflow:"hidden"}}>
-            <div style={{display:"grid",gridTemplateColumns:"34px 2.2fr 1fr 0.9fr 0.9fr 0.8fr 0.7fr 0.6fr 0.6fr 95px",padding:"10px 14px",background:`${C.panel}88`,borderBottom:`1px solid ${C.navy}`,gap:8,alignItems:"center"}}>
-              <input type="checkbox" checked={selected.size===paginated.length&&paginated.length>0} onChange={toggleAll} style={{accentColor:C.orange,width:14,height:14,cursor:"pointer"}}/>
-              {[{l:"RUTINA",k:"nombre"},{l:"CATEG.",k:"categoria"},{l:"SUBCATEG.",k:"subcategoria"},{l:"DIFICULD.",k:"dificultad"},{l:"DÍAS",k:null},{l:"XP",k:"xpTotal"},{l:"SESIONES",k:"sesiones"},{l:"ESTADO",k:"activo"}].map((h,i)=>(
-                <div key={i} className={h.k?"r-sort":""} onClick={()=>h.k&&sort(h.k)}
-                  style={{display:"flex",alignItems:"center",gap:3,...px(5),color:sortKey===h.k?C.orange:C.muted,letterSpacing:".05em"}}>
-                  {h.l}{h.k&&<SortIcon active={sortKey===h.k} dir={sortDir}/>}
-                </div>
-              ))}
-              <span style={{...px(5),color:C.muted,letterSpacing:".05em"}}>ACC.</span>
-            </div>
-            {paginated.length===0?<div style={{padding:40,textAlign:"center",...raj(14,500),color:C.muted}}>Sin resultados.</div>
-            :paginated.map((r,i)=>{
-              const c=TAXONOMIA[r.categoria]?.color||C.orange;
-              return (
-                <div key={r.id} className="r-row" style={{display:"grid",gridTemplateColumns:"34px 2.2fr 1fr 0.9fr 0.9fr 0.8fr 0.7fr 0.6fr 0.6fr 95px",padding:"11px 14px",borderBottom:`1px solid ${C.navy}22`,gap:8,alignItems:"center",animation:`r-slideU .3s ease ${i*.04}s both`,background:selected.has(r.id)?`${C.orange}08`:"transparent"}}>
-                  <input type="checkbox" checked={selected.has(r.id)} onChange={()=>toggleSelect(r.id)} style={{accentColor:C.orange,width:14,height:14,cursor:"pointer"}}/>
-                  <div style={{display:"flex",alignItems:"center",gap:10,minWidth:0}}>
-                    <div style={{width:32,height:32,background:`${c}18`,border:`1px solid ${c}33`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,flexShrink:0}}>{r.imagen}</div>
-                    <div style={{minWidth:0}}><div style={{...raj(13,700),color:C.white,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{r.nombre}</div></div>
-                  </div>
-                  <CatBadge cat={r.categoria}/>
-                  <SubBadge sub={r.subcategoria} cat={r.categoria}/>
-                  <DifBadge dif={r.dificultad}/>
-                  <div style={{opacity:.75,transform:"scale(.85)",transformOrigin:"left"}}><DiaChips dias={r.diasSemana} color={c}/></div>
-                  <span style={{...orb(12,900),color:C.gold}}>+{r.xpTotal}</span>
-                  <div><div style={{...raj(11,700),color:C.blue,marginBottom:2}}>{r.sesiones}</div><MiniBar val={(r.sesiones/100)*100} color={C.blue} height={3}/></div>
-                  <div style={{display:"flex",alignItems:"center",gap:5}}>
-                    <div style={{width:7,height:7,borderRadius:"50%",background:r.activo?C.green:C.red,animation:r.activo?"r-pulse 1.8s infinite":"none"}}/>
-                    <span style={{...raj(10,600),color:r.activo?C.green:C.red}}>{r.activo?"ON":"OFF"}</span>
-                  </div>
-                  <div style={{display:"flex",gap:5}}>
-                    {[{Icon:Eye,c:C.blue,fn:()=>setModal({type:"view",r})},{Icon:Edit2,c:C.orange,fn:()=>setModal({type:"form",r})},{Icon:Trash2,c:C.red,fn:()=>setModal({type:"delete",r})}].map(({Icon,c:ic,fn},j)=>(
-                      <button key={j} onClick={fn} className="r-icon-btn"
-                        style={{background:"transparent",border:`1px solid ${ic}33`,padding:5,color:ic,display:"flex",alignItems:"center"}}
-                        onMouseEnter={e=>{e.currentTarget.style.background=`${ic}18`;e.currentTarget.style.borderColor=ic;}}
-                        onMouseLeave={e=>{e.currentTarget.style.background="transparent";e.currentTarget.style.borderColor=`${ic}33`;}}><Icon size={12}/></button>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Pagination */}
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10}}>
-          <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <span style={{...raj(13,500),color:C.muted}}>{Math.min((page-1)*pageSize+1,filtered.length)}–{Math.min(page*pageSize,filtered.length)} de {filtered.length}</span>
-            <select value={pageSize} onChange={e=>{setPageSize(Number(e.target.value));setPage(1);}} className="r-input"
-              style={{padding:"6px 10px",background:C.panel,border:`1px solid ${C.navy}`,color:C.muted,...raj(12,500),cursor:"pointer"}}>
-              {PAGE_SIZE_OPTIONS.map(n=><option key={n} value={n}>{n} por página</option>)}
+          {/* Subcategory filter */}
+          {subcats.length > 0 && (
+            <select value={subfilter} onChange={e => setSubfilter(e.target.value)}
+              className="rn-input"
+              style={{ ...inpStyle(), width:"auto", padding:"8px 12px", appearance:"none", cursor:"pointer" }}>
+              <option value="Todas">Todas subcategorías</option>
+              {subcats.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
-          </div>
-          <div style={{display:"flex",gap:5}}>
-            <button onClick={()=>setPage(1)} disabled={page===1} className="r-btn" style={{background:C.panel,border:`1px solid ${C.navy}`,color:page===1?C.navy:C.muted,padding:"6px 11px",cursor:page===1?"not-allowed":"pointer"}}>«</button>
-            <button onClick={()=>setPage(p=>p-1)} disabled={page===1} className="r-btn" style={{background:C.panel,border:`1px solid ${C.navy}`,color:page===1?C.navy:C.muted,padding:"6px 10px",cursor:page===1?"not-allowed":"pointer",display:"flex",alignItems:"center"}}><ChevronLeft size={13}/></button>
-            {Array.from({length:totalPages},(_,i)=>i+1).filter(n=>Math.abs(n-page)<=2).map(n=>(
-              <button key={n} onClick={()=>setPage(n)} className="r-btn"
-                style={{background:n===page?C.orange:C.panel,border:`1px solid ${n===page?C.orange:C.navy}`,color:n===page?C.bg:C.muted,padding:"6px 13px",cursor:"pointer",...raj(13,n===page?700:500)}}>
-                {n}
+          )}
+
+          {/* Difficulty filter */}
+          <select value={difilter} onChange={e => setDifilter(e.target.value)}
+            className="rn-input"
+            style={{ ...inpStyle(), width:"auto", padding:"8px 12px", appearance:"none", cursor:"pointer" }}>
+            <option value="Todas">Todas dificultades</option>
+            {DIFICULTADES.map(d => <option key={d} value={d}>{d}</option>)}
+          </select>
+
+          {/* Status pills */}
+          <div style={{ display:"flex", gap:4 }}>
+            {[
+              { v:"all",      l:"Todas",    c:C.orange },
+              { v:"activas",  l:"● Activas",c:C.green  },
+              { v:"inactivas",l:"● Inactivas",c:C.red  },
+            ].map(o => (
+              <button key={o.v} onClick={() => setStatusFilter(o.v)} className="rn-btn"
+                style={pillBtn(statusFilter===o.v, o.c)}>
+                {o.l}
               </button>
             ))}
-            <button onClick={()=>setPage(p=>p+1)} disabled={page===totalPages} className="r-btn" style={{background:C.panel,border:`1px solid ${C.navy}`,color:page===totalPages?C.navy:C.muted,padding:"6px 10px",cursor:page===totalPages?"not-allowed":"pointer",display:"flex",alignItems:"center"}}><ChevronRight size={13}/></button>
-            <button onClick={()=>setPage(totalPages)} disabled={page===totalPages} className="r-btn" style={{background:C.panel,border:`1px solid ${C.navy}`,color:page===totalPages?C.navy:C.muted,padding:"6px 11px",cursor:page===totalPages?"not-allowed":"pointer"}}>»</button>
           </div>
+
+          {/* Refresh */}
+          <button onClick={refresh} className="rn-btn"
+            style={{ ...raj(12,600), color:C.muted, background:C.panel, border:`1px solid ${C.navy}`,
+              borderRadius:6, padding:"7px 11px", cursor:"pointer", display:"flex", alignItems:"center", gap:5 }}>
+            <RefreshCw size={12} style={{ animation:refreshing?"rn-spin .8s linear infinite":"none" }}/> Actualizar
+          </button>
         </div>
+
+        {/* ── RESULTS COUNT ── */}
+        <div style={{ ...raj(12,500), color:C.muted }}>
+          {filtered.length} rutina{filtered.length!==1?"s":""} encontrada{filtered.length!==1?"s":""}
+        </div>
+
+        {/* ── CARD GRID ── */}
+        {filtered.length === 0 ? (
+          <div style={{
+            background:"rgba(20,26,42,0.78)", backdropFilter:"blur(12px)",
+            border:`1px solid ${C.navy}`, borderRadius:14,
+            padding:"60px 40px", textAlign:"center",
+          }}>
+            <BookOpen size={40} color={C.navy} style={{ marginBottom:14, opacity:.5 }}/>
+            <div style={{ ...raj(14,600), color:C.muted }}>No hay rutinas que coincidan con el filtro.</div>
+          </div>
+        ) : (
+          <div style={{
+            display:"grid",
+            gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",
+            gap:14,
+            gridAutoRows:"auto",
+          }}>
+            <AnimatePresence mode="popLayout">
+              {filtered.map((rutina, i) => (
+                <motion.div key={rutina.id}
+                  initial={{ opacity:0, scale:.97 }}
+                  animate={{ opacity:1, scale:1 }}
+                  exit={{ opacity:0, scale:.95 }}
+                  transition={{ duration:0.25, delay:i*.04, ease:"easeOut" }}
+                  // Featured rutinas (top sessions) get extra column span
+                  style={{ gridColumn:(rutina.sesiones||0)>=100 ? "span 1" : "span 1" }}>
+                  <RutinaCard
+                    rutina={rutina}
+                    onView={()   => setModal({type:"view",   data:rutina})}
+                    onEdit={()   => setModal({type:"edit",   data:rutina})}
+                    onDelete={()=> setModal({type:"delete",  data:rutina})}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        )}
 
       </div>
     </>

@@ -11,6 +11,9 @@ const transporter = nodemailer.createTransport({
     user: process.env.GMAIL_USER,
     pass: process.env.GMAIL_PASS,   // contraseña de aplicación, no tu contraseña normal
   },
+  tls: {
+    rejectUnauthorized: false,      // permite certificados auto-firmados (proxies corporativos)
+  },
 });
 
 // Verificar conexión al iniciar (solo en desarrollo)

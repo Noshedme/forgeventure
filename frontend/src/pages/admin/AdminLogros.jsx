@@ -5,22 +5,18 @@
 //  Conectar: getLogros(), createLogro(), updateLogro(),
 //            deleteLogro() desde api.js cuando esté el backend.
 // ─────────────────────────────────────────────────────────────
-import { useState, useMemo } from "react";
+
+import { useState, useEffect, useMemo } from "react";
+import { useToast } from "../../components/shared/ui.jsx";
 import {
   Search, Plus, RefreshCw, Eye, Edit2, Trash2,
   ChevronUp, ChevronDown, ChevronLeft, ChevronRight,
   X, Check, AlertTriangle, Trophy, Zap, Star,
   BarChart2, Lock, Unlock, EyeOff, Award,
 } from "lucide-react";
-
-const C = {
-  bg:"#050C18", side:"#080F1C", card:"#0C1826", panel:"#091220",
-  navy:"#1A3354", navyL:"#1E3A5F",
-  orange:"#E85D04", orangeL:"#FF9F1C", gold:"#FFD700",
-  blue:"#4CC9F0", teal:"#0A9396", green:"#2ecc71",
-  red:"#E74C3C", purple:"#9B59B6",
-  white:"#F0F4FF", muted:"#5A7A9A", mutedL:"#7A9AB8",
-};
+import { auth } from "../../firebase.js";
+import { getLogros, createLogro, updateLogro, deleteLogro, seedMenteLogros, seedMenteMisiones } from "../../services/api.js";
+import { C, px, raj, orb } from "../../components/admin/config/shared.jsx";
 
 const CSS = `
   @keyframes l-slideU  { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
@@ -32,7 +28,12 @@ const CSS = `
   @keyframes l-shine   { 0%{transform:translateX(-100%) rotate(25deg)} 100%{transform:translateX(200%) rotate(25deg)} }
   @keyframes l-glow    { 0%,100%{box-shadow:0 0 10px var(--gc)} 50%{box-shadow:0 0 28px var(--gc),0 0 50px var(--gc)} }
   @keyframes l-badge   { 0%,100%{transform:translateY(0) scale(1)} 50%{transform:translateY(-4px) scale(1.05)} }
+  @keyframes l-toastIn { from{opacity:0;transform:translateX(120%)} to{opacity:1;transform:translateX(0)} }
+  @keyframes l-toastOut{ from{opacity:1;transform:translateX(0)} to{opacity:0;transform:translateX(120%)} }
+  @keyframes l-slideE  { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes l-shimmer { 0%{background-position:-400px 0} 100%{background-position:400px 0} }
 
+  .l-skel { background:linear-gradient(90deg,${C.card} 25%,${C.navy}55 50%,${C.card} 75%); background-size:400px 100%; animation:l-shimmer 1.5s infinite linear; }
   .l-row     { transition:background .15s; }
   .l-row:hover { background:${C.navyL}18 !important; }
   .l-btn     { transition:all .18s; cursor:pointer; }
@@ -40,20 +41,15 @@ const CSS = `
   .l-icon-btn { transition:all .2s; cursor:pointer; }
   .l-input   { transition:border-color .2s,box-shadow .2s; outline:none; }
   .l-input:focus { border-color:${C.orange} !important; box-shadow:0 0 0 2px ${C.orange}22; }
-  .l-input::placeholder { color:${C.navy}; }
+  .l-input::placeholder { color:${C.muted}88; }
   .l-sort    { cursor:pointer; user-select:none; transition:color .2s; }
   .l-sort:hover { color:${C.orange} !important; }
-  .l-card    { transition:all .22s; }
-  .l-card:hover { transform:translateY(-4px); box-shadow:0 16px 48px rgba(0,0,0,.5) !important; }
+  .l-card    { transition:transform .22s,box-shadow .22s; }
   .l-tab     { transition:all .2s; cursor:pointer; }
   .l-req-row { transition:background .15s; }
   .l-req-row:hover { background:${C.navyL}18 !important; }
   .l-badge-preview:hover .l-shine-effect { animation: l-shine .6s ease; }
 `;
-
-const px  = s => ({ fontFamily:"'Press Start 2P'", fontSize:s });
-const raj = (s,w=600) => ({ fontFamily:"'Rajdhani',sans-serif", fontSize:s, fontWeight:w });
-const orb = (s,w=700) => ({ fontFamily:"'Orbitron',sans-serif", fontSize:s, fontWeight:w });
 
 // ── Tipos ──────────────────────────────────────────────────────
 const TIPOS = {
@@ -62,6 +58,7 @@ const TIPOS = {
   Nivel:     { color:C.gold,    icon:"⬆️", bg:"#FFD70014", desc:"Alcanzar niveles en el juego" },
   Social:    { color:C.blue,    icon:"👥", bg:"#4CC9F014", desc:"Interacciones y comunidad" },
   Especial:  { color:C.purple,  icon:"🌟", bg:"#9B59B614", desc:"Eventos y fechas especiales" },
+  Mente:     { color:C.teal,    icon:"🧘", bg:"#0A939614", desc:"Bienestar y psicología positiva" },
   Secreto:   { color:C.muted,   icon:"❓", bg:"#5A7A9A14", desc:"Condición oculta al jugador" },
 };
 const TIPO_KEYS = Object.keys(TIPOS);
@@ -94,10 +91,11 @@ const COND_TIPOS = [
 
 // ── Recompensas que otorga el logro ────────────────────────────
 const RECOMP_TIPOS = [
-  { id:"xp",     icon:"⚡", label:"XP Bonus"  },
-  { id:"titulo", icon:"👑", label:"Título"    },
-  { id:"item",   icon:"🎒", label:"Objeto"    },
-  { id:"badge_xtra", icon:"🏅", label:"Badge Extra" },
+  { id:"xp",        icon:"⚡", label:"XP Bonus"   },
+  { id:"monedas",   icon:"🪙", label:"Monedas"    },
+  { id:"titulo",    icon:"👑", label:"Título"     },
+  { id:"item",      icon:"🎒", label:"Objeto"     },
+  { id:"badge_xtra",icon:"🏅", label:"Badge Extra"},
 ];
 
 const EMOJIS = [
@@ -148,7 +146,7 @@ const MOCK_LOGROS = [
 ];
 
 const EMPTY_COND = { tipo:"sesiones_total", label:"Total de sesiones", icon:"🏃", cantidad:1, unidad:"sesiones" };
-const EMPTY_FORM = { nombre:"", tipo:"Ejercicio", rareza:"Común", imagen:"🏆", xpBonus:100, secreto:false, activo:true, descripcion:"", descripcionSecreta:"", condiciones:[], recompensas:[{tipo:"xp",icon:"⚡",label:"XP Bonus",valor:""}] };
+const EMPTY_FORM = { nombre:"", tipo:"Ejercicio", rareza:"Común", imagen:"🏆", xpBonus:100, coinsBonus:0, secreto:false, activo:true, descripcion:"", descripcionCorta:"", descripcionSecreta:"", condiciones:[], recompensas:[{tipo:"xp",icon:"⚡",label:"XP Bonus",valor:""}], prerequisitos:[] };
 const PAGE_SIZE_OPTIONS = [6,12,24];
 
 // ── UI atoms ───────────────────────────────────────────────────
@@ -157,12 +155,12 @@ function MiniBar({val,color,height=5}) {
 }
 function TipoBadge({tipo}) {
   const m=TIPOS[tipo]||{color:C.muted,icon:"?",bg:C.panel};
-  return <span style={{...raj(10,700),color:m.color,background:m.bg,border:`1px solid ${m.color}33`,padding:"2px 8px",display:"inline-flex",alignItems:"center",gap:4,whiteSpace:"nowrap"}}>{m.icon} {tipo}</span>;
+  return <span style={{...raj(10,700),color:m.color,background:m.bg,border:`1px solid ${m.color}33`,padding:"2px 10px",borderRadius:20,display:"inline-flex",alignItems:"center",gap:4,whiteSpace:"nowrap"}}>{m.icon} {tipo}</span>;
 }
 function RarezaBadge({rareza}) {
   const r=RAREZA[rareza]||{color:C.muted,tier:1};
   const stars="★".repeat(r.tier);
-  return <span style={{...raj(10,700),color:r.color,background:`${r.color}14`,border:`1px solid ${r.color}33`,padding:"2px 8px",whiteSpace:"nowrap",textShadow:r.tier>=3?`0 0 8px ${r.color}`:"none"}}>{rareza} {stars}</span>;
+  return <span style={{...raj(10,700),color:r.color,background:`${r.color}14`,border:`1px solid ${r.color}33`,padding:"2px 10px",borderRadius:20,whiteSpace:"nowrap",textShadow:r.tier>=3?`0 0 8px ${r.color}`:"none"}}>{rareza} {stars}</span>;
 }
 function Spinner({color=C.orange}) {
   return <div style={{width:13,height:13,border:`2px solid ${C.muted}`,borderTop:`2px solid ${color}`,borderRadius:"50%",animation:"l-spin .8s linear infinite"}}/>;
@@ -233,7 +231,7 @@ function ViewModal({logro,onClose,onEdit}) {
     <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,.78)",display:"flex",alignItems:"center",justifyContent:"center",padding:16}}
       onClick={e=>e.target===e.currentTarget&&onClose()}>
       <div style={{width:"100%",maxWidth:580,background:C.card,border:`2px solid ${c}44`,
-        boxShadow:`0 0 60px ${c}18,0 24px 60px rgba(0,0,0,.6)`,animation:"l-modalIn .25s ease both",overflow:"hidden"}}>
+        borderRadius:16,boxShadow:`0 0 60px ${c}18,0 24px 60px rgba(0,0,0,.6)`,animation:"l-modalIn .25s ease both",overflow:"hidden"}}>
         <div style={{height:4,background:`linear-gradient(90deg,transparent,${c},transparent)`}}/>
 
         {/* header */}
@@ -345,31 +343,42 @@ function ViewModal({logro,onClose,onEdit}) {
 // ══════════════════════════════════════════════════════════════
 // MODAL — FORM (Crear / Editar)
 // ══════════════════════════════════════════════════════════════
-function FormModal({logro,onClose,onSave}) {
+function FormModal({logro,onClose,onSave,allLogros=[]}) {
   const isEdit=!!logro;
   const [form,    setForm]    = useState(logro?{...logro,condiciones:[...logro.condiciones],recompensas:[...logro.recompensas]}:{...EMPTY_FORM});
   const [loading, setLoading] = useState(false);
   const [errors,  setErrors]  = useState({});
   const [shake,   setShake]   = useState(false);
   const [tab,     setTab]     = useState("info");
+  const [dirty,   setDirty]   = useState(new Set());
 
-  const set=(k,v)=>setForm(f=>({...f,[k]:v}));
+  const touch=k=>setDirty(d=>{const n=new Set(d);n.add(k);return n;});
+  const set=(k,v)=>setForm(f=>{const next={...f,[k]:v};if(dirty.has(k))setErrors(validate(next));return next;});
+  const blur=(k)=>{touch(k);setErrors(validate(form));};
   const bc=isEdit?C.orange:C.green;
   const tm=TIPOS[form.tipo]||{};
   const rm=RAREZA[form.rareza]||{color:C.muted};
 
-  const validate=()=>{
+  const validate=(f=form)=>{
     const e={};
-    if(!form.nombre.trim())       e.nombre="Requerido";
-    if(!form.descripcion.trim())  e.descripcion="Requerido";
-    if(!form.condiciones.length)  e.condiciones="Añade al menos una condición";
+    if(!f.nombre.trim())       e.nombre="Requerido";
+    if(!f.descripcion.trim())  e.descripcion="Requerido";
+    if(!f.condiciones.length)  e.condiciones="Añade al menos una condición";
     return e;
   };
   const save=async()=>{
-    const e=validate();if(Object.keys(e).length){setErrors(e);setShake(true);setTimeout(()=>setShake(false),500);return;}
-    setLoading(true);await new Promise(r=>setTimeout(r,900));setLoading(false);
-    onSave({...form,id:logro?.id||`lg${Date.now()}`,obtenidos:logro?.obtenidos||0,xpBonus:Number(form.xpBonus)||0,creadoEn:logro?.creadoEn||new Date().toISOString().slice(0,10)});
-    onClose();
+    ["nombre","descripcion"].forEach(touch);
+    const e=validate();
+    if(Object.keys(e).length){setErrors(e);setShake(true);setTimeout(()=>setShake(false),500);return;}
+    setLoading(true);
+    try {
+      await onSave({...form,id:logro?.id||undefined,obtenidos:logro?.obtenidos||0,xpBonus:Number(form.xpBonus)||0,creadoEn:logro?.creadoEn||new Date().toISOString().slice(0,10)});
+      onClose();
+    } catch(err) {
+      setErrors(prev=>({...prev,_api:err.message||"Error al guardar"}));
+    } finally {
+      setLoading(false);
+    }
   };
 
   // condiciones
@@ -390,7 +399,7 @@ function FormModal({logro,onClose,onSave}) {
     setRec(i,"tipo",tid);setRec(i,"icon",rt.icon);setRec(i,"label",rt.label);
   };
 
-  const inpSt=(err)=>({width:"100%",padding:"11px 14px",background:C.panel,border:`1px solid ${err?C.red:C.navy}`,color:C.white,...raj(14,500)});
+  const inpSt=(err)=>({width:"100%",padding:"11px 14px",background:C.panel,border:`1px solid ${err?C.red:C.navy}`,borderRadius:6,color:C.white,...raj(14,500)});
   const lbl={display:"block",...px(6),color:C.muted,marginBottom:7,letterSpacing:".06em"};
   const TABS=[{id:"info",l:"INFO"},{id:"condiciones",l:`CONDICIONES (${form.condiciones.length})`},{id:"recompensas",l:`RECOMPENSAS (${form.recompensas.length})`}];
 
@@ -398,7 +407,7 @@ function FormModal({logro,onClose,onSave}) {
     <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,.78)",display:"flex",alignItems:"center",justifyContent:"center",padding:16,overflowY:"auto"}}
       onClick={e=>e.target===e.currentTarget&&onClose()}>
       <div style={{width:"100%",maxWidth:720,background:C.card,border:`1px solid ${bc}44`,
-        boxShadow:`0 0 60px ${bc}0E,0 24px 60px rgba(0,0,0,.6)`,animation:"l-modalIn .25s ease both",
+        borderRadius:16,boxShadow:`0 0 60px ${bc}0E,0 24px 60px rgba(0,0,0,.6)`,animation:"l-modalIn .25s ease both",
         overflow:"hidden",display:"flex",flexDirection:"column",maxHeight:"93vh"}}>
         <div style={{height:3,background:`linear-gradient(90deg,transparent,${bc},transparent)`,flexShrink:0}}/>
 
@@ -445,13 +454,18 @@ function FormModal({logro,onClose,onSave}) {
                 <div style={{display:"flex",flexDirection:"column",gap:14}}>
                   <div>
                     <label style={lbl}>📝 NOMBRE</label>
-                    <input className="l-input" value={form.nombre} onChange={e=>set("nombre",e.target.value)} placeholder="Ej: Maestro del Fuego" style={inpSt(errors.nombre)}/>
-                    {errors.nombre&&<p style={{...raj(11),color:C.red,marginTop:4}}>⚠ {errors.nombre}</p>}
+                    <input className="l-input" value={form.nombre} onChange={e=>set("nombre",e.target.value)} onBlur={()=>blur("nombre")} placeholder="Ej: Maestro del Fuego" style={inpSt(errors.nombre&&dirty.has("nombre"))}/>
+                    {errors.nombre&&dirty.has("nombre")&&<p style={{...raj(11),color:C.red,marginTop:4,animation:"l-slideE .2s ease both"}}>⚠ {errors.nombre}</p>}
+                  </div>
+                  <div>
+                    <label style={lbl}>💬 SUBTÍTULO DE CARD <span style={{...raj(10,400),color:C.muted,marginLeft:6}}>(máx. 60 chars)</span></label>
+                    <input className="l-input" value={form.descripcionCorta||""} onChange={e=>set("descripcionCorta",e.target.value.slice(0,60))} placeholder="Ej: Completa tu primera sesión" style={inpSt(false)}/>
+                    <div style={{...raj(10,400),color:C.muted,marginTop:3,textAlign:"right"}}>{(form.descripcionCorta||"").length}/60</div>
                   </div>
                   <div>
                     <label style={lbl}>📋 DESCRIPCIÓN PÚBLICA</label>
-                    <textarea className="l-input" value={form.descripcion} onChange={e=>set("descripcion",e.target.value)} rows={2} placeholder="Lo que el jugador ve como objetivo..." style={{...inpSt(errors.descripcion),resize:"vertical"}}/>
-                    {errors.descripcion&&<p style={{...raj(11),color:C.red,marginTop:4}}>⚠ {errors.descripcion}</p>}
+                    <textarea className="l-input" value={form.descripcion} onChange={e=>set("descripcion",e.target.value)} onBlur={()=>blur("descripcion")} rows={2} placeholder="Lo que el jugador ve como objetivo..." style={{...inpSt(errors.descripcion&&dirty.has("descripcion")),resize:"vertical"}}/>
+                    {errors.descripcion&&dirty.has("descripcion")&&<p style={{...raj(11),color:C.red,marginTop:4,animation:"l-slideE .2s ease both"}}>⚠ {errors.descripcion}</p>}
                   </div>
                   {form.secreto&&(
                     <div>
@@ -459,10 +473,14 @@ function FormModal({logro,onClose,onSave}) {
                       <textarea className="l-input" value={form.descripcionSecreta} onChange={e=>set("descripcionSecreta",e.target.value)} rows={2} placeholder="Condición real que el jugador no ve hasta obtenerlo..." style={{...inpSt(false),resize:"vertical",borderColor:C.muted}}/>
                     </div>
                   )}
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
                     <div>
                       <label style={lbl}>⚡ XP BONUS</label>
                       <input className="l-input" type="number" min={0} value={form.xpBonus} onChange={e=>set("xpBonus",e.target.value)} style={inpSt(false)}/>
+                    </div>
+                    <div>
+                      <label style={lbl}>🪙 MONEDAS</label>
+                      <input className="l-input" type="number" min={0} value={form.coinsBonus||0} onChange={e=>set("coinsBonus",e.target.value)} style={inpSt(false)}/>
                     </div>
                     <div>
                       <label style={lbl}>● ESTADO</label>
@@ -537,14 +555,14 @@ function FormModal({logro,onClose,onSave}) {
                     <div>
                       <label style={{...lbl,marginBottom:6}}>TIPO DE CONDICIÓN</label>
                       <select className="l-input" value={cd.tipo} onChange={e=>changeCondTipo(i,e.target.value)}
-                        style={{width:"100%",padding:"9px 12px",background:C.card,border:`1px solid ${C.navy}`,color:C.white,...raj(13,500),appearance:"none",cursor:"pointer"}}>
+                        style={{width:"100%",padding:"9px 12px",background:C.card,border:`1px solid ${C.navy}`,borderRadius:6,color:C.white,...raj(13,500),appearance:"none",cursor:"pointer"}}>
                         {COND_TIPOS.map(ct=><option key={ct.id} value={ct.id}>{ct.icon} {ct.label}</option>)}
                       </select>
                     </div>
                     <div>
                       <label style={{...lbl,marginBottom:6}}>CANTIDAD ({cd.unidad})</label>
                       <input className="l-input" type="number" min={1} value={cd.cantidad} onChange={e=>setCond(i,"cantidad",Number(e.target.value))}
-                        style={{width:"100%",padding:"9px 12px",background:C.card,border:`1px solid ${C.navy}`,color:C.white,...raj(14,600)}}/>
+                        style={{width:"100%",padding:"9px 12px",background:C.card,border:`1px solid ${C.navy}`,borderRadius:6,color:C.white,...raj(14,600)}}/>
                     </div>
                     <button type="button" onClick={()=>removeCond(i)} className="l-icon-btn"
                       style={{background:"transparent",border:`1px solid ${C.red}33`,padding:"9px",color:C.red,display:"flex",alignItems:"center",alignSelf:"flex-end"}}
@@ -566,8 +584,41 @@ function FormModal({logro,onClose,onSave}) {
                 <Plus size={16}/> AÑADIR CONDICIÓN
               </button>
 
+              {/* prerequisitos */}
+              <div style={{background:C.panel,border:`1px solid ${C.purple}33`,borderRadius:8,padding:"14px 16px"}}>
+                <div style={{...px(6),color:C.purple,marginBottom:10,letterSpacing:".05em",display:"flex",alignItems:"center",gap:8}}>
+                  🔗 PREREQUISITOS <span style={{...raj(10,400),color:C.muted,fontFamily:"sans-serif"}}>(logros que el usuario debe tener antes)</span>
+                </div>
+                {(form.prerequisitos||[]).length===0
+                  ? <div style={{...raj(12,400),color:C.muted}}>Sin prerequisitos — logro disponible para todos.</div>
+                  : (form.prerequisitos||[]).map((pid,i)=>{
+                    const pre=logros.find(l=>l.id===pid);
+                    if(!pre) return null;
+                    const pRm=RAREZA[pre.rareza]||{color:C.muted};
+                    return (
+                      <div key={pid} style={{display:"flex",alignItems:"center",gap:10,background:C.card,border:`1px solid ${pRm.color}33`,borderRadius:6,padding:"8px 12px",marginBottom:6}}>
+                        <span style={{fontSize:18}}>{pre.imagen}</span>
+                        <span style={{...raj(13,700),color:C.white,flex:1}}>{pre.nombre}</span>
+                        <RarezaBadge rareza={pre.rareza}/>
+                        <button type="button" onClick={()=>set("prerequisitos",(form.prerequisitos||[]).filter(p=>p!==pid))}
+                          style={{background:"transparent",border:`1px solid ${C.red}44`,borderRadius:4,padding:"4px 7px",color:C.red,cursor:"pointer",display:"flex",alignItems:"center"}}><X size={11}/></button>
+                      </div>
+                    );
+                  })
+                }
+                <select className="l-input" defaultValue="" onChange={e=>{
+                  const v=e.target.value; e.target.value="";
+                  if(v&&!(form.prerequisitos||[]).includes(v)) set("prerequisitos",[...(form.prerequisitos||[]),v]);
+                }} style={{width:"100%",marginTop:8,padding:"8px 12px",background:C.card,border:`1px solid ${C.navy}`,borderRadius:6,color:C.white,...raj(13,500),appearance:"none",cursor:"pointer"}}>
+                  <option value="">＋ Añadir prerequisito...</option>
+                  {allLogros.filter(l=>l.id!==(logro?.id)&&!(form.prerequisitos||[]).includes(l.id)).map(l=>(
+                    <option key={l.id} value={l.id}>{l.imagen} {l.nombre} [{l.rareza}]</option>
+                  ))}
+                </select>
+              </div>
+
               {/* referencia */}
-              <div style={{background:C.panel,border:`1px solid ${C.navy}`,padding:"14px 16px"}}>
+              <div style={{background:C.panel,border:`1px solid ${C.navy}`,borderRadius:8,padding:"14px 16px"}}>
                 <div style={{...px(6),color:C.muted,marginBottom:10,letterSpacing:".05em"}}>📖 TIPOS DE CONDICIÓN</div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
                   {COND_TIPOS.map(ct=>(
@@ -596,15 +647,15 @@ function FormModal({logro,onClose,onSave}) {
                     <div>
                       <label style={{...lbl,marginBottom:6}}>TIPO</label>
                       <select className="l-input" value={rec.tipo} onChange={e=>changeRecTipo(i,e.target.value)}
-                        style={{width:"100%",padding:"9px 12px",background:C.card,border:`1px solid ${C.navy}`,color:C.white,...raj(13,500),appearance:"none",cursor:"pointer"}}>
+                        style={{width:"100%",padding:"9px 12px",background:C.card,border:`1px solid ${C.navy}`,borderRadius:6,color:C.white,...raj(13,500),appearance:"none",cursor:"pointer"}}>
                         {RECOMP_TIPOS.map(rt=><option key={rt.id} value={rt.id}>{rt.icon} {rt.label}</option>)}
                       </select>
                     </div>
                     <div>
                       <label style={{...lbl,marginBottom:6}}>{rec.tipo==="xp"?"CANTIDAD XP":rec.tipo==="titulo"?"NOMBRE TÍTULO":rec.tipo==="item"?"NOMBRE OBJETO":"NOMBRE BADGE"}</label>
                       <input className="l-input" value={rec.valor} onChange={e=>setRec(i,"valor",e.target.value)}
-                        placeholder={rec.tipo==="xp"?"Ej: 500 XP":rec.tipo==="titulo"?"Ej: Llama Eterna":rec.tipo==="item"?"Ej: Corona del Campeón":"Ej: Badge Centenario"}
-                        style={{width:"100%",padding:"9px 12px",background:C.card,border:`1px solid ${C.navy}`,color:C.white,...raj(14,600)}}/>
+                        placeholder={rec.tipo==="xp"?"Ej: 500 XP":rec.tipo==="titulo"?"Ej: Llama Eterna":rec.tipo==="item"?"Ej: Corona del Campeón":rec.tipo==="monedas"?"Ej: 200":"Ej: Badge Centenario"}
+                        style={{width:"100%",padding:"9px 12px",background:C.card,border:`1px solid ${C.navy}`,borderRadius:6,color:C.white,...raj(14,600)}}/>
                     </div>
                     {form.recompensas.length>1&&(
                       <button type="button" onClick={()=>removeRecomp(i)} className="l-icon-btn"
@@ -630,10 +681,11 @@ function FormModal({logro,onClose,onSave}) {
           )}
         </div>
 
+        {errors._api&&<div style={{...raj(12,600),color:C.red,padding:"0 22px 10px",display:"flex",alignItems:"center",gap:8}}><AlertTriangle size={13}/>{errors._api}</div>}
         <div style={{display:"flex",gap:10,padding:"15px 22px",borderTop:`1px solid ${C.navy}`,flexShrink:0}}>
-          <button onClick={onClose} className="l-btn" style={{flex:"0 0 auto",...raj(13,600),color:C.muted,background:C.panel,border:`1px solid ${C.navy}`,padding:"12px 20px",cursor:"pointer"}}>CANCELAR</button>
+          <button onClick={onClose} className="l-btn" style={{flex:"0 0 auto",...raj(13,600),color:C.muted,background:C.panel,border:`1px solid ${C.navy}`,borderRadius:8,padding:"12px 20px",cursor:"pointer"}}>CANCELAR</button>
           <button onClick={save} disabled={loading} className="l-btn"
-            style={{flex:1,...px(8),color:loading?C.muted:C.bg,background:loading?`${bc}55`:bc,border:"none",padding:"12px",cursor:loading?"not-allowed":"pointer",boxShadow:`0 4px 20px ${bc}44`,display:"flex",alignItems:"center",justifyContent:"center",gap:10}}>
+            style={{flex:1,...px(8),color:loading?C.muted:C.bg,background:loading?`${bc}55`:bc,border:"none",borderRadius:8,padding:"12px",cursor:loading?"not-allowed":"pointer",boxShadow:`0 4px 20px ${bc}44`,display:"flex",alignItems:"center",justifyContent:"center",gap:10}}>
             {loading?<><Spinner color={bc}/> GUARDANDO...</>:<><Check size={14}/> {isEdit?"GUARDAR CAMBIOS":"CREAR LOGRO"}</>}
           </button>
         </div>
@@ -648,30 +700,45 @@ function FormModal({logro,onClose,onSave}) {
 function DeleteModal({logro,onClose,onConfirm}) {
   const [typed,setTyped]=useState("");
   const [loading,setLoading]=useState(false);
+  const [delError,setDelError]=useState("");
   const match=typed===logro.nombre;
-  const confirm=async()=>{if(!match)return;setLoading(true);await new Promise(r=>setTimeout(r,700));setLoading(false);onConfirm(logro.id);onClose();};
+  const confirm=async()=>{
+    if(!match)return;
+    setLoading(true);
+    try{await onConfirm(logro.id);onClose();}
+    catch(e){setDelError(e.message||"Error al eliminar");setLoading(false);}
+  };
   return (
     <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,.8)",display:"flex",alignItems:"center",justifyContent:"center",padding:16}}
       onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{width:"100%",maxWidth:420,background:C.card,border:`1px solid ${C.red}44`,boxShadow:`0 0 60px ${C.red}14,0 24px 60px rgba(0,0,0,.6)`,animation:"l-modalIn .25s ease both",overflow:"hidden"}}>
+      <div style={{width:"100%",maxWidth:420,background:C.card,border:`1px solid ${C.red}44`,borderRadius:16,boxShadow:`0 0 60px ${C.red}14,0 24px 60px rgba(0,0,0,.6)`,animation:"l-modalIn .25s ease both",overflow:"hidden"}}>
         <div style={{height:3,background:`linear-gradient(90deg,transparent,${C.red},transparent)`}}/>
         <div style={{padding:"22px 24px 26px"}}>
           <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:18}}>
             <div style={{background:`${C.red}18`,border:`1px solid ${C.red}44`,padding:10,display:"flex"}}><AlertTriangle size={22} color={C.red}/></div>
             <div><div style={{...orb(13,900),color:C.red,marginBottom:3}}>ELIMINAR LOGRO</div><div style={{...raj(12,500),color:C.muted}}>Esta acción no se puede deshacer</div></div>
           </div>
-          <div style={{background:`${C.red}0A`,border:`1px solid ${C.red}22`,padding:"12px 16px",marginBottom:18,display:"flex",gap:12,alignItems:"center"}}>
+          <div style={{background:`${C.red}0A`,border:`1px solid ${C.red}22`,padding:"12px 16px",marginBottom:12,display:"flex",gap:12,alignItems:"center"}}>
             <BadgePreview logro={logro} size="sm"/>
             <div>
               <div style={{...raj(14,700),color:C.red}}>{logro.nombre}</div>
               <div style={{...raj(12,400),color:C.muted}}>{logro.tipo} · {logro.rareza} · {logro.obtenidos} obtenidos</div>
             </div>
           </div>
+          {logro.obtenidos > 0 && (
+            <div style={{background:"#FF9F1C14",border:"1px solid #FF9F1C55",padding:"10px 14px",borderRadius:4,display:"flex",gap:10,alignItems:"flex-start",marginBottom:14}}>
+              <AlertTriangle size={14} color="#FF9F1C" style={{flexShrink:0,marginTop:2}}/>
+              <div style={{...raj(12,500),color:"#FF9F1C",lineHeight:1.5}}>
+                ⚠️ <strong>{logro.obtenidos.toLocaleString()} héroes</strong> tienen este logro. Al eliminarlo quedará huérfano en sus perfiles.
+              </div>
+            </div>
+          )}
           <div style={{marginBottom:18}}>
             <label style={{display:"block",...px(6),color:C.muted,marginBottom:8,letterSpacing:".06em"}}>ESCRIBE <span style={{color:C.red}}>{logro.nombre}</span> PARA CONFIRMAR</label>
             <input className="l-input" value={typed} onChange={e=>setTyped(e.target.value)} placeholder={logro.nombre}
-              style={{width:"100%",padding:"12px 14px",background:C.panel,border:`1px solid ${match?C.red:C.navy}`,color:C.white,...raj(14,600)}}/>
+              style={{width:"100%",padding:"12px 14px",background:C.panel,border:`1px solid ${match?C.green:C.navy}`,color:C.white,...raj(14,600)}}/>
           </div>
+          {delError&&<div style={{...raj(11,600),color:C.red,marginBottom:10,display:"flex",gap:6,alignItems:"center"}}><AlertTriangle size={12}/>{delError}</div>}
           <div style={{display:"flex",gap:10}}>
             <button onClick={onClose} className="l-btn" style={{flex:"0 0 auto",...raj(13,600),color:C.muted,background:C.panel,border:`1px solid ${C.navy}`,padding:"12px 18px",cursor:"pointer"}}>CANCELAR</button>
             <button onClick={confirm} disabled={!match||loading} className="l-btn"
@@ -686,10 +753,114 @@ function DeleteModal({logro,onClose,onConfirm}) {
 }
 
 // ══════════════════════════════════════════════════════════════
+// MODAL — BULK DELETE CONFIRM (I28)
+// ══════════════════════════════════════════════════════════════
+function BulkDeleteModal({items,onClose,onConfirm}) {
+  const [loading,setLoading]=useState(false);
+  const [typed,  setTyped]  =useState("");
+  const [err,    setErr]    =useState("");
+  const confirmWord="ELIMINAR";
+  const match=typed===confirmWord;
+  const confirm=async()=>{
+    if(!match) return;
+    setLoading(true);
+    try { await onConfirm(); onClose(); }
+    catch(e){ setErr(e.message||"Error"); setLoading(false); }
+  };
+  return (
+    <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,.82)",display:"flex",alignItems:"center",justifyContent:"center",padding:16}}
+      onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div style={{width:"100%",maxWidth:480,background:C.card,border:`1px solid ${C.red}44`,borderRadius:16,
+        boxShadow:`0 0 60px ${C.red}14,0 24px 60px rgba(0,0,0,.6)`,animation:"l-modalIn .25s ease both",overflow:"hidden"}}>
+        <div style={{height:3,background:`linear-gradient(90deg,transparent,${C.red},transparent)`}}/>
+        <div style={{padding:"22px 24px 26px"}}>
+          <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:18}}>
+            <div style={{background:`${C.red}18`,border:`1px solid ${C.red}44`,borderRadius:10,padding:10,display:"flex"}}>
+              <AlertTriangle size={22} color={C.red}/>
+            </div>
+            <div>
+              <div style={{...orb(13,900),color:C.red,marginBottom:3}}>ELIMINAR {items.length} LOGROS</div>
+              <div style={{...raj(12,500),color:C.muted}}>Esta acción no se puede deshacer</div>
+            </div>
+          </div>
+
+          {/* Lista compacta */}
+          <div style={{background:`${C.red}08`,border:`1px solid ${C.red}22`,borderRadius:8,padding:"10px 14px",marginBottom:14,maxHeight:160,overflowY:"auto"}}>
+            {items.map(l=>(
+              <div key={l.id} style={{display:"flex",alignItems:"center",gap:10,padding:"5px 0",borderBottom:`1px solid ${C.navy}33`}}>
+                <span style={{fontSize:18,flexShrink:0}}>{l.imagen}</span>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{...raj(12,700),color:C.white,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.nombre}</div>
+                </div>
+                <RarezaBadge rareza={l.rareza}/>
+              </div>
+            ))}
+          </div>
+
+          <div style={{background:"#C66B6B14",border:"1px solid #C66B6B44",borderRadius:8,padding:"10px 14px",marginBottom:16,display:"flex",gap:10,alignItems:"flex-start"}}>
+            <AlertTriangle size={14} color={C.red} style={{flexShrink:0,marginTop:2}}/>
+            <div style={{...raj(12,500),color:C.red,lineHeight:1.5}}>
+              {items.filter(l=>l.obtenidos>0).length>0
+                ? `${items.filter(l=>l.obtenidos>0).length} logros tienen héroes que los han obtenido. Quedarán huérfanos en sus perfiles.`
+                : "Ninguno de estos logros ha sido obtenido aún."
+              }
+            </div>
+          </div>
+
+          <div style={{marginBottom:18}}>
+            <label style={{display:"block",...px(6),color:C.muted,marginBottom:8,letterSpacing:".06em"}}>
+              ESCRIBE <span style={{color:C.red}}>{confirmWord}</span> PARA CONFIRMAR
+            </label>
+            <input className="l-input" value={typed} onChange={e=>setTyped(e.target.value)} placeholder={confirmWord}
+              style={{width:"100%",padding:"12px 14px",background:C.panel,border:`1px solid ${match?C.green:C.navy}`,borderRadius:6,color:C.white,...raj(14,600)}}/>
+          </div>
+
+          {err&&<div style={{...raj(11,600),color:C.red,marginBottom:10,display:"flex",gap:6,alignItems:"center"}}><AlertTriangle size={12}/>{err}</div>}
+
+          <div style={{display:"flex",gap:10}}>
+            <button onClick={onClose} className="l-btn"
+              style={{flex:"0 0 auto",...raj(13,600),color:C.muted,background:C.panel,border:`1px solid ${C.navy}`,borderRadius:8,padding:"12px 18px",cursor:"pointer"}}>
+              CANCELAR
+            </button>
+            <button onClick={confirm} disabled={!match||loading} className="l-btn"
+              style={{flex:1,...px(7),color:(match&&!loading)?C.white:C.muted,background:(match&&!loading)?C.red:`${C.red}22`,border:`1px solid ${C.red}55`,borderRadius:8,padding:"12px",cursor:match?"pointer":"not-allowed",display:"flex",alignItems:"center",justifyContent:"center",gap:10,transition:"all .2s"}}>
+              {loading?<><Spinner color={C.red}/> ELIMINANDO...</>:<><Trash2 size={13}/> ELIMINAR {items.length} LOGROS</>}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Skeleton shimmer grid ──────────────────────────────────────
+function SkeletonLogros() {
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:18}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12}}>
+        {Array.from({length:4}).map((_,i)=>(
+          <div key={i} className="l-skel" style={{borderRadius:14,height:90,animationDelay:`${i*.08}s`}}/>
+        ))}
+      </div>
+      <div className="l-skel" style={{borderRadius:12,height:52}}/>
+      <div className="l-skel" style={{borderRadius:10,height:54}}/>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:14}}>
+        {Array.from({length:8}).map((_,i)=>(
+          <div key={i} className="l-skel" style={{borderRadius:14,height:300,animationDelay:`${i*.07}s`}}/>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
 // MAIN
 // ══════════════════════════════════════════════════════════════
 export default function AdminLogros() {
-  const [logros,     setLogros]     = useState(MOCK_LOGROS);
+  const [logros,     setLogros]     = useState([]);
+  const [loading,    setLoading]    = useState(true);
+  const [error,      setError]      = useState(null);
+  const { push }                   = useToast();
   const [tipoTab,    setTipoTab]    = useState("Todos");
   const [search,     setSearch]     = useState("");
   const [filterRar,  setFilterRar]  = useState("all");
@@ -701,10 +872,56 @@ export default function AdminLogros() {
   const [page,       setPage]       = useState(1);
   const [pageSize,   setPageSize]   = useState(12);
   const [selected,   setSelected]   = useState(new Set());
-  const [modal,      setModal]      = useState(null);
-  const [refreshing, setRefreshing] = useState(false);
+  const [modal,          setModal]          = useState(null);
+  const [bulkDelModal,   setBulkDelModal]   = useState(false);
+  const [refreshing,     setRefreshing]     = useState(false);
+  const [seeding,        setSeeding]        = useState(false);
 
-  const refresh=async()=>{setRefreshing(true);await new Promise(r=>setTimeout(r,800));setRefreshing(false);};
+  // Cargar logros desde Firebase
+  const loadLogros = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) {
+        setError("Usuario no autenticado");
+        return;
+      }
+      const response = await getLogros(token);
+      setLogros(response.logros || []);
+    } catch (err) {
+      console.error("Error cargando logros:", err);
+      setError("Error al cargar logros: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { loadLogros(); }, []);
+
+  const refresh = async () => {
+    setRefreshing(true);
+    await loadLogros();
+    setRefreshing(false);
+  };
+
+  const handleSeedMente = async () => {
+    try {
+      setSeeding(true);
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) { push("No autenticado", "error"); return; }
+      const [r1, r2] = await Promise.all([
+        seedMenteLogros(token),
+        seedMenteMisiones(token),
+      ]);
+      push(`✅ ${r1.message} · ${r2.message}`);
+      await loadLogros();
+    } catch (err) {
+      push(err.message || "Error al sembrar datos Mente", "error");
+    } finally {
+      setSeeding(false);
+    }
+  };
 
   const filtered=useMemo(()=>{
     let list=[...logros];
@@ -722,10 +939,95 @@ export default function AdminLogros() {
   const sort=(k)=>{if(sortKey===k)setSortDir(d=>d==="asc"?"desc":"asc");else{setSortKey(k);setSortDir("asc");}};
   const toggleSelect=(id)=>setSelected(s=>{const n=new Set(s);n.has(id)?n.delete(id):n.add(id);return n;});
   const toggleAll=()=>setSelected(s=>s.size===paginated.length?new Set():new Set(paginated.map(l=>l.id)));
-  const handleSave=(saved)=>setLogros(ls=>{const i=ls.findIndex(l=>l.id===saved.id);if(i>=0){const a=[...ls];a[i]=saved;return a;}return[saved,...ls];});
-  const handleDelete=(id)=>{setLogros(ls=>ls.filter(l=>l.id!==id));setSelected(s=>{const n=new Set(s);n.delete(id);return n;});};
-  const bulkDelete=()=>{setLogros(ls=>ls.filter(l=>!selected.has(l.id)));setSelected(new Set());};
-  const bulkToggle=(activo)=>setLogros(ls=>ls.map(l=>selected.has(l.id)?{...l,activo}:l));
+  const handleSave = async saved => {
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) throw new Error("Usuario no autenticado");
+
+      if (saved.id) { await updateLogro(token, saved.id, saved); push("Logro actualizado correctamente"); }
+      else          { await createLogro(token, saved); push("Logro creado correctamente"); }
+      await loadLogros();
+    } catch (err) {
+      push(err.message || "Error al guardar logro", "error");
+      throw err;
+    }
+  };
+
+  const handleDelete = async id => {
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) throw new Error("Usuario no autenticado");
+
+      await deleteLogro(token, id);
+      setSelected(s => { const n = new Set(s); n.delete(id); return n; });
+      await loadLogros();
+      push("Logro eliminado");
+    } catch (err) {
+      push(err.message || "Error al eliminar logro", "error");
+      throw err;
+    }
+  };
+
+  const bulkDelete = async () => {
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) throw new Error("Usuario no autenticado");
+      const n = selected.size;
+      for (const id of selected) await deleteLogro(token, id);
+      setSelected(new Set());
+      await loadLogros();
+      push(`${n} logro${n!==1?"s":""} eliminado${n!==1?"s":""}`);
+    } catch (err) {
+      push(err.message || "Error en eliminación masiva", "error");
+      throw err;
+    }
+  };
+
+  const bulkToggle = async activo => {
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) throw new Error("Usuario no autenticado");
+      const n = selected.size;
+
+      for (const id of selected) {
+        const logro = logros.find(l => l.id === id);
+        if (logro) await updateLogro(token, id, { ...logro, activo });
+      }
+      setSelected(new Set());
+      await loadLogros();
+      push(`${n} logro${n!==1?"s":""} ${activo?"activado":"desactivado"}${n!==1?"s":""}`);
+    } catch (err) {
+      push(err.message || "Error en cambio masivo", "error");
+    }
+  };
+
+  const exportLogros = (fmt="json") => {
+    const data = filtered.map(l=>({
+      id: l.id, nombre: l.nombre, tipo: l.tipo, rareza: l.rareza,
+      imagen: l.imagen, xpBonus: l.xpBonus, coinsBonus: l.coinsBonus||0,
+      descripcion: l.descripcion, descripcionCorta: l.descripcionCorta||"",
+      activo: l.activo, secreto: l.secreto,
+      obtenidos: l.obtenidos, creadoEn: l.creadoEn||"",
+      condiciones: (l.condiciones||[]).length,
+      recompensas: (l.recompensas||[]).map(r=>r.label).join(" · "),
+    }));
+    let content, mime, ext;
+    if (fmt === "csv") {
+      const cols = Object.keys(data[0]||{});
+      const esc  = v => `"${String(v).replace(/"/g,'""')}"`;
+      content = [cols.join(","), ...data.map(r=>cols.map(c=>esc(r[c])).join(","))].join("\n");
+      mime = "text/csv"; ext = "csv";
+    } else {
+      content = JSON.stringify(data, null, 2);
+      mime = "application/json"; ext = "json";
+    }
+    const blob = new Blob([content], {type:mime});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href = url; a.download = `logros_${new Date().toISOString().slice(0,10)}.${ext}`;
+    a.click(); URL.revokeObjectURL(url);
+    push(`Exportados ${data.length} logros como .${ext.toUpperCase()}`);
+  };
 
   const kpis=useMemo(()=>({
     total:     logros.length,
@@ -736,13 +1038,33 @@ export default function AdminLogros() {
 
   const fBtn=(on,c=C.orange)=>({...raj(11,on?700:600),color:on?c:C.muted,background:on?`${c}18`:"transparent",border:`1px solid ${on?c:C.navy}`,padding:"5px 12px",cursor:"pointer",transition:"all .18s"});
 
+  if (loading) return <><style>{CSS}</style><SkeletonLogros/></>;
+
+  if (error) {
+    return (
+      <>
+        <style>{CSS}</style>
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"400px",gap:16}}>
+          <div style={{background:`${C.red}14`,border:`1px solid ${C.red}44`,borderRadius:14,padding:"28px 40px",textAlign:"center"}}>
+            <AlertTriangle size={36} color={C.red} style={{marginBottom:12}}/>
+            <div style={{...orb(13,700),color:C.red,marginBottom:8}}>Error al cargar logros</div>
+            <div style={{...raj(13,500),color:C.muted,marginBottom:20}}>{error}</div>
+            <button onClick={loadLogros} className="l-btn" style={{...raj(13,600),color:C.bg,background:C.orange,border:"none",borderRadius:8,padding:"10px 22px",cursor:"pointer",display:"inline-flex",alignItems:"center",gap:8}}>
+              <RefreshCw size={14}/> Reintentar
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <style>{CSS}</style>
-
       {modal?.type==="view"   && <ViewModal   logro={modal.l} onClose={()=>setModal(null)} onEdit={l=>setModal({type:"form",l})}/>}
-      {modal?.type==="form"   && <FormModal   logro={modal.l} onClose={()=>setModal(null)} onSave={handleSave}/>}
+      {modal?.type==="form"   && <FormModal   logro={modal.l} onClose={()=>setModal(null)} onSave={handleSave} allLogros={logros}/>}
       {modal?.type==="delete" && <DeleteModal logro={modal.l} onClose={()=>setModal(null)} onConfirm={handleDelete}/>}
+      {bulkDelModal && <BulkDeleteModal items={[...selected].map(id=>logros.find(l=>l.id===id)).filter(Boolean)} onClose={()=>setBulkDelModal(false)} onConfirm={bulkDelete}/>}
 
       <div style={{display:"flex",flexDirection:"column",gap:18}}>
 
@@ -754,7 +1076,7 @@ export default function AdminLogros() {
             {label:"OBTENIDOS",     value:kpis.obtenidos.toLocaleString(),icon:<Award size={18}/>,color:C.blue},
             {label:"SECRETOS",      value:kpis.secretos, icon:<EyeOff size={18}/>,  color:C.muted },
           ].map((k,i)=>(
-            <div key={i} style={{background:C.card,border:`1px solid ${k.color}33`,padding:"18px 16px",position:"relative",overflow:"hidden",animation:`l-cardIn .4s ease ${i*.07}s both`,transition:"transform .2s,box-shadow .2s"}}
+            <div key={i} style={{background:C.card,border:`1px solid ${k.color}33`,borderRadius:14,padding:"18px 16px",position:"relative",overflow:"hidden",animation:`l-cardIn .4s ease ${i*.07}s both`,transition:"transform .2s,box-shadow .2s"}}
               onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.boxShadow=`0 10px 32px rgba(0,0,0,.4)`;}}
               onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="none";}}>
               <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:`linear-gradient(90deg,transparent,${k.color},transparent)`}}/>
@@ -765,18 +1087,18 @@ export default function AdminLogros() {
           ))}
         </div>
 
-        {/* Tipo tabs */}
-        <div style={{background:C.card,border:`1px solid ${C.navy}`,overflow:"hidden"}}>
-          <div style={{display:"flex",borderBottom:`1px solid ${C.navy}`}}>
+        {/* Tipo tabs — pill style */}
+        <div style={{background:C.card,border:`1px solid ${C.navy}`,borderRadius:12,overflow:"hidden",padding:"10px 12px"}}>
+          <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
             {["Todos",...TIPO_KEYS].map(tipo=>{
               const m=TIPOS[tipo]; const on=tipoTab===tipo; const cc=m?.color||C.orange;
               const count=tipo==="Todos"?logros.length:logros.filter(l=>l.tipo===tipo).length;
               return (
                 <button key={tipo} onClick={()=>{setTipoTab(tipo);setPage(1);}} className="l-tab"
-                  style={{flex:1,padding:"14px 8px",background:on?`${cc}12`:"transparent",border:"none",borderBottom:`3px solid ${on?cc:"transparent"}`,color:on?cc:C.muted,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:5}}>
-                  <div style={{fontSize:18,filter:on?`drop-shadow(0 0 6px ${cc})`:"none"}}>{m?.icon||"🌐"}</div>
-                  <span style={{...raj(11,on?700:500),letterSpacing:".03em"}}>{tipo}</span>
-                  <span style={{...raj(9,700),color:on?cc:C.navy,background:on?`${cc}22`:`${C.navy}44`,padding:"1px 6px"}}>{count}</span>
+                  style={{padding:"7px 14px",background:on?`${cc}18`:"transparent",border:`1px solid ${on?cc:C.navy}`,borderRadius:20,color:on?cc:C.muted,cursor:"pointer",display:"flex",alignItems:"center",gap:7,boxShadow:on?`0 0 10px ${cc}33`:"none"}}>
+                  <div style={{fontSize:15,filter:on?`drop-shadow(0 0 5px ${cc})`:"none"}}>{m?.icon||"🌐"}</div>
+                  <span style={{...raj(12,on?700:500)}}>{tipo}</span>
+                  <span style={{...raj(10,700),color:on?cc:C.muted,background:on?`${cc}22`:`${C.navy}44`,padding:"1px 7px",borderRadius:10}}>{count}</span>
                 </button>
               );
             })}
@@ -784,7 +1106,7 @@ export default function AdminLogros() {
         </div>
 
         {/* Toolbar */}
-        <div style={{background:C.card,border:`1px solid ${C.navy}`,padding:"13px 16px"}}>
+        <div style={{background:C.card,border:`1px solid ${C.navy}`,borderRadius:10,padding:"13px 16px"}}>
           <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
             <div style={{position:"relative",flex:"1 1 200px"}}>
               <Search size={13} color={C.muted} style={{position:"absolute",left:11,top:"50%",transform:"translateY(-50%)"}}/>
@@ -807,10 +1129,20 @@ export default function AdminLogros() {
               {selected.size>0&&(<>
                 <button onClick={()=>bulkToggle(true)} className="l-btn" style={{...raj(11,700),color:C.green,background:`${C.green}14`,border:`1px solid ${C.green}44`,padding:"7px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:5}}><Check size={12}/> Activar ({selected.size})</button>
                 <button onClick={()=>bulkToggle(false)} className="l-btn" style={{...raj(11,700),color:C.orange,background:`${C.orange}14`,border:`1px solid ${C.orange}44`,padding:"7px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:5}}><X size={12}/> Desactivar ({selected.size})</button>
-                <button onClick={bulkDelete} className="l-btn" style={{...raj(11,700),color:C.red,background:`${C.red}14`,border:`1px solid ${C.red}44`,padding:"7px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:5}}><Trash2 size={12}/> Eliminar ({selected.size})</button>
+                <button onClick={()=>setBulkDelModal(true)} className="l-btn" style={{...raj(11,700),color:C.red,background:`${C.red}14`,border:`1px solid ${C.red}44`,padding:"7px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:5}}><Trash2 size={12}/> Eliminar ({selected.size})</button>
               </>)}
+              <button onClick={()=>exportLogros("json")} className="l-btn" title="Exportar JSON" style={{...raj(11,700),color:C.blue,background:`${C.blue}14`,border:`1px solid ${C.blue}44`,padding:"7px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:5}}>⬇ JSON</button>
+              <button onClick={()=>exportLogros("csv")} className="l-btn" title="Exportar CSV" style={{...raj(11,700),color:C.teal,background:`${C.teal}14`,border:`1px solid ${C.teal}44`,padding:"7px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:5}}>⬇ CSV</button>
               <button onClick={refresh} className="l-btn" style={{...raj(12,600),color:C.muted,background:C.panel,border:`1px solid ${C.navy}`,padding:"7px 11px",cursor:"pointer",display:"flex",alignItems:"center",gap:5}}>
                 <RefreshCw size={12} style={{animation:refreshing?"l-spin .8s linear infinite":"none"}}/> Actualizar
+              </button>
+              <button onClick={handleSeedMente} disabled={seeding} className="l-btn"
+                style={{...raj(11,700),color:C.teal,background:`${C.teal}14`,border:`1px solid ${C.teal}44`,padding:"7px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:5,opacity:seeding?.6:1}}
+                title="Sembrar logros y misiones de Zona Mente en Firestore (idempotente)">
+                {seeding
+                  ? <RefreshCw size={12} style={{animation:"l-spin .8s linear infinite"}}/>
+                  : <span>🧘</span>}
+                {seeding ? "Sembrando..." : "Sembrar Mente"}
               </button>
               <button onClick={()=>setModal({type:"form",l:null})} className="l-btn"
                 style={{...px(7),color:C.bg,background:C.green,border:"none",padding:"7px 14px",cursor:"pointer",boxShadow:`0 3px 14px ${C.green}33`,display:"flex",alignItems:"center",gap:6}}>
@@ -830,12 +1162,23 @@ export default function AdminLogros() {
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:14}}>
             {paginated.length===0?<div style={{gridColumn:"1/-1",padding:40,textAlign:"center",...raj(14,500),color:C.muted}}>Sin resultados.</div>
             :paginated.map((l,i)=>{
-              const tm=TIPOS[l.tipo]||{}; const rm=RAREZA[l.rareza]||{color:C.muted};
+              const tm=TIPOS[l.tipo]||{}; const rm=RAREZA[l.rareza]||{color:C.muted,tier:1};
               const c=rm.color; const sel=selected.has(l.id);
+              const glowMap={1:"none",2:`0 0 14px ${c}22`,3:`0 0 22px ${c}44`,4:`0 0 36px ${c}66`};
+              const isLegendary=rm.tier===4;
               return (
-                <div key={l.id} className="l-card" style={{background:C.card,border:`2px solid ${sel?C.orange:c}22`,
-                  boxShadow:sel?`0 0 18px ${C.orange}22`:`0 4px 16px rgba(0,0,0,.3)`,
-                  overflow:"hidden",animation:`l-cardIn .4s ease ${i*.05}s both`,position:"relative"}}>
+                <div key={l.id} className="l-card"
+                  style={{
+                    background: isLegendary?"rgba(20,26,42,0.92)":C.card,
+                    backdropFilter: isLegendary?"blur(8px)":undefined,
+                    WebkitBackdropFilter: isLegendary?"blur(8px)":undefined,
+                    border: sel?`2px solid ${C.orange}`:`2px solid ${c}${rm.tier>=3?"44":"22"}`,
+                    borderRadius:14,
+                    boxShadow: sel?`0 0 18px ${C.orange}33`:glowMap[rm.tier]||"none",
+                    overflow:"hidden",animation:`l-cardIn .4s ease ${i*.05}s both`,position:"relative"
+                  }}
+                  onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-4px)";e.currentTarget.style.boxShadow=`0 16px 40px ${c}44`;}}
+                  onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow=sel?`0 0 18px ${C.orange}33`:glowMap[rm.tier]||"none";}}>
                   <input type="checkbox" checked={sel} onChange={()=>toggleSelect(l.id)} style={{position:"absolute",top:10,left:10,accentColor:C.orange,width:14,height:14,cursor:"pointer",zIndex:2}}/>
                   <div style={{height:3,background:`linear-gradient(90deg,transparent,${c},transparent)`}}/>
 
@@ -862,7 +1205,7 @@ export default function AdminLogros() {
 
                     <p style={{...raj(11,400),color:C.muted,lineHeight:1.5,marginBottom:10,
                       display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>
-                      {l.descripcion}
+                      {l.descripcionCorta || l.descripcion}
                     </p>
 
                     {/* condiciones preview */}
@@ -976,16 +1319,16 @@ export default function AdminLogros() {
             </select>
           </div>
           <div style={{display:"flex",gap:5}}>
-            <button onClick={()=>setPage(1)} disabled={page===1} className="l-btn" style={{background:C.panel,border:`1px solid ${C.navy}`,color:page===1?C.navy:C.muted,padding:"6px 11px",cursor:page===1?"not-allowed":"pointer"}}>«</button>
-            <button onClick={()=>setPage(p=>p-1)} disabled={page===1} className="l-btn" style={{background:C.panel,border:`1px solid ${C.navy}`,color:page===1?C.navy:C.muted,padding:"6px 10px",cursor:page===1?"not-allowed":"pointer",display:"flex",alignItems:"center"}}><ChevronLeft size={13}/></button>
+            <button onClick={()=>setPage(1)} disabled={page===1} className="l-btn" style={{background:C.panel,border:`1px solid ${C.navy}`,borderRadius:6,color:page===1?C.navy:C.muted,padding:"6px 11px",cursor:page===1?"not-allowed":"pointer"}}>«</button>
+            <button onClick={()=>setPage(p=>p-1)} disabled={page===1} className="l-btn" style={{background:C.panel,border:`1px solid ${C.navy}`,borderRadius:6,color:page===1?C.navy:C.muted,padding:"6px 10px",cursor:page===1?"not-allowed":"pointer",display:"flex",alignItems:"center"}}><ChevronLeft size={13}/></button>
             {Array.from({length:totalPages},(_,i)=>i+1).filter(n=>Math.abs(n-page)<=2).map(n=>(
               <button key={n} onClick={()=>setPage(n)} className="l-btn"
-                style={{background:n===page?C.orange:C.panel,border:`1px solid ${n===page?C.orange:C.navy}`,color:n===page?C.bg:C.muted,padding:"6px 13px",cursor:"pointer",...raj(13,n===page?700:500)}}>
+                style={{background:n===page?C.orange:C.panel,border:`1px solid ${n===page?C.orange:C.navy}`,borderRadius:6,color:n===page?C.bg:C.muted,padding:"6px 13px",cursor:"pointer",...raj(13,n===page?700:500)}}>
                 {n}
               </button>
             ))}
-            <button onClick={()=>setPage(p=>p+1)} disabled={page===totalPages} className="l-btn" style={{background:C.panel,border:`1px solid ${C.navy}`,color:page===totalPages?C.navy:C.muted,padding:"6px 10px",cursor:page===totalPages?"not-allowed":"pointer",display:"flex",alignItems:"center"}}><ChevronRight size={13}/></button>
-            <button onClick={()=>setPage(totalPages)} disabled={page===totalPages} className="l-btn" style={{background:C.panel,border:`1px solid ${C.navy}`,color:page===totalPages?C.navy:C.muted,padding:"6px 11px",cursor:page===totalPages?"not-allowed":"pointer"}}>»</button>
+            <button onClick={()=>setPage(p=>p+1)} disabled={page===totalPages} className="l-btn" style={{background:C.panel,border:`1px solid ${C.navy}`,borderRadius:6,color:page===totalPages?C.navy:C.muted,padding:"6px 10px",cursor:page===totalPages?"not-allowed":"pointer",display:"flex",alignItems:"center"}}><ChevronRight size={13}/></button>
+            <button onClick={()=>setPage(totalPages)} disabled={page===totalPages} className="l-btn" style={{background:C.panel,border:`1px solid ${C.navy}`,borderRadius:6,color:page===totalPages?C.navy:C.muted,padding:"6px 11px",cursor:page===totalPages?"not-allowed":"pointer"}}>»</button>
           </div>
         </div>
 

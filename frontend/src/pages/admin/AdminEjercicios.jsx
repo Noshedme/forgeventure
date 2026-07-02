@@ -1,870 +1,1071 @@
 // src/pages/admin/AdminEjercicios.jsx
-// ─────────────────────────────────────────────────────────────
-//  Gestión completa de ejercicios para el Admin de ForgeVenture.
-//  Conectar: getEjercicios(), createEjercicio(), updateEjercicio(),
-//            deleteEjercicio() desde api.js cuando esté el backend.
-// ─────────────────────────────────────────────────────────────
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { C, px, raj, orb } from "../../components/admin/config/shared.jsx";
+import { useToast } from "../../components/shared/ui.jsx";
 import {
-  Search, Plus, Filter, RefreshCw, Eye, Edit2, Trash2,
-  ChevronUp, ChevronDown, ChevronLeft, ChevronRight,
-  X, Check, AlertTriangle, Dumbbell, Zap, Clock,
-  Flame, Target, Star, BarChart2, Camera, Timer,
+  getCategorias, createCategoria, updateCategoria, deleteCategoria,
+  getRutinas, createRutina, updateRutina, deleteRutina,
+  getEjercicios, createEjercicio, updateEjercicio, deleteEjercicio,
+} from "../../services/api.js";
+import { auth } from "../../firebase.js";
+import {
+  Search, Plus, RefreshCw, Edit2, Trash2, X, Check, AlertTriangle,
+  ChevronRight, Home, BookOpen, Dumbbell, Layers, Zap, Timer, Repeat,
+  Eye, EyeOff, ToggleLeft, ToggleRight,
 } from "lucide-react";
 
-const C = {
-  bg:"#050C18", side:"#080F1C", card:"#0C1826", panel:"#091220",
-  navy:"#1A3354", navyL:"#1E3A5F",
-  orange:"#E85D04", orangeL:"#FF9F1C", gold:"#FFD700",
-  blue:"#4CC9F0", teal:"#0A9396", green:"#2ecc71",
-  red:"#E74C3C", purple:"#9B59B6",
-  white:"#F0F4FF", muted:"#5A7A9A", mutedL:"#7A9AB8",
-};
+const DIFICULTADES    = ["Principiante","Intermedio","Avanzado","Élite"];
+const MUSCULOS_OPT    = ["Pecho","Espalda","Hombros","Bíceps","Tríceps","Abdomen","Piernas","Glúteos","Pantorrillas","Cuerpo completo"];
+const VERIFICACION_OPT = ["Cámara","Timer","Ambos"];
+const DIFF_COLOR = { Principiante:C.green, Intermedio:C.teal, Avanzado:C.orange, Élite:C.red };
 
 const CSS = `
-  @keyframes e-slideU  { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
-  @keyframes e-cardIn  { from{opacity:0;transform:scale(.97)} to{opacity:1;transform:scale(1)} }
-  @keyframes e-spin    { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-  @keyframes e-modalIn { from{opacity:0;transform:scale(.94) translateY(12px)} to{opacity:1;transform:scale(1) translateY(0)} }
-  @keyframes e-shake   { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-5px)} 40%,80%{transform:translateX(5px)} }
-  @keyframes e-pulse   { 0%,100%{opacity:1} 50%{opacity:.5} }
-
-  .e-row { transition:background .15s; }
-  .e-row:hover { background:${C.navyL}18 !important; }
-  .e-btn { transition:all .18s; cursor:pointer; }
-  .e-btn:hover:not(:disabled) { transform:translateY(-2px); }
-  .e-icon-btn { transition:all .2s; cursor:pointer; }
-  .e-input { transition:border-color .2s,box-shadow .2s; outline:none; }
-  .e-input:focus { border-color:${C.orange} !important; box-shadow:0 0 0 2px ${C.orange}22,0 0 14px ${C.orange}18; }
-  .e-input::placeholder { color:${C.navy}; }
-  .e-sort { cursor:pointer; transition:color .2s; user-select:none; }
-  .e-sort:hover { color:${C.orange} !important; }
-  .e-card:hover { border-color:${C.orange}55 !important; transform:translateY(-3px); box-shadow:0 12px 36px rgba(0,0,0,.4) !important; }
-  .e-card { transition:all .22s; }
-  .e-tag-del { transition:all .2s; }
-  .e-tag-del:hover { background:${C.red}22 !important; color:${C.red} !important; }
+  @keyframes ae-spin      { to{transform:rotate(360deg)} }
+  @keyframes ae-skelPulse { 0%,100%{opacity:.5} 50%{opacity:.2} }
+  @keyframes ae-glow      { 0%,100%{opacity:.5} 50%{opacity:1} }
+  @keyframes ae-slideUp   { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  .ae-skel { background:${C.navy}66; animation:ae-skelPulse 1.4s ease infinite; border-radius:10px; }
+  .ae-inp  { transition:border-color .2s,box-shadow .2s; outline:none; }
+  .ae-inp:focus { border-color:${C.orange} !important; box-shadow:0 0 0 2px ${C.orange}22 !important; }
+  .ae-card-cat:hover .ae-cat-orb { opacity:1 !important; }
 `;
 
-const px  = s => ({ fontFamily:"'Press Start 2P'", fontSize:s });
-const raj = (s,w=600) => ({ fontFamily:"'Rajdhani',sans-serif", fontSize:s, fontWeight:w });
-const orb = (s,w=700) => ({ fontFamily:"'Orbitron',sans-serif", fontSize:s, fontWeight:w });
-
-// ── Categorías y músculos ──────────────────────────────────────
-const CATEGORIAS = ["Fuerza","Cardio","Flexibilidad","HIIT","Yoga","Pilates","Calistenia","Funcional"];
-const MUSCULOS   = ["Pecho","Espalda","Hombros","Bíceps","Tríceps","Abdomen","Piernas","Glúteos","Pantorrillas","Cuerpo completo"];
-const DIFICULTADES = ["Principiante","Intermedio","Avanzado","Élite"];
-const VERIFICACION = ["Cámara","Timer","Ambos"];
-
-const CAT_COLOR = {
-  "Fuerza":       C.orange, "Cardio":    C.blue,   "Flexibilidad": C.purple,
-  "HIIT":         C.red,    "Yoga":      C.teal,   "Pilates":      "#FF69B4",
-  "Calistenia":   C.gold,   "Funcional": C.green,
-};
-const DIFICULTAD_COLOR = {
-  "Principiante": C.green, "Intermedio": C.gold,
-  "Avanzado":     C.orange,"Élite":      C.red,
-};
-
-// ── Mock data ─────────────────────────────────────────────────
-const MOCK_EJERCICIOS = [
-  { id:"e1",  nombre:"Flexiones",          categoria:"Fuerza",       musculos:["Pecho","Tríceps","Hombros"],     dificultad:"Principiante", duracion:null, series:3, reps:15, xpBase:30, verificacion:"Cámara",  activo:true,  descripcion:"Ejercicio clásico de empuje para desarrollar fuerza en el tren superior.", imagen:"💪", sesiones:148, creadoEn:"2024-10-01" },
-  { id:"e2",  nombre:"Sentadillas",        categoria:"Fuerza",       musculos:["Piernas","Glúteos"],             dificultad:"Principiante", duracion:null, series:4, reps:12, xpBase:35, verificacion:"Cámara",  activo:true,  descripcion:"Ejercicio fundamental para el desarrollo del tren inferior.",              imagen:"🦵", sesiones:132, creadoEn:"2024-10-01" },
-  { id:"e3",  nombre:"Cardio Libre",       categoria:"Cardio",       musculos:["Cuerpo completo"],               dificultad:"Intermedio",   duracion:30,   series:1, reps:null,xpBase:60, verificacion:"Timer",   activo:true,  descripcion:"30 minutos de cardio continuo a ritmo moderado.",                         imagen:"🏃", sesiones:118, creadoEn:"2024-10-05" },
-  { id:"e4",  nombre:"Plancha",            categoria:"Funcional",    musculos:["Abdomen","Hombros","Espalda"],   dificultad:"Intermedio",   duracion:60,   series:3, reps:null,xpBase:40, verificacion:"Timer",   activo:true,  descripcion:"Ejercicio isométrico para fortalecer el core y la estabilidad.",          imagen:"🏋️", sesiones:89,  creadoEn:"2024-10-08" },
-  { id:"e5",  nombre:"Dominadas",          categoria:"Calistenia",   musculos:["Espalda","Bíceps"],              dificultad:"Avanzado",     duracion:null, series:3, reps:8,  xpBase:55, verificacion:"Cámara",  activo:true,  descripcion:"Ejercicio compuesto para la musculatura de la espalda y brazos.",          imagen:"🔝", sesiones:67,  creadoEn:"2024-10-10" },
-  { id:"e6",  nombre:"Yoga Matutino",      categoria:"Yoga",         musculos:["Cuerpo completo"],               dificultad:"Principiante", duracion:20,   series:1, reps:null,xpBase:45, verificacion:"Timer",   activo:true,  descripcion:"Rutina de yoga para comenzar el día con energía y flexibilidad.",         imagen:"🧘", sesiones:54,  creadoEn:"2024-10-12" },
-  { id:"e7",  nombre:"HIIT Explosivo",     categoria:"HIIT",         musculos:["Cuerpo completo","Piernas"],     dificultad:"Avanzado",     duracion:20,   series:6, reps:null,xpBase:90, verificacion:"Timer",   activo:true,  descripcion:"Intervalos de alta intensidad para quemar grasa y mejorar resistencia.",  imagen:"⚡", sesiones:43,  creadoEn:"2024-11-01" },
-  { id:"e8",  nombre:"Press Militar",      categoria:"Fuerza",       musculos:["Hombros","Tríceps"],             dificultad:"Intermedio",   duracion:null, series:4, reps:10, xpBase:45, verificacion:"Cámara",  activo:true,  descripcion:"Ejercicio de empuje vertical para desarrollar hombros fuertes.",           imagen:"🏋️", sesiones:38,  creadoEn:"2024-11-05" },
-  { id:"e9",  nombre:"Burpees",            categoria:"HIIT",         musculos:["Cuerpo completo"],               dificultad:"Avanzado",     duracion:null, series:4, reps:10, xpBase:70, verificacion:"Cámara",  activo:false, descripcion:"Ejercicio de cuerpo completo que combina fuerza y cardio.",               imagen:"💥", sesiones:31,  creadoEn:"2024-11-10" },
-  { id:"e10", nombre:"Estiramiento Total", categoria:"Flexibilidad", musculos:["Cuerpo completo"],               dificultad:"Principiante", duracion:15,   series:1, reps:null,xpBase:20, verificacion:"Timer",   activo:true,  descripcion:"Rutina de estiramientos para mejorar la flexibilidad general.",           imagen:"🤸", sesiones:28,  creadoEn:"2024-11-15" },
-  { id:"e11", nombre:"Fondos en Paralelas",categoria:"Calistenia",   musculos:["Pecho","Tríceps","Hombros"],     dificultad:"Avanzado",     duracion:null, series:3, reps:12, xpBase:55, verificacion:"Cámara",  activo:true,  descripcion:"Ejercicio de calistenia para el desarrollo del tren superior.",           imagen:"💪", sesiones:22,  creadoEn:"2024-11-20" },
-  { id:"e12", nombre:"Pilates Core",       categoria:"Pilates",      musculos:["Abdomen","Espalda"],             dificultad:"Intermedio",   duracion:25,   series:1, reps:null,xpBase:35, verificacion:"Timer",   activo:true,  descripcion:"Sesión de pilates enfocada en fortalecer el núcleo corporal.",            imagen:"🧘", sesiones:19,  creadoEn:"2024-12-01" },
-];
-
-const EMPTY_FORM = { nombre:"", categoria:"Fuerza", musculos:[], dificultad:"Principiante", duracion:"", series:3, reps:10, xpBase:30, verificacion:"Cámara", activo:true, descripcion:"", imagen:"💪" };
-const EMOJIS = ["💪","🏃","🧘","🏋️","⚡","🔥","💥","🤸","🏆","⚔️","🎯","🦵","🔝","🌟","💨"];
-const PAGE_SIZE_OPTIONS = [6,12,24];
-
-// ── Helpers UI ────────────────────────────────────────────────
-function CatBadge({ cat }) {
-  const c = CAT_COLOR[cat] || C.muted;
-  return <span style={{ ...raj(10,700), color:c, background:`${c}14`, border:`1px solid ${c}33`, padding:"2px 8px", whiteSpace:"nowrap" }}>{cat}</span>;
+// ── Helpers ────────────────────────────────────────────────────────────────────
+function inp(dirty, errors, k) {
+  return {
+    width:"100%", padding:"9px 12px",
+    background:"rgba(10,14,26,0.8)", color:C.white, ...raj(12,500),
+    border:`1px solid ${dirty.has(k) && errors[k] ? C.red : dirty.has(k) && !errors[k] ? C.green : C.navy}`,
+    borderRadius:8, boxSizing:"border-box",
+  };
 }
-function DifBadge({ dif }) {
-  const c = DIFICULTAD_COLOR[dif] || C.muted;
-  return <span style={{ ...raj(10,700), color:c, background:`${c}14`, border:`1px solid ${c}33`, padding:"2px 8px", whiteSpace:"nowrap" }}>{dif}</span>;
-}
-function MiniBar({ val, color, height=5 }) {
+
+function FieldError({ msg }) {
+  if (!msg) return null;
   return (
-    <div style={{ height, background:C.panel, border:`1px solid ${color}22`, overflow:"hidden", width:"100%" }}>
-      <div style={{ height:"100%", width:`${Math.min(val,100)}%`, background:color, boxShadow:`0 0 5px ${color}66`, transition:"width .6s ease" }}/>
-    </div>
-  );
-}
-function SortIcon({ active, dir }) {
-  if (!active) return <ChevronDown size={11} color={C.navy}/>;
-  return dir==="asc" ? <ChevronUp size={11} color={C.orange}/> : <ChevronDown size={11} color={C.orange}/>;
-}
-function Spinner({ color=C.orange }) {
-  return <div style={{ width:13,height:13,border:`2px solid ${C.muted}`,borderTop:`2px solid ${color}`,borderRadius:"50%",animation:"e-spin .8s linear infinite" }}/>;
-}
-
-// ── Chip musculos ─────────────────────────────────────────────
-function MusculoChips({ list, color=C.blue }) {
-  const show = list.slice(0,2);
-  const rest = list.length - 2;
-  return (
-    <div style={{ display:"flex", gap:4, flexWrap:"wrap" }}>
-      {show.map(m => <span key={m} style={{ ...raj(10,600), color, background:`${color}12`, border:`1px solid ${color}22`, padding:"1px 6px" }}>{m}</span>)}
-      {rest > 0 && <span style={{ ...raj(10,600), color:C.muted, background:`${C.muted}12`, border:`1px solid ${C.muted}22`, padding:"1px 6px" }}>+{rest}</span>}
+    <div style={{...raj(11,600),color:C.red,marginTop:4,display:"flex",alignItems:"center",gap:5}}>
+      <AlertTriangle size={11}/>{msg}
     </div>
   );
 }
 
-// ── Multi-select chips ────────────────────────────────────────
-function MultiSelect({ options, value, onChange, color=C.blue }) {
-  const toggle = (opt) => onChange(value.includes(opt) ? value.filter(v=>v!==opt) : [...value, opt]);
+function Spin() {
+  return <div style={{width:12,height:12,border:"2px solid #fff4",borderTop:"2px solid #fff",borderRadius:"50%",animation:"ae-spin .8s linear infinite"}}/>;
+}
+
+function SaveCancelRow({ onClose, onSave, loading }) {
   return (
-    <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
-      {options.map(opt => {
-        const on = value.includes(opt);
+    <div style={{display:"flex",gap:10,paddingTop:4}}>
+      <button onClick={onClose} style={{flex:1,...raj(11,600),background:"rgba(10,14,26,0.8)",border:`1px solid ${C.navy}`,color:C.muted,padding:10,cursor:"pointer",borderRadius:8}}>
+        CANCELAR
+      </button>
+      <button onClick={onSave} disabled={loading} style={{
+        flex:1,...raj(11,700),
+        background:loading?`${C.green}44`:C.green,
+        color:loading?C.muted:"#060D1A",
+        border:"none",padding:10,
+        cursor:loading?"not-allowed":"pointer",
+        display:"flex",alignItems:"center",justifyContent:"center",gap:6,borderRadius:8,
+      }}>
+        {loading ? <><Spin/> GUARDANDO...</> : <><Check size={13}/> GUARDAR</>}
+      </button>
+    </div>
+  );
+}
+
+// ── Glassmorphism modal wrapper ────────────────────────────────────────────────
+function ModalWrap({ children, onClose, maxWidth=440 }) {
+  return (
+    <div
+      onClick={e => e.target===e.currentTarget && onClose()}
+      style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,0.6)",backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center",padding:16}}
+    >
+      <motion.div
+        initial={{opacity:0,scale:.95,y:12}}
+        animate={{opacity:1,scale:1,y:0}}
+        exit={{opacity:0,scale:.95,y:8}}
+        transition={{duration:.2}}
+        style={{
+          width:"100%",maxWidth,
+          background:"rgba(20,26,42,0.95)",
+          backdropFilter:"blur(16px)",
+          border:`1px solid ${C.navy}`,
+          borderRadius:12,overflow:"hidden",
+          maxHeight:"90vh",overflowY:"auto",
+          boxShadow:"0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)",
+        }}
+      >
+        {children}
+      </motion.div>
+    </div>
+  );
+}
+
+function ModalHeader({ isEdit, label, onClose, accent }) {
+  const col  = accent || (isEdit ? C.orange : C.green);
+  const icon = isEdit ? <Edit2 size={14}/> : <Plus size={14}/>;
+  return (
+    <div style={{background:`${col}14`,borderBottom:`2px solid ${col}`,padding:"14px 18px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+      <div style={{display:"flex",alignItems:"center",gap:8}}>
+        <div style={{background:col,color:"#fff",width:26,height:26,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:6}}>{icon}</div>
+        <span style={{...orb(11,800),color:col}}>{label}</span>
+      </div>
+      <button onClick={onClose} style={{background:"transparent",border:"none",color:C.muted,cursor:"pointer",display:"flex",padding:4,borderRadius:4}}>
+        <X size={16}/>
+      </button>
+    </div>
+  );
+}
+
+// ── DiffPills shared component ────────────────────────────────────────────────
+function DiffPills({ value, onChange }) {
+  return (
+    <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+      {DIFICULTADES.map(d => {
+        const on = value === d;
+        const dc = DIFF_COLOR[d];
         return (
-          <button key={opt} type="button" onClick={() => toggle(opt)} className="e-btn"
-            style={{ ...raj(11,on?700:500), color:on?color:C.muted, background:on?`${color}18`:"transparent", border:`1px solid ${on?color:C.navy}`, padding:"4px 10px", cursor:"pointer", transition:"all .18s" }}>
-            {opt}
-          </button>
+          <button key={d} type="button" onClick={()=>onChange(d)} style={{
+            ...raj(10,on?700:500), color:on?dc:C.muted,
+            background:on?`${dc}22`:"transparent",
+            border:`1px solid ${on?dc:C.navy}`,
+            padding:"4px 12px",cursor:"pointer",borderRadius:20,
+          }}>{d}</button>
         );
       })}
     </div>
   );
 }
 
-// ══════════════════════════════════════════════════════════════
-//  MODAL — Ver ejercicio
-// ══════════════════════════════════════════════════════════════
-function ViewModal({ ej, onClose, onEdit }) {
-  const c = CAT_COLOR[ej.categoria] || C.orange;
+// ─────────────────────────────────────────────────────────────────────────────
+// CATEGORÍAS MODAL
+// ─────────────────────────────────────────────────────────────────────────────
+function validateCatForm(form) {
+  const e = {};
+  if (!form.nombre?.trim())               e.nombre = "Nombre requerido";
+  else if (form.nombre.trim().length < 3) e.nombre = "Mín. 3 caracteres";
+  return e;
+}
+
+function CategoriasModal({ data, onClose, onSave, isEdit, loading }) {
+  const [form,   setForm]   = useState(data || { nombre:"", descripcion:"", icono:"💪", color:"#E85D04", activo:true });
+  const [dirty,  setDirty]  = useState(new Set());
+  const [errors, setErrors] = useState({});
+
+  const set   = (k,v) => setForm(f => { const n={...f,[k]:v}; if(dirty.has(k)) setErrors(validateCatForm(n)); return n; });
+  const touch = k => setDirty(d => { const n=new Set(d);n.add(k);return n; });
+  const blur  = k => { touch(k); setErrors(validateCatForm(form)); };
+
+  const handleSave = () => {
+    ["nombre"].forEach(touch);
+    const errs = validateCatForm(form);
+    setErrors(errs);
+    if (Object.keys(errs).length) return;
+    onSave(form);
+  };
+
+  const i = k => inp(dirty, errors, k);
   return (
-    <div style={{ position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,.78)",display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
-      onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{ width:"100%",maxWidth:540,background:C.card,border:`1px solid ${c}44`,boxShadow:`0 0 60px ${c}11,0 24px 60px rgba(0,0,0,.6)`,animation:"e-modalIn .25s ease both",overflow:"hidden" }}>
-        <div style={{ height:3,background:`linear-gradient(90deg,transparent,${c},transparent)` }}/>
-
-        {/* header */}
-        <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",padding:"18px 22px",borderBottom:`1px solid ${C.navy}` }}>
-          <div style={{ display:"flex",alignItems:"center",gap:12 }}>
-            <div style={{ width:46,height:46,background:`${c}18`,border:`2px solid ${c}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24 }}>{ej.imagen}</div>
-            <div>
-              <div style={{ ...orb(14,900),color:C.white }}>{ej.nombre}</div>
-              <div style={{ display:"flex",gap:8,marginTop:4 }}>
-                <CatBadge cat={ej.categoria}/><DifBadge dif={ej.dificultad}/>
-              </div>
-            </div>
-          </div>
-          <button onClick={onClose} className="e-icon-btn" style={{ background:"transparent",border:`1px solid ${C.navy}`,padding:7,color:C.muted,display:"flex" }}><X size={15}/></button>
+    <ModalWrap onClose={onClose} maxWidth={420}>
+      <ModalHeader isEdit={isEdit} label={isEdit?"EDITAR CATEGORÍA":"NUEVA CATEGORÍA"} onClose={onClose} accent={C.green}/>
+      <div style={{padding:20,display:"flex",flexDirection:"column",gap:14}}>
+        <div>
+          <label style={{...raj(11,600),color:C.muted,display:"block",marginBottom:5}}>NOMBRE</label>
+          <input className="ae-inp" value={form.nombre} onChange={e=>set("nombre",e.target.value)} onBlur={()=>blur("nombre")} placeholder="Nombre de la categoría" style={i("nombre")}/>
+          <FieldError msg={dirty.has("nombre")?errors.nombre:null}/>
         </div>
-
-        <div style={{ padding:22,display:"flex",flexDirection:"column",gap:16 }}>
-          {/* stats */}
-          <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10 }}>
-            {[
-              { label:"XP BASE",    value:`+${ej.xpBase}`,            color:C.gold   },
-              { label:"SESIONES",   value:ej.sesiones.toLocaleString(),color:C.blue   },
-              { label:ej.duracion?"DURACIÓN":"SERIES×REPS", value:ej.duracion?`${ej.duracion}min`:`${ej.series}×${ej.reps}`, color:C.orange },
-              { label:"VERIFICACIÓN",value:ej.verificacion,            color:C.teal   },
-            ].map((s,i)=>(
-              <div key={i} style={{ background:C.panel,border:`1px solid ${s.color}22`,padding:"12px 10px",textAlign:"center" }}>
-                <div style={{ ...orb(13,900),color:s.color,marginBottom:3 }}>{s.value}</div>
-                <div style={{ ...px(5),color:C.muted }}>{s.label}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* descripcion */}
-          <div style={{ background:C.panel,border:`1px solid ${C.navy}`,padding:"14px 16px" }}>
-            <div style={{ ...px(6),color:C.muted,marginBottom:8,letterSpacing:".05em" }}>📝 DESCRIPCIÓN</div>
-            <p style={{ ...raj(13,400),color:C.white,lineHeight:1.7 }}>{ej.descripcion}</p>
-          </div>
-
-          {/* músculos */}
+        <div>
+          <label style={{...raj(11,600),color:C.muted,display:"block",marginBottom:5}}>DESCRIPCIÓN</label>
+          <input className="ae-inp" value={form.descripcion} onChange={e=>set("descripcion",e.target.value)} placeholder="Descripción breve" style={i("descripcion")}/>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
           <div>
-            <div style={{ ...px(6),color:C.muted,marginBottom:10,letterSpacing:".05em" }}>💪 MÚSCULOS TRABAJADOS</div>
-            <div style={{ display:"flex",gap:8,flexWrap:"wrap" }}>
-              {ej.musculos.map(m=>(
-                <span key={m} style={{ ...raj(12,600),color:C.blue,background:`${C.blue}14`,border:`1px solid ${C.blue}33`,padding:"4px 12px" }}>{m}</span>
+            <label style={{...raj(11,600),color:C.muted,display:"block",marginBottom:5}}>ICONO</label>
+            <input className="ae-inp" value={form.icono} onChange={e=>set("icono",e.target.value)} maxLength={2} style={{...i("icono"),textAlign:"center",fontSize:18}}/>
+          </div>
+          <div>
+            <label style={{...raj(11,600),color:C.muted,display:"block",marginBottom:5}}>COLOR</label>
+            <input type="color" value={form.color} onChange={e=>set("color",e.target.value)} style={{width:"100%",height:42,border:`1px solid ${C.navy}`,borderRadius:8,cursor:"pointer",background:"transparent"}}/>
+          </div>
+        </div>
+        <button type="button" onClick={()=>set("activo",!form.activo)} style={{
+          display:"flex",alignItems:"center",gap:10,padding:"10px 14px",
+          background:form.activo?`${C.green}14`:`${C.muted}0A`,
+          border:`1px solid ${form.activo?C.green:C.navy}`,borderRadius:8,cursor:"pointer",
+          transition:"all .2s",
+        }}>
+          {form.activo
+            ? <><ToggleRight size={18} color={C.green}/><span style={{...raj(12,700),color:C.green}}>VISIBLE PARA USUARIOS</span></>
+            : <><ToggleLeft  size={18} color={C.muted}/><span style={{...raj(12,700),color:C.muted}}>OCULTA (inactiva)</span></>
+          }
+        </button>
+        <SaveCancelRow onClose={onClose} onSave={handleSave} loading={loading}/>
+      </div>
+    </ModalWrap>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RUTINAS MODAL
+// ─────────────────────────────────────────────────────────────────────────────
+function validateRutinaForm(form) {
+  const e = {};
+  if (!form.nombre?.trim())                    e.nombre     = "Nombre requerido";
+  else if (form.nombre.trim().length < 3)      e.nombre     = "Mín. 3 caracteres";
+  if (!DIFICULTADES.includes(form.dificultad)) e.dificultad = "Dificultad inválida";
+  const dur = Number(form.duracion);
+  if (isNaN(dur) || dur < 1)                   e.duracion   = "Mínimo 1 min";
+  return e;
+}
+
+function RutinasModal({ data, onClose, onSave, isEdit, loading, ejercicios }) {
+  const [form,  setForm]  = useState(data || { nombre:"", descripcion:"", duracion:30, dificultad:"Intermedio", ejercicios:[] });
+  const [dirty, setDirty] = useState(new Set());
+  const [errors,setErrors]= useState({});
+
+  const set      = (k,v) => setForm(f => { const n={...f,[k]:v}; if(dirty.has(k)) setErrors(validateRutinaForm(n)); return n; });
+  const touch    = k => setDirty(d => { const n=new Set(d);n.add(k);return n; });
+  const blur     = k => { touch(k); setErrors(validateRutinaForm(form)); };
+  const toggleEj = id => set("ejercicios", form.ejercicios.includes(id) ? form.ejercicios.filter(x=>x!==id) : [...form.ejercicios,id]);
+
+  const handleSave = () => {
+    ["nombre","dificultad","duracion"].forEach(touch);
+    const errs = validateRutinaForm(form);
+    setErrors(errs);
+    if (Object.keys(errs).length) return;
+    onSave(form);
+  };
+
+  const i = k => inp(dirty, errors, k);
+  return (
+    <ModalWrap onClose={onClose} maxWidth={500}>
+      <ModalHeader isEdit={isEdit} label={isEdit?"EDITAR RUTINA":"NUEVA RUTINA"} onClose={onClose} accent={C.orange}/>
+      <div style={{padding:20,display:"flex",flexDirection:"column",gap:14}}>
+        <div>
+          <label style={{...raj(11,600),color:C.muted,display:"block",marginBottom:5}}>NOMBRE</label>
+          <input className="ae-inp" value={form.nombre} onChange={e=>set("nombre",e.target.value)} onBlur={()=>blur("nombre")} placeholder="Nombre" style={i("nombre")}/>
+          <FieldError msg={dirty.has("nombre")?errors.nombre:null}/>
+        </div>
+        <div>
+          <label style={{...raj(11,600),color:C.muted,display:"block",marginBottom:5}}>DESCRIPCIÓN</label>
+          <textarea value={form.descripcion} rows={2} onChange={e=>set("descripcion",e.target.value)} placeholder="Descripción" className="ae-inp" style={{...i("descripcion"),resize:"vertical"}}/>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,alignItems:"start"}}>
+          <div>
+            <label style={{...raj(11,600),color:C.muted,display:"block",marginBottom:5}}>DURACIÓN (min)</label>
+            <input type="number" min={1} value={form.duracion} onChange={e=>set("duracion",Number(e.target.value))} onBlur={()=>blur("duracion")} className="ae-inp" style={i("duracion")}/>
+            <FieldError msg={dirty.has("duracion")?errors.duracion:null}/>
+          </div>
+          <div>
+            <label style={{...raj(11,600),color:C.muted,display:"block",marginBottom:6}}>DIFICULTAD</label>
+            <DiffPills value={form.dificultad} onChange={v=>{set("dificultad",v);touch("dificultad");}}/>
+            <FieldError msg={dirty.has("dificultad")?errors.dificultad:null}/>
+          </div>
+        </div>
+        {ejercicios?.length > 0 && (
+          <div>
+            <label style={{...raj(11,600),color:C.muted,display:"block",marginBottom:8}}>EJERCICIOS ({form.ejercicios.length} sel.)</label>
+            <div style={{display:"flex",flexDirection:"column",gap:4,maxHeight:180,overflowY:"auto"}}>
+              {ejercicios.map(ej=>(
+                <label key={ej.id} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 10px",background:form.ejercicios.includes(ej.id)?"rgba(90,159,212,0.1)":"rgba(10,14,26,0.5)",border:`1px solid ${form.ejercicios.includes(ej.id)?C.blue:C.navy}44`,cursor:"pointer",borderRadius:6,transition:"all .15s"}}>
+                  <input type="checkbox" checked={form.ejercicios.includes(ej.id)} onChange={()=>toggleEj(ej.id)} style={{accentColor:C.blue,width:14,height:14}}/>
+                  <span style={{...raj(11,600),color:C.white,flex:1}}>{ej.nombre}</span>
+                </label>
               ))}
             </div>
           </div>
-
-          {/* popularidad */}
-          <div>
-            <div style={{ display:"flex",justifyContent:"space-between",marginBottom:6 }}>
-              <span style={{ ...raj(12,600),color:C.muted }}>Popularidad ({ej.sesiones} sesiones)</span>
-              <span style={{ ...raj(12,700),color:c }}>{Math.round((ej.sesiones/200)*100)}%</span>
-            </div>
-            <MiniBar val={(ej.sesiones/200)*100} color={c} height={7}/>
-          </div>
-
-          {/* status + actions */}
-          <div style={{ display:"flex",gap:10 }}>
-            <div style={{ flex:1,display:"flex",alignItems:"center",gap:8,background:C.panel,border:`1px solid ${ej.activo?C.green:C.red}33`,padding:"10px 14px" }}>
-              <div style={{ width:8,height:8,borderRadius:"50%",background:ej.activo?C.green:C.red,animation:ej.activo?"e-pulse 1.5s infinite":"none" }}/>
-              <span style={{ ...raj(13,700),color:ej.activo?C.green:C.red }}>{ej.activo?"ACTIVO":"INACTIVO"}</span>
-            </div>
-            <button onClick={()=>{onClose();onEdit(ej);}} className="e-btn" style={{ flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:8,...px(7),color:C.bg,background:C.orange,border:"none",padding:"10px",cursor:"pointer",boxShadow:`0 3px 14px ${C.orange}44` }}>
-              <Edit2 size={13}/> EDITAR
-            </button>
-          </div>
-        </div>
+        )}
+        <SaveCancelRow onClose={onClose} onSave={handleSave} loading={loading}/>
       </div>
-    </div>
+    </ModalWrap>
   );
 }
 
-// ══════════════════════════════════════════════════════════════
-//  MODAL — Crear / Editar ejercicio
-// ══════════════════════════════════════════════════════════════
-function FormModal({ ej, onClose, onSave }) {
-  const isEdit = !!ej;
-  const [form,    setForm]    = useState(ej ? { ...ej } : { ...EMPTY_FORM });
-  const [loading, setLoading] = useState(false);
-  const [errors,  setErrors]  = useState({});
-  const [shake,   setShake]   = useState(false);
-  const [tab,     setTab]     = useState("general"); // general | musculos | config
+// ─────────────────────────────────────────────────────────────────────────────
+// EJERCICIOS MODAL
+// ─────────────────────────────────────────────────────────────────────────────
+function validateEjForm(form) {
+  const e = {};
+  if (!form.nombre?.trim())                          e.nombre       = "Nombre requerido";
+  else if (form.nombre.trim().length < 3)            e.nombre       = "Mín. 3 caracteres";
+  if (!DIFICULTADES.includes(form.dificultad))       e.dificultad   = "Dificultad inválida";
+  if (isNaN(Number(form.xpBase)) || form.xpBase < 1) e.xpBase      = "Mín. 1 XP";
+  if (!VERIFICACION_OPT.includes(form.verificacion)) e.verificacion = "Verificación inválida";
+  return e;
+}
 
-  const set = (k,v) => setForm(f=>({ ...f,[k]:v }));
+function EjerciciosModal({ data, onClose, onSave, isEdit, loading }) {
+  const [form,  setForm]  = useState(data || { nombre:"", descripcion:"", musculos:[], dificultad:"Principiante", series:3, reps:10, duracion:null, xpBase:25, verificacion:"Cámara", imagen:"💪", activo:true });
+  const [dirty, setDirty] = useState(new Set());
+  const [errors,setErrors]= useState({});
 
-  const validate = () => {
-    const e = {};
-    if (!form.nombre.trim())       e.nombre = "El nombre es requerido";
-    if (!form.descripcion.trim())  e.descripcion = "La descripción es requerida";
-    if (!form.musculos.length)     e.musculos = "Selecciona al menos un músculo";
-    if (form.xpBase < 1)           e.xpBase = "Mínimo 1 XP";
-    return e;
+  const set       = (k,v) => setForm(f => { const n={...f,[k]:v}; if(dirty.has(k)) setErrors(validateEjForm(n)); return n; });
+  const touch     = k => setDirty(d => { const n=new Set(d);n.add(k);return n; });
+  const blur      = k => { touch(k); setErrors(validateEjForm(form)); };
+  const toggleMus = m => set("musculos", form.musculos.includes(m) ? form.musculos.filter(x=>x!==m) : [...form.musculos,m]);
+
+  const handleSave = () => {
+    ["nombre","dificultad","xpBase","verificacion"].forEach(touch);
+    const errs = validateEjForm(form);
+    setErrors(errs);
+    if (Object.keys(errs).length) return;
+    onSave(form);
   };
 
-  const save = async () => {
-    const e = validate();
-    if (Object.keys(e).length) { setErrors(e); setShake(true); setTimeout(()=>setShake(false),500); return; }
-    setLoading(true);
-    await new Promise(r=>setTimeout(r,900)); // ← reemplazar con createEjercicio / updateEjercicio
-    setLoading(false);
-    onSave({ ...form, id: ej?.id || `e${Date.now()}`, sesiones: ej?.sesiones||0, creadoEn: ej?.creadoEn || new Date().toISOString().slice(0,10) });
-    onClose();
-  };
-
-  const borderColor = isEdit ? C.orange : C.green;
-  const inpSt = (err) => ({ width:"100%",padding:"12px 14px",background:C.panel,border:`1px solid ${err?C.red:C.navy}`,color:C.white,...raj(14,500) });
-  const lbl   = { display:"block",...px(6),color:C.muted,marginBottom:7,letterSpacing:".06em" };
-  const TABS  = [{ id:"general",label:"GENERAL" },{ id:"musculos",label:"MÚSCULOS" },{ id:"config",label:"CONFIG" }];
-
+  const i = k => inp(dirty, errors, k);
   return (
-    <div style={{ position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,.78)",display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
-      onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{ width:"100%",maxWidth:600,background:C.card,border:`1px solid ${borderColor}44`,boxShadow:`0 0 60px ${borderColor}0E,0 24px 60px rgba(0,0,0,.6)`,animation:"e-modalIn .25s ease both",overflow:"hidden",maxHeight:"90vh",display:"flex",flexDirection:"column" }}>
-        <div style={{ height:3,background:`linear-gradient(90deg,transparent,${borderColor},transparent)`,flexShrink:0 }}/>
-
-        {/* header */}
-        <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",padding:"16px 22px",borderBottom:`1px solid ${C.navy}`,flexShrink:0 }}>
-          <div style={{ display:"flex",alignItems:"center",gap:10 }}>
-            {isEdit ? <Edit2 size={15} color={C.orange}/> : <Plus size={15} color={C.green}/>}
-            <span style={{ ...orb(12,700),color:C.white }}>{isEdit?"EDITAR EJERCICIO":"NUEVO EJERCICIO"}</span>
-            {isEdit && <span style={{ ...raj(12,500),color:C.muted }}>— {ej.nombre}</span>}
+    <ModalWrap onClose={onClose} maxWidth={520}>
+      <ModalHeader isEdit={isEdit} label={isEdit?"EDITAR EJERCICIO":"NUEVO EJERCICIO"} onClose={onClose} accent={C.blue}/>
+      <div style={{padding:20,display:"flex",flexDirection:"column",gap:14}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr auto",gap:10,alignItems:"start"}}>
+          <div>
+            <label style={{...raj(11,600),color:C.muted,display:"block",marginBottom:5}}>NOMBRE</label>
+            <input className="ae-inp" value={form.nombre} onChange={e=>set("nombre",e.target.value)} onBlur={()=>blur("nombre")} placeholder="Nombre del ejercicio" style={i("nombre")}/>
+            <FieldError msg={dirty.has("nombre")?errors.nombre:null}/>
           </div>
-          <button onClick={onClose} className="e-icon-btn" style={{ background:"transparent",border:`1px solid ${C.navy}`,padding:7,color:C.muted,display:"flex" }}><X size={15}/></button>
+          <div>
+            <label style={{...raj(11,600),color:C.muted,display:"block",marginBottom:5}}>ICONO</label>
+            <input className="ae-inp" value={form.imagen} onChange={e=>set("imagen",e.target.value)} maxLength={2} style={{...i("imagen"),width:52,textAlign:"center",fontSize:20,padding:"8px 0"}}/>
+          </div>
         </div>
-
-        {/* tabs */}
-        <div style={{ display:"flex",borderBottom:`1px solid ${C.navy}`,flexShrink:0 }}>
-          {TABS.map(t=>(
-            <button key={t.id} onClick={()=>setTab(t.id)} className="e-btn" style={{ flex:1,padding:"11px 0",...raj(12,tab===t.id?700:500),color:tab===t.id?borderColor:C.muted,background:"transparent",border:"none",borderBottom:`2px solid ${tab===t.id?borderColor:"transparent"}`,cursor:"pointer",transition:"all .2s" }}>
-              {t.label}
-            </button>
+        <div>
+          <label style={{...raj(11,600),color:C.muted,display:"block",marginBottom:5}}>DESCRIPCIÓN</label>
+          <textarea value={form.descripcion} rows={2} onChange={e=>set("descripcion",e.target.value)} placeholder="Descripción" className="ae-inp" style={{...i("descripcion"),resize:"vertical"}}/>
+        </div>
+        <div>
+          <label style={{...raj(11,600),color:C.muted,display:"block",marginBottom:6}}>DIFICULTAD</label>
+          <DiffPills value={form.dificultad} onChange={v=>{set("dificultad",v);touch("dificultad");}}/>
+          <FieldError msg={dirty.has("dificultad")?errors.dificultad:null}/>
+        </div>
+        <div>
+          <label style={{...raj(11,600),color:C.muted,display:"block",marginBottom:6}}>MÚSCULOS</label>
+          <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+            {MUSCULOS_OPT.map(m => {
+              const on = form.musculos.includes(m);
+              return (
+                <button key={m} type="button" onClick={()=>toggleMus(m)} style={{
+                  ...raj(10,on?700:500), color:on?C.blue:C.muted,
+                  background:on?`${C.blue}18`:"transparent",
+                  border:`1px solid ${on?C.blue:C.navy}`,
+                  padding:"4px 10px",cursor:"pointer",borderRadius:20,
+                }}>{m}</button>
+              );
+            })}
+          </div>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
+          {[["series","SERIES"],["reps","REPS"],["duracion","DUR (min)"]].map(([k,l])=>(
+            <div key={k}>
+              <label style={{...raj(11,600),color:C.muted,display:"block",marginBottom:5}}>{l}</label>
+              <input type="number" min={1} value={form[k]||""} onChange={e=>set(k,e.target.value?Number(e.target.value):null)} placeholder="—" className="ae-inp" style={i(k)}/>
+            </div>
           ))}
         </div>
-
-        {/* body */}
-        <div style={{ padding:22,overflowY:"auto",flex:1 }} className={shake?"e-shake":""}>
-
-          {/* ── TAB: GENERAL ── */}
-          {tab==="general" && (
-            <div style={{ display:"flex",flexDirection:"column",gap:16 }}>
-              {/* emoji + nombre */}
-              <div style={{ display:"grid",gridTemplateColumns:"100px 1fr",gap:14 }}>
-                <div>
-                  <label style={lbl}>🎨 ICONO</label>
-                  <div style={{ display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:5 }}>
-                    {EMOJIS.map(e=>(
-                      <button key={e} type="button" onClick={()=>set("imagen",e)} className="e-btn"
-                        style={{ fontSize:18,background:form.imagen===e?`${C.orange}22`:"transparent",border:`1px solid ${form.imagen===e?C.orange:C.navy}`,padding:"6px",cursor:"pointer",transition:"all .18s" }}>
-                        {e}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <label style={lbl}>📝 NOMBRE</label>
-                  <input className="e-input" value={form.nombre} onChange={e=>set("nombre",e.target.value)} placeholder="Ej: Flexiones Diamante" style={inpSt(errors.nombre)}/>
-                  {errors.nombre && <p style={{ ...raj(11),color:C.red,marginTop:4 }}>⚠ {errors.nombre}</p>}
-
-                  <label style={{ ...lbl,marginTop:12 }}>🗂️ CATEGORÍA</label>
-                  <select className="e-input" value={form.categoria} onChange={e=>set("categoria",e.target.value)} style={{ ...inpSt(false),appearance:"none" }}>
-                    {CATEGORIAS.map(c=><option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-              </div>
-
-              {/* descripcion */}
-              <div>
-                <label style={lbl}>📋 DESCRIPCIÓN</label>
-                <textarea className="e-input" value={form.descripcion} onChange={e=>set("descripcion",e.target.value)}
-                  placeholder="Describe el ejercicio, técnica correcta, beneficios..."
-                  rows={3} style={{ ...inpSt(errors.descripcion),resize:"vertical" }}/>
-                {errors.descripcion && <p style={{ ...raj(11),color:C.red,marginTop:4 }}>⚠ {errors.descripcion}</p>}
-              </div>
-
-              {/* dificultad + estado */}
-              <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:14 }}>
-                <div>
-                  <label style={lbl}>⚡ DIFICULTAD</label>
-                  <div style={{ display:"flex",flexDirection:"column",gap:6 }}>
-                    {DIFICULTADES.map(d=>{
-                      const c = DIFICULTAD_COLOR[d];
-                      const on = form.dificultad===d;
-                      return (
-                        <button key={d} type="button" onClick={()=>set("dificultad",d)} className="e-btn"
-                          style={{ ...raj(12,on?700:500),color:on?c:C.muted,background:on?`${c}18`:"transparent",border:`1px solid ${on?c:C.navy}`,padding:"8px 12px",cursor:"pointer",textAlign:"left",transition:"all .18s" }}>
-                          {d}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-                <div>
-                  <label style={lbl}>● ESTADO</label>
-                  {[{v:true,label:"ACTIVO",c:C.green},{v:false,label:"INACTIVO",c:C.red}].map(o=>(
-                    <button key={String(o.v)} type="button" onClick={()=>set("activo",o.v)} className="e-btn"
-                      style={{ width:"100%",marginBottom:8,...raj(12,form.activo===o.v?700:500),color:form.activo===o.v?o.c:C.muted,background:form.activo===o.v?`${o.c}18`:"transparent",border:`1px solid ${form.activo===o.v?o.c:C.navy}`,padding:"10px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:8,transition:"all .18s" }}>
-                      <div style={{ width:8,height:8,borderRadius:"50%",background:form.activo===o.v?o.c:C.navy }}/>
-                      {o.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ── TAB: MÚSCULOS ── */}
-          {tab==="musculos" && (
-            <div style={{ display:"flex",flexDirection:"column",gap:18 }}>
-              <div>
-                <label style={lbl}>💪 MÚSCULOS TRABAJADOS</label>
-                <p style={{ ...raj(12,400),color:C.muted,marginBottom:12,lineHeight:1.5 }}>Selecciona todos los grupos musculares que trabaja este ejercicio.</p>
-                <MultiSelect options={MUSCULOS} value={form.musculos} onChange={v=>set("musculos",v)} color={C.blue}/>
-                {errors.musculos && <p style={{ ...raj(11),color:C.red,marginTop:8 }}>⚠ {errors.musculos}</p>}
-              </div>
-
-              {form.musculos.length > 0 && (
-                <div style={{ background:C.panel,border:`1px solid ${C.navy}`,padding:"14px 16px" }}>
-                  <div style={{ ...px(6),color:C.muted,marginBottom:10,letterSpacing:".05em" }}>SELECCIONADOS ({form.musculos.length})</div>
-                  <div style={{ display:"flex",gap:8,flexWrap:"wrap" }}>
-                    {form.musculos.map(m=>(
-                      <span key={m} style={{ ...raj(12,600),color:C.blue,background:`${C.blue}14`,border:`1px solid ${C.blue}33`,padding:"4px 10px",display:"flex",alignItems:"center",gap:6 }}>
-                        {m}
-                        <button type="button" onClick={()=>set("musculos",form.musculos.filter(x=>x!==m))} className="e-tag-del"
-                          style={{ background:"transparent",border:"none",cursor:"pointer",color:C.muted,display:"flex",lineHeight:1,padding:2 }}>
-                          <X size={11}/>
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ── TAB: CONFIGURACIÓN ── */}
-          {tab==="config" && (
-            <div style={{ display:"flex",flexDirection:"column",gap:16 }}>
-              {/* verificacion */}
-              <div>
-                <label style={lbl}>📹 MODO DE VERIFICACIÓN</label>
-                <div style={{ display:"flex",gap:8 }}>
-                  {VERIFICACION.map(v=>{
-                    const on = form.verificacion===v;
-                    const ic = v==="Cámara"?<Camera size={14}/>:v==="Timer"?<Timer size={14}/>:<><Camera size={14}/><Timer size={14}/></>;
-                    return (
-                      <button key={v} type="button" onClick={()=>set("verificacion",v)} className="e-btn"
-                        style={{ flex:1,...raj(12,on?700:500),color:on?C.teal:C.muted,background:on?`${C.teal}18`:"transparent",border:`1px solid ${on?C.teal:C.navy}`,padding:"12px 8px",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,transition:"all .18s" }}>
-                        {ic} {v}
-                      </button>
-                    );
-                  })}
-                </div>
-                <p style={{ ...raj(11,400),color:C.muted,marginTop:8,lineHeight:1.5 }}>
-                  {form.verificacion==="Cámara" && "MediaPipe detectará y contará las repeticiones automáticamente."}
-                  {form.verificacion==="Timer"  && "El usuario deberá mantener el tiempo activo en la app."}
-                  {form.verificacion==="Ambos"  && "El usuario puede elegir entre cámara o timer."}
-                </p>
-              </div>
-
-              {/* series / reps / duracion */}
-              <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14 }}>
-                <div>
-                  <label style={lbl}>🔁 SERIES</label>
-                  <input className="e-input" type="number" min={1} value={form.series} onChange={e=>set("series",Number(e.target.value))} style={inpSt(false)}/>
-                </div>
-                <div>
-                  <label style={lbl}>🏋️ REPS</label>
-                  <input className="e-input" type="number" min={1} value={form.reps||""} onChange={e=>set("reps",Number(e.target.value)||null)} placeholder="—" style={inpSt(false)}/>
-                  <p style={{ ...raj(10,400),color:C.muted,marginTop:4 }}>Dejar vacío si es por tiempo</p>
-                </div>
-                <div>
-                  <label style={lbl}>⏱️ DURACIÓN (min)</label>
-                  <input className="e-input" type="number" min={1} value={form.duracion||""} onChange={e=>set("duracion",Number(e.target.value)||null)} placeholder="—" style={inpSt(false)}/>
-                  <p style={{ ...raj(10,400),color:C.muted,marginTop:4 }}>Dejar vacío si es por reps</p>
-                </div>
-              </div>
-
-              {/* xp */}
-              <div>
-                <label style={lbl}>⚡ XP BASE POR SESIÓN</label>
-                <div style={{ display:"flex",alignItems:"center",gap:12 }}>
-                  <input className="e-input" type="range" min={5} max={200} step={5} value={form.xpBase} onChange={e=>set("xpBase",Number(e.target.value))}
-                    style={{ flex:1,accentColor:C.gold,cursor:"pointer" }}/>
-                  <div style={{ background:C.panel,border:`1px solid ${C.gold}44`,padding:"10px 16px",minWidth:80,textAlign:"center" }}>
-                    <span style={{ ...orb(16,900),color:C.gold }}>+{form.xpBase}</span>
-                    <div style={{ ...raj(10,500),color:C.muted,marginTop:2 }}>XP</div>
-                  </div>
-                </div>
-                <p style={{ ...raj(11,400),color:C.muted,marginTop:6 }}>
-                  El XP real puede ser mayor según la clase del héroe y dificultad completada.
-                </p>
-              </div>
-            </div>
-          )}
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+          <div>
+            <label style={{...raj(11,600),color:C.muted,display:"block",marginBottom:5}}>XP BASE</label>
+            <input type="number" min={1} value={form.xpBase} onChange={e=>set("xpBase",Number(e.target.value))} onBlur={()=>blur("xpBase")} className="ae-inp" style={i("xpBase")}/>
+            <FieldError msg={dirty.has("xpBase")?errors.xpBase:null}/>
+          </div>
+          <div>
+            <label style={{...raj(11,600),color:C.muted,display:"block",marginBottom:5}}>VERIFICACIÓN</label>
+            <select value={form.verificacion} onChange={e=>{set("verificacion",e.target.value);touch("verificacion");}} className="ae-inp" style={i("verificacion")}>
+              {VERIFICACION_OPT.map(v=><option key={v} value={v}>{v}</option>)}
+            </select>
+            <FieldError msg={dirty.has("verificacion")?errors.verificacion:null}/>
+          </div>
         </div>
-
-        {/* footer */}
-        <div style={{ display:"flex",gap:10,padding:"16px 22px",borderTop:`1px solid ${C.navy}`,flexShrink:0 }}>
-          <button onClick={onClose} className="e-btn" style={{ flex:"0 0 auto",...raj(13,600),color:C.muted,background:C.panel,border:`1px solid ${C.navy}`,padding:"12px 20px",cursor:"pointer" }}>
-            CANCELAR
-          </button>
-          <button onClick={save} disabled={loading} className="e-btn" style={{ flex:1,...px(8),color:loading?C.muted:C.bg,background:loading?`${borderColor}55`:borderColor,border:"none",padding:"12px",cursor:loading?"not-allowed":"pointer",boxShadow:`0 4px 20px ${borderColor}44`,display:"flex",alignItems:"center",justifyContent:"center",gap:10 }}>
-            {loading ? <><Spinner color={borderColor}/> GUARDANDO...</> : <><Check size={14}/> {isEdit?"GUARDAR CAMBIOS":"CREAR EJERCICIO"}</>}
-          </button>
-        </div>
+        <button type="button" onClick={()=>set("activo",!form.activo)} style={{
+          display:"flex",alignItems:"center",gap:10,padding:"10px 14px",
+          background:form.activo?`${C.green}14`:`${C.muted}0A`,
+          border:`1px solid ${form.activo?C.green:C.navy}`,borderRadius:8,cursor:"pointer",
+          transition:"all .2s",
+        }}>
+          {form.activo
+            ? <><ToggleRight size={18} color={C.green}/><span style={{...raj(12,700),color:C.green}}>VISIBLE PARA USUARIOS</span></>
+            : <><ToggleLeft  size={18} color={C.muted}/><span style={{...raj(12,700),color:C.muted}}>OCULTO (inactivo)</span></>
+          }
+        </button>
+        <SaveCancelRow onClose={onClose} onSave={handleSave} loading={loading}/>
       </div>
-    </div>
+    </ModalWrap>
   );
 }
 
-// ══════════════════════════════════════════════════════════════
-//  MODAL — Eliminar
-// ══════════════════════════════════════════════════════════════
-function DeleteModal({ ej, onClose, onConfirm }) {
-  const [typed,   setTyped]   = useState("");
-  const [loading, setLoading] = useState(false);
-  const match = typed === ej.nombre;
-
-  const confirm = async () => {
-    if (!match) return;
-    setLoading(true);
-    await new Promise(r=>setTimeout(r,700)); // ← reemplazar con deleteEjercicio(token, id)
-    setLoading(false);
-    onConfirm(ej.id);
-    onClose();
-  };
-
+// ─────────────────────────────────────────────────────────────────────────────
+// DELETE MODAL
+// ─────────────────────────────────────────────────────────────────────────────
+function DeleteModal({ name, onClose, onConfirm, loading, type, inUseCount }) {
+  const [typed, setTyped] = useState("");
+  const ok = typed === name;
   return (
-    <div style={{ position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,.8)",display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}
-      onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{ width:"100%",maxWidth:420,background:C.card,border:`1px solid ${C.red}44`,boxShadow:`0 0 60px ${C.red}14,0 24px 60px rgba(0,0,0,.6)`,animation:"e-modalIn .25s ease both",overflow:"hidden" }}>
-        <div style={{ height:3,background:`linear-gradient(90deg,transparent,${C.red},transparent)` }}/>
-        <div style={{ padding:"22px 24px 26px" }}>
-          <div style={{ display:"flex",alignItems:"center",gap:12,marginBottom:18 }}>
-            <div style={{ background:`${C.red}18`,border:`1px solid ${C.red}44`,padding:10,display:"flex" }}>
-              <AlertTriangle size={22} color={C.red}/>
-            </div>
-            <div>
-              <div style={{ ...orb(13,900),color:C.red,marginBottom:3 }}>ELIMINAR EJERCICIO</div>
-              <div style={{ ...raj(12,500),color:C.muted }}>Esta acción no se puede deshacer</div>
-            </div>
-          </div>
-
-          <div style={{ background:`${C.red}0A`,border:`1px solid ${C.red}22`,padding:"12px 16px",marginBottom:18,display:"flex",gap:12,alignItems:"center" }}>
-            <span style={{ fontSize:24 }}>{ej.imagen}</span>
-            <div>
-              <div style={{ ...raj(14,700),color:C.red }}>{ej.nombre}</div>
-              <div style={{ ...raj(12,400),color:C.muted }}>{ej.categoria} · {ej.sesiones} sesiones</div>
-            </div>
-          </div>
-
-          <div style={{ marginBottom:18 }}>
-            <label style={{ display:"block",...px(6),color:C.muted,marginBottom:8,letterSpacing:".06em" }}>
-              ESCRIBE <span style={{ color:C.red }}>{ej.nombre}</span> PARA CONFIRMAR
-            </label>
-            <input className="e-input" value={typed} onChange={e=>setTyped(e.target.value)} placeholder={ej.nombre}
-              style={{ width:"100%",padding:"12px 14px",background:C.panel,border:`1px solid ${match?C.red:C.navy}`,color:C.white,...raj(14,600) }}/>
-          </div>
-
-          <div style={{ display:"flex",gap:10 }}>
-            <button onClick={onClose} className="e-btn" style={{ flex:"0 0 auto",...raj(13,600),color:C.muted,background:C.panel,border:`1px solid ${C.navy}`,padding:"12px 18px",cursor:"pointer" }}>CANCELAR</button>
-            <button onClick={confirm} disabled={!match||loading} className="e-btn"
-              style={{ flex:1,...px(7),color:(match&&!loading)?C.white:C.muted,background:(match&&!loading)?C.red:`${C.red}22`,border:`1px solid ${C.red}55`,padding:"12px",cursor:match?"pointer":"not-allowed",display:"flex",alignItems:"center",justifyContent:"center",gap:10,transition:"all .2s" }}>
-              {loading ? <><Spinner color={C.red}/> ELIMINANDO...</> : <><Trash2 size={13}/> ELIMINAR</>}
-            </button>
-          </div>
+    <ModalWrap onClose={onClose} maxWidth={400}>
+      <div style={{background:`${C.red}14`,borderBottom:`2px solid ${C.red}`,padding:"14px 18px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <div style={{background:C.red,color:"#fff",width:26,height:26,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:6}}><Trash2 size={14}/></div>
+          <span style={{...orb(11,800),color:C.red}}>ELIMINAR {type.toUpperCase()}</span>
         </div>
+        <button onClick={onClose} style={{background:"transparent",border:"none",color:C.muted,cursor:"pointer",display:"flex",padding:4}}><X size={16}/></button>
+      </div>
+      <div style={{padding:20,display:"flex",flexDirection:"column",gap:14}}>
+        {inUseCount > 0 && (
+          <div style={{background:`${C.orange}14`,border:`1px solid ${C.orange}44`,padding:"10px 14px",borderRadius:8,display:"flex",gap:10}}>
+            <AlertTriangle size={15} color={C.orange} style={{flexShrink:0,marginTop:2}}/>
+            <div style={{...raj(12,500),color:C.orange,lineHeight:1.5}}>
+              Este {type} está referenciado en <strong>{inUseCount}</strong> {inUseCount===1?"elemento":"elementos"}.
+            </div>
+          </div>
+        )}
+        <div style={{background:`${C.red}14`,border:`1px solid ${C.red}33`,padding:"10px 14px",borderRadius:8,display:"flex",gap:10}}>
+          <AlertTriangle size={15} color={C.red} style={{flexShrink:0,marginTop:2}}/>
+          <div style={{...raj(12,500),color:C.red,lineHeight:1.5}}>Esta acción es <strong>irreversible</strong>.</div>
+        </div>
+        <div style={{...raj(12,500),color:C.muted}}>Escribe el nombre para confirmar:</div>
+        <div style={{...raj(13,700),color:C.white,background:"rgba(10,14,26,0.8)",padding:"8px 12px",borderRadius:8,letterSpacing:1}}>{name}</div>
+        <input
+          value={typed} onChange={e=>setTyped(e.target.value)} placeholder={name}
+          className="ae-inp"
+          style={{padding:"9px 12px",background:"rgba(10,14,26,0.8)",border:`1px solid ${ok?C.green:C.red}`,color:C.white,...raj(12,500),borderRadius:8,outline:"none"}}
+        />
+        <div style={{display:"flex",gap:10}}>
+          <button onClick={onClose} style={{flex:1,...raj(11,600),background:"rgba(10,14,26,0.8)",border:`1px solid ${C.navy}`,color:C.muted,padding:10,cursor:"pointer",borderRadius:8}}>CANCELAR</button>
+          <button onClick={()=>ok&&onConfirm()} disabled={!ok||loading} style={{flex:1,...raj(11,700),background:(ok&&!loading)?C.red:`${C.red}44`,color:ok&&!loading?"#fff":C.muted,border:"none",padding:10,cursor:ok?"pointer":"not-allowed",display:"flex",alignItems:"center",justifyContent:"center",gap:6,borderRadius:8}}>
+            {loading?<><Spin/> ELIMINANDO...</>:<><Trash2 size={13}/> ELIMINAR</>}
+          </button>
+        </div>
+      </div>
+    </ModalWrap>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SKELETON
+// ─────────────────────────────────────────────────────────────────────────────
+function SkeletonEjercicios() {
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:18}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14}}>
+        {[0,1,2,3].map(i=><div key={i} className="ae-skel" style={{height:96}}/>)}
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:14}}>
+        {[0,1,2,3,4,5].map(i=><div key={i} className="ae-skel" style={{height:148}}/>)}
       </div>
     </div>
   );
 }
 
-// ══════════════════════════════════════════════════════════════
-//  MAIN
-// ══════════════════════════════════════════════════════════════
-export default function AdminEjercicios() {
-  const [ejercicios,  setEjercicios]  = useState(MOCK_EJERCICIOS);
-  const [view,        setView]        = useState("table"); // "table" | "grid"
-  const [search,      setSearch]      = useState("");
-  const [filterCat,   setFilterCat]   = useState("all");
-  const [filterDif,   setFilterDif]   = useState("all");
-  const [filterAct,   setFilterAct]   = useState("all");
-  const [filterVer,   setFilterVer]   = useState("all");
-  const [sortKey,     setSortKey]     = useState("sesiones");
-  const [sortDir,     setSortDir]     = useState("desc");
-  const [page,        setPage]        = useState(1);
-  const [pageSize,    setPageSize]    = useState(12);
-  const [selected,    setSelected]    = useState(new Set());
-  const [modal,       setModal]       = useState(null);
-  const [refreshing,  setRefreshing]  = useState(false);
+// ─────────────────────────────────────────────────────────────────────────────
+// CATEGORY CARD
+// ─────────────────────────────────────────────────────────────────────────────
+function CatCard({ cat, rutinas, ejercicios, onClick, onToggleActivo }) {
+  const rc = rutinas.filter(r=>r.categoria===cat.id).length;
+  const ec = ejercicios.filter(e=>e.categoria===cat.id).length;
+  const isInactive = cat.activo === false;
+  return (
+    <motion.div
+      className="ae-card-cat"
+      whileHover={{ y:-4, boxShadow:`0 14px 40px ${cat.color}28, 0 4px 16px rgba(0,0,0,0.45)` }}
+      transition={{ duration:.2 }}
+      onClick={onClick}
+      style={{
+        background:"rgba(20,26,42,0.84)",
+        backdropFilter:"blur(14px)",
+        border:`1px solid ${isInactive ? C.navy : cat.color+"30"}`,
+        borderRadius:14, overflow:"hidden",
+        cursor:"pointer",
+        boxShadow:"0 2px 14px rgba(0,0,0,0.28)",
+        opacity: isInactive ? 0.65 : 1,
+      }}
+    >
+      {/* Colored header band */}
+      <div style={{
+        background:`linear-gradient(135deg, ${cat.color}1A 0%, ${cat.color}06 100%)`,
+        borderBottom:`1px solid ${cat.color}22`,
+        padding:"18px 18px 14px",
+        position:"relative", overflow:"hidden",
+      }}>
+        {/* Corner ambient orb — fades in on hover via CSS */}
+        <div className="ae-cat-orb" style={{
+          position:"absolute", top:-24, right:-24, width:90, height:90, borderRadius:"50%",
+          background:`radial-gradient(circle, ${cat.color}44, transparent)`,
+          filter:"blur(22px)", pointerEvents:"none", opacity:.4, transition:"opacity .25s",
+        }}/>
+        <div style={{ position:"absolute", top:10, right:10, zIndex:2 }}>
+          {isInactive
+            ? <span style={{...raj(8,700),color:C.muted,background:`${C.muted}14`,border:`1px solid ${C.muted}33`,padding:"2px 7px",borderRadius:20}}>INACTIVA</span>
+            : <span style={{...raj(8,700),color:C.green,background:`${C.green}14`,border:`1px solid ${C.green}33`,padding:"2px 7px",borderRadius:20}}>✓ ACTIVA</span>
+          }
+        </div>
+        <div style={{ fontSize:30, marginBottom:10, filter:`drop-shadow(0 2px 10px ${cat.color}55)`,
+          position:"relative" }}>{cat.icono}</div>
+        <div style={{...orb(11,700), color:isInactive?C.muted:cat.color, letterSpacing:".02em",
+          position:"relative"}}>{cat.nombre}</div>
+      </div>
+      {/* Body */}
+      <div style={{ padding:"12px 18px 16px" }}>
+        {cat.descripcion && (
+          <div style={{...raj(10,400), color:C.muted, marginBottom:10, lineHeight:1.5,
+            overflow:"hidden", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical" }}>
+            {cat.descripcion}
+          </div>
+        )}
+        <div style={{ display:"flex", gap:8, marginBottom:8 }}>
+          <div style={{ flex:1, background:`${C.navy}55`, borderRadius:8, padding:"7px 10px",
+            display:"flex", alignItems:"center", gap:6, border:`1px solid ${C.navy}` }}>
+            <BookOpen size={10} color={C.orange}/>
+            <span style={{...raj(11,700), color:C.white}}>{rc}</span>
+            <span style={{...raj(9,400), color:C.muted}}>rut.</span>
+          </div>
+          <div style={{ flex:1, background:`${C.navy}55`, borderRadius:8, padding:"7px 10px",
+            display:"flex", alignItems:"center", gap:6, border:`1px solid ${C.navy}` }}>
+            <Dumbbell size={10} color={C.blue}/>
+            <span style={{...raj(11,700), color:C.white}}>{ec}</span>
+            <span style={{...raj(9,400), color:C.muted}}>ej.</span>
+          </div>
+        </div>
+        <button
+          onClick={e=>{e.stopPropagation();onToggleActivo?.();}}
+          style={{
+            width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:6,
+            padding:"6px 10px",
+            background:isInactive?`${C.green}14`:`${C.muted}0A`,
+            border:`1px solid ${isInactive?C.green:C.navy}`,
+            borderRadius:7,cursor:"pointer",transition:"all .2s",
+            ...raj(10,700), color:isInactive?C.green:C.muted,
+          }}
+        >
+          {isInactive ? <><Eye size={11}/> Activar</> : <><EyeOff size={11}/> Desactivar</>}
+        </button>
+      </div>
+    </motion.div>
+  );
+}
 
-  const refresh = async () => {
-    setRefreshing(true);
-    await new Promise(r=>setTimeout(r,800)); // ← reemplazar con getEjercicios(token)
-    setRefreshing(false);
+// ─────────────────────────────────────────────────────────────────────────────
+// RUTINA ROW CARD
+// ─────────────────────────────────────────────────────────────────────────────
+function RutinaCard({ rut, onEdit, onDelete }) {
+  const dc = DIFF_COLOR[rut.dificultad] || C.muted;
+  return (
+    <motion.div
+      whileHover={{ y:-1, boxShadow:`0 6px 22px rgba(0,0,0,.32), 0 0 0 1px ${dc}20` }}
+      transition={{ duration:.16 }}
+      style={{
+        background:"rgba(20,26,42,0.76)",
+        backdropFilter:"blur(12px)",
+        border:`1px solid ${C.navy}`,
+        borderLeft:`3px solid ${dc}`,
+        borderRadius:10, padding:"12px 14px",
+        display:"flex", alignItems:"center", gap:12,
+      }}
+    >
+      {/* Icon orb */}
+      <div style={{ width:36, height:36, borderRadius:10, background:`${dc}16`,
+        border:`1px solid ${dc}30`, display:"flex", alignItems:"center",
+        justifyContent:"center", flexShrink:0 }}>
+        <BookOpen size={14} color={dc}/>
+      </div>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{...raj(12,700),color:C.white,marginBottom:4,
+          whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{rut.nombre}</div>
+        <div style={{display:"flex",gap:5,alignItems:"center",flexWrap:"wrap"}}>
+          <span style={{...raj(9,700),color:dc,background:`${dc}18`,
+            border:`1px solid ${dc}28`,padding:"2px 8px",borderRadius:20}}>{rut.dificultad}</span>
+          {rut.duracion && (
+            <span style={{...raj(9,500),color:C.muted,display:"flex",alignItems:"center",gap:3}}>
+              <Timer size={9}/>{rut.duracion}min
+            </span>
+          )}
+          {rut.ejercicios?.length > 0 && (
+            <span style={{...raj(9,500),color:C.muted,display:"flex",alignItems:"center",gap:3}}>
+              <Dumbbell size={9}/>{rut.ejercicios.length} ej.
+            </span>
+          )}
+        </div>
+      </div>
+      <div style={{display:"flex",gap:4,flexShrink:0}}>
+        <button onClick={onEdit}   style={{background:`${C.orange}14`,border:`1px solid ${C.orange}33`,padding:"6px 7px",color:C.orange,cursor:"pointer",borderRadius:7,display:"flex"}}><Edit2 size={11}/></button>
+        <button onClick={onDelete} style={{background:`${C.red}14`,border:`1px solid ${C.red}33`,padding:"6px 7px",color:C.red,cursor:"pointer",borderRadius:7,display:"flex"}}><Trash2 size={11}/></button>
+      </div>
+    </motion.div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EJERCICIO ROW CARD
+// ─────────────────────────────────────────────────────────────────────────────
+function EjercicioCard({ ej, onEdit, onDelete, onToggleActivo }) {
+  const dc = DIFF_COLOR[ej.dificultad] || C.muted;
+  const muscles = (ej.musculos || []).slice(0, 2);
+  const isInactive = ej.activo === false;
+  return (
+    <motion.div
+      whileHover={{ y:-1, boxShadow:`0 6px 22px rgba(0,0,0,.32), 0 0 0 1px ${isInactive?C.navy:C.blue+"20"}` }}
+      transition={{ duration:.16 }}
+      style={{
+        background:"rgba(20,26,42,0.76)",
+        backdropFilter:"blur(12px)",
+        border:`1px solid ${C.navy}`,
+        borderLeft:`3px solid ${isInactive?C.muted:C.blue}`,
+        borderRadius:10, padding:"12px 14px",
+        display:"flex", alignItems:"center", gap:12,
+        opacity: isInactive ? 0.65 : 1,
+      }}
+    >
+      {/* Emoji orb */}
+      <div style={{ width:36, height:36, borderRadius:10, background:`${isInactive?C.muted:C.blue}14`,
+        border:`1px solid ${isInactive?C.muted:C.blue}28`, display:"flex", alignItems:"center",
+        justifyContent:"center", fontSize:18, flexShrink:0 }}>{ej.imagen}</div>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{...raj(12,700),color:isInactive?C.muted:C.white,marginBottom:4,
+          whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{ej.nombre}</div>
+        <div style={{display:"flex",gap:5,alignItems:"center",flexWrap:"wrap"}}>
+          {isInactive && (
+            <span style={{...raj(8,700),color:C.muted,background:`${C.muted}14`,
+              border:`1px solid ${C.muted}33`,padding:"1px 7px",borderRadius:20}}>INACTIVO</span>
+          )}
+          <span style={{...raj(9,700),color:dc,background:`${dc}18`,
+            border:`1px solid ${dc}28`,padding:"2px 8px",borderRadius:20}}>{ej.dificultad}</span>
+          {ej.series && (
+            <span style={{...raj(9,500),color:C.muted,display:"flex",alignItems:"center",gap:3}}>
+              <Repeat size={9}/>{ej.series}×{ej.reps}
+            </span>
+          )}
+          <span style={{...raj(9,700),color:C.gold,background:`${C.gold}16`,
+            border:`1px solid ${C.gold}28`,padding:"2px 8px",borderRadius:20,
+            display:"flex",alignItems:"center",gap:3}}>
+            <Zap size={8}/>+{ej.xpBase}XP
+          </span>
+          {muscles.map(m => (
+            <span key={m} style={{...raj(8,500),color:C.muted,background:`${C.navy}88`,
+              padding:"1px 6px",borderRadius:20}}>{m}</span>
+          ))}
+        </div>
+      </div>
+      <div style={{display:"flex",gap:4,flexShrink:0}}>
+        <button onClick={onToggleActivo} title={isInactive?"Activar":"Desactivar"}
+          style={{background:isInactive?`${C.green}14`:`${C.muted}0A`,border:`1px solid ${isInactive?C.green:C.navy}`,padding:"6px 7px",color:isInactive?C.green:C.muted,cursor:"pointer",borderRadius:7,display:"flex"}}>
+          {isInactive ? <Eye size={11}/> : <EyeOff size={11}/>}
+        </button>
+        <button onClick={onEdit}   style={{background:`${C.orange}14`,border:`1px solid ${C.orange}33`,padding:"6px 7px",color:C.orange,cursor:"pointer",borderRadius:7,display:"flex"}}><Edit2 size={11}/></button>
+        <button onClick={onDelete} style={{background:`${C.red}14`,border:`1px solid ${C.red}33`,padding:"6px 7px",color:C.red,cursor:"pointer",borderRadius:7,display:"flex"}}><Trash2 size={11}/></button>
+      </div>
+    </motion.div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN COMPONENT
+// ─────────────────────────────────────────────────────────────────────────────
+export default function AdminEjercicios() {
+  const [categorias,   setCategorias]   = useState([]);
+  const [rutinas,      setRutinas]      = useState([]);
+  const [ejercicios,   setEjercicios]   = useState([]);
+  const [loading,      setLoading]      = useState(true);
+  const [selectedCat,  setSelectedCat]  = useState(null);
+  const [search,       setSearch]       = useState("");
+  const [modal,        setModal]        = useState(null);
+  const [modalLoading, setModalLoading] = useState(false);
+  const { push } = useToast();
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+      const token = await user.getIdToken();
+      const [catsRes, rutRes, ejRes] = await Promise.all([getCategorias(token), getRutinas(token), getEjercicios(token)]);
+      setCategorias(catsRes.categorias || []);
+      setRutinas(rutRes.rutinas || []);
+      setEjercicios(ejRes.ejercicios || []);
+    } catch { push("Error cargando datos", "error"); }
+    finally { setLoading(false); }
+  }, [push]);
+
+  useEffect(() => { loadData(); }, [loadData]);
+
+  const filteredRutinas = useMemo(() => {
+    let r = rutinas;
+    if (selectedCat) r = r.filter(x => x.categoria === selectedCat.id);
+    if (search) r = r.filter(x => x.nombre.toLowerCase().includes(search.toLowerCase()));
+    return r;
+  }, [rutinas, selectedCat, search]);
+
+  const filteredEjercicios = useMemo(() => {
+    let e = ejercicios;
+    if (selectedCat) e = e.filter(x => x.categoria === selectedCat.id);
+    if (search) e = e.filter(x => x.nombre.toLowerCase().includes(search.toLowerCase()));
+    return e;
+  }, [ejercicios, selectedCat, search]);
+
+  const catInUse    = cat => rutinas.filter(r=>r.categoria===cat.id).length + ejercicios.filter(e=>e.categoria===cat.id).length;
+  const rutinaInUse = rut => (rut.ejercicios||[]).length;
+  const ejInUse     = ej  => rutinas.filter(r=>(r.ejercicios||[]).includes(ej.id)).length;
+
+  const handleSaveCategoria = async (data) => {
+    setModalLoading(true);
+    try {
+      const token = await auth.currentUser.getIdToken();
+      if (modal.isEdit) await updateCategoria(token, modal.data.id, data);
+      else              await createCategoria(token, data);
+      await loadData();
+      push(`Categoría ${modal.isEdit?"actualizada":"creada"}`);
+      setModal(null);
+    } catch (err) { push(err.message||"Error al guardar","error"); }
+    finally { setModalLoading(false); }
   };
 
-  // ── Filtro + orden ─────────────────────────────────────────
-  const filtered = useMemo(() => {
-    let list = [...ejercicios];
-    if (search)           list = list.filter(e=>e.nombre.toLowerCase().includes(search.toLowerCase())||e.descripcion.toLowerCase().includes(search.toLowerCase()));
-    if (filterCat!=="all") list = list.filter(e=>e.categoria===filterCat);
-    if (filterDif!=="all") list = list.filter(e=>e.dificultad===filterDif);
-    if (filterAct!=="all") list = list.filter(e=>String(e.activo)===(filterAct==="active"?"true":"false"));
-    if (filterVer!=="all") list = list.filter(e=>e.verificacion===filterVer);
-    list.sort((a,b)=>{
-      const av=a[sortKey]??""; const bv=b[sortKey]??"";
-      return sortDir==="asc"?(av>bv?1:-1):(av<bv?1:-1);
-    });
-    return list;
-  },[ejercicios,search,filterCat,filterDif,filterAct,filterVer,sortKey,sortDir]);
+  const handleSaveRutina = async (data) => {
+    setModalLoading(true);
+    try {
+      const token = await auth.currentUser.getIdToken();
+      if (modal.isEdit) await updateRutina(token, modal.data.id, {...data, categoria:selectedCat.id});
+      else              await createRutina(token, {...data, categoria:selectedCat.id});
+      await loadData();
+      push(`Rutina ${modal.isEdit?"actualizada":"creada"}`);
+      setModal(null);
+    } catch (err) { push(err.message||"Error al guardar","error"); }
+    finally { setModalLoading(false); }
+  };
 
-  const totalPages = Math.max(1,Math.ceil(filtered.length/pageSize));
-  const paginated  = filtered.slice((page-1)*pageSize,page*pageSize);
+  const handleSaveEjercicio = async (data) => {
+    setModalLoading(true);
+    try {
+      const token = await auth.currentUser.getIdToken();
+      if (modal.isEdit) await updateEjercicio(token, modal.data.id, {...data, categoria:selectedCat.id});
+      else              await createEjercicio(token, {...data, categoria:selectedCat.id});
+      await loadData();
+      push(`Ejercicio ${modal.isEdit?"actualizado":"creado"}`);
+      setModal(null);
+    } catch (err) { push(err.message||"Error al guardar","error"); }
+    finally { setModalLoading(false); }
+  };
 
-  const sort = (key) => { if(sortKey===key)setSortDir(d=>d==="asc"?"desc":"asc"); else{setSortKey(key);setSortDir("asc");} };
-  const toggleSelect = id => setSelected(s=>{const n=new Set(s);n.has(id)?n.delete(id):n.add(id);return n;});
-  const toggleAll    = () => setSelected(s=>s.size===paginated.length?new Set():new Set(paginated.map(e=>e.id)));
+  const handleDeleteCategoria = async () => {
+    setModalLoading(true);
+    try {
+      const token = await auth.currentUser.getIdToken();
+      await deleteCategoria(token, modal.data.id);
+      await loadData(); setSelectedCat(null);
+      push("Categoría eliminada"); setModal(null);
+    } catch (err) { push(err.message||"Error al eliminar","error"); }
+    finally { setModalLoading(false); }
+  };
 
-  const handleSave = (saved) => setEjercicios(es=>{
-    const idx = es.findIndex(e=>e.id===saved.id);
-    if(idx>=0){ const a=[...es]; a[idx]=saved; return a; }
-    return [saved,...es];
-  });
-  const handleDelete   = (id) => { setEjercicios(es=>es.filter(e=>e.id!==id)); setSelected(s=>{const n=new Set(s);n.delete(id);return n;}); };
-  const bulkDelete     = () => { setEjercicios(es=>es.filter(e=>!selected.has(e.id))); setSelected(new Set()); };
-  const bulkToggle     = (activo) => setEjercicios(es=>es.map(e=>selected.has(e.id)?{...e,activo}:e));
+  const handleDeleteRutina = async () => {
+    setModalLoading(true);
+    try {
+      const token = await auth.currentUser.getIdToken();
+      await deleteRutina(token, modal.data.id);
+      await loadData(); push("Rutina eliminada"); setModal(null);
+    } catch (err) { push(err.message||"Error al eliminar","error"); }
+    finally { setModalLoading(false); }
+  };
 
-  const kpis = useMemo(()=>({
-    total:    ejercicios.length,
-    activos:  ejercicios.filter(e=>e.activo).length,
-    sesiones: ejercicios.reduce((s,e)=>s+e.sesiones,0),
-    avgXP:    Math.round(ejercicios.reduce((s,e)=>s+e.xpBase,0)/ejercicios.length),
-  }),[ejercicios]);
+  const handleDeleteEjercicio = async () => {
+    setModalLoading(true);
+    try {
+      const token = await auth.currentUser.getIdToken();
+      await deleteEjercicio(token, modal.data.id);
+      await loadData(); push("Ejercicio eliminado"); setModal(null);
+    } catch (err) { push(err.message||"Error al eliminar","error"); }
+    finally { setModalLoading(false); }
+  };
 
-  const fBtn = (on,c=C.orange) => ({ ...raj(11,on?700:600), color:on?c:C.muted, background:on?`${c}18`:"transparent", border:`1px solid ${on?c:C.navy}`, padding:"5px 12px", cursor:"pointer", transition:"all .18s", boxShadow:on?`0 0 8px ${c}22`:"none" });
+  const handleToggleActivoCategoria = async (cat) => {
+    try {
+      const token = await auth.currentUser.getIdToken();
+      await updateCategoria(token, cat.id, { activo: !(cat.activo ?? true) });
+      await loadData();
+      push(`Categoría ${cat.activo === false ? "activada" : "desactivada"}`);
+    } catch (err) { push(err.message||"Error al actualizar","error"); }
+  };
+
+  const handleToggleActivoEjercicio = async (ej) => {
+    try {
+      const token = await auth.currentUser.getIdToken();
+      await updateEjercicio(token, ej.id, { activo: !(ej.activo ?? true) });
+      await loadData();
+      push(`Ejercicio ${ej.activo === false ? "activado" : "desactivado"}`);
+    } catch (err) { push(err.message||"Error al actualizar","error"); }
+  };
+
+  const avgXp = ejercicios.length
+    ? Math.round(ejercicios.reduce((s,e)=>s+(e.xpBase||0),0)/ejercicios.length)
+    : 0;
+
+  const KPIS = [
+    { label:"CATEGORÍAS", value:categorias.length, Icon:Layers,   color:C.green  },
+    { label:"RUTINAS",    value:rutinas.length,    Icon:BookOpen, color:C.orange },
+    { label:"EJERCICIOS", value:ejercicios.length, Icon:Dumbbell, color:C.blue   },
+    { label:"XP PROMEDIO",value:avgXp,             Icon:Zap,      color:C.gold   },
+  ];
 
   return (
     <>
       <style>{CSS}</style>
 
-      {modal?.type==="view"   && <ViewModal ej={modal.ej} onClose={()=>setModal(null)} onEdit={(e)=>setModal({type:"form",ej:e})}/>}
-      {modal?.type==="form"   && <FormModal ej={modal.ej} onClose={()=>setModal(null)} onSave={handleSave}/>}
-      {modal?.type==="delete" && <DeleteModal ej={modal.ej} onClose={()=>setModal(null)} onConfirm={handleDelete}/>}
+      <AnimatePresence>
+        {modal?.type==="categoria"       && <CategoriasModal key="m-cat"  data={modal.data} onClose={()=>setModal(null)} onSave={handleSaveCategoria} isEdit={modal.isEdit} loading={modalLoading}/>}
+        {modal?.type==="rutina"          && <RutinasModal    key="m-rut"  data={modal.data} onClose={()=>setModal(null)} onSave={handleSaveRutina}    isEdit={modal.isEdit} loading={modalLoading} ejercicios={filteredEjercicios}/>}
+        {modal?.type==="ejercicio"       && <EjerciciosModal key="m-ej"   data={modal.data} onClose={()=>setModal(null)} onSave={handleSaveEjercicio} isEdit={modal.isEdit} loading={modalLoading}/>}
+        {modal?.type==="deleteCategoria" && <DeleteModal key="d-cat" name={modal.data.nombre} onClose={()=>setModal(null)} onConfirm={handleDeleteCategoria} loading={modalLoading} type="categoría" inUseCount={catInUse(modal.data)}/>}
+        {modal?.type==="deleteRutina"    && <DeleteModal key="d-rut" name={modal.data.nombre} onClose={()=>setModal(null)} onConfirm={handleDeleteRutina}    loading={modalLoading} type="rutina"    inUseCount={rutinaInUse(modal.data)}/>}
+        {modal?.type==="deleteEjercicio" && <DeleteModal key="d-ej"  name={modal.data.nombre} onClose={()=>setModal(null)} onConfirm={handleDeleteEjercicio} loading={modalLoading} type="ejercicio" inUseCount={ejInUse(modal.data)}/>}
+      </AnimatePresence>
 
-      <div style={{ display:"flex",flexDirection:"column",gap:18 }}>
+      {/* Ambient orbs */}
+      <div style={{ position:"fixed", top:0, right:0, width:320, height:320, borderRadius:"50%",
+        background:`radial-gradient(circle, ${C.blue}0A, transparent)`,
+        filter:"blur(90px)", pointerEvents:"none", zIndex:0 }}/>
+      <div style={{ position:"fixed", bottom:60, left:0, width:260, height:260, borderRadius:"50%",
+        background:`radial-gradient(circle, ${C.orange}08, transparent)`,
+        filter:"blur(80px)", pointerEvents:"none", zIndex:0 }}/>
 
-        {/* ── KPIs ── */}
-        <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12 }}>
-          {[
-            { label:"EJERCICIOS",    value:kpis.total,               icon:<Dumbbell size={18}/>, color:C.orange },
-            { label:"ACTIVOS",       value:kpis.activos,             icon:<Zap size={18}/>,      color:C.green  },
-            { label:"SESIONES TOTAL",value:kpis.sesiones.toLocaleString(), icon:<BarChart2 size={18}/>,color:C.blue },
-            { label:"XP PROMEDIO",   value:`+${kpis.avgXP}`,         icon:<Star size={18}/>,     color:C.gold   },
-          ].map((k,i)=>(
-            <div key={i} style={{ background:C.card,border:`1px solid ${k.color}33`,padding:"18px 16px",position:"relative",overflow:"hidden",animation:`e-cardIn .4s ease ${i*.07}s both`,transition:"transform .2s,box-shadow .2s" }}
-              onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.boxShadow=`0 10px 32px rgba(0,0,0,.4)`;}}
-              onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="none";}}>
-              <div style={{ position:"absolute",top:0,left:0,right:0,height:2,background:`linear-gradient(90deg,transparent,${k.color},transparent)` }}/>
-              <div style={{ background:`${k.color}18`,border:`1px solid ${k.color}33`,padding:9,display:"inline-flex",color:k.color,marginBottom:10 }}>{k.icon}</div>
-              <div style={{ ...orb(26,900),color:k.color,marginBottom:3 }}>{k.value}</div>
-              <div style={{ ...px(6),color:C.muted,letterSpacing:".05em" }}>{k.label}</div>
-            </div>
-          ))}
-        </div>
+      <div style={{display:"flex",flexDirection:"column",gap:20,padding:20,position:"relative",zIndex:1}}>
 
-        {/* ── Toolbar ── */}
-        <div style={{ background:C.card,border:`1px solid ${C.navy}`,padding:"14px 16px" }}>
-          {/* top row */}
-          <div style={{ display:"flex",alignItems:"center",gap:10,marginBottom:12,flexWrap:"wrap" }}>
-            <div style={{ position:"relative",flex:"1 1 200px" }}>
-              <Search size={13} color={C.muted} style={{ position:"absolute",left:11,top:"50%",transform:"translateY(-50%)" }}/>
-              <input className="e-input" value={search} onChange={e=>{setSearch(e.target.value);setPage(1);}} placeholder="Buscar ejercicio..."
-                style={{ width:"100%",padding:"8px 12px 8px 30px",background:C.panel,border:`1px solid ${C.navy}`,color:C.white,...raj(13,500) }}/>
-              {search && <button onClick={()=>setSearch("")} style={{ position:"absolute",right:9,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:C.muted,display:"flex" }}><X size={12}/></button>}
-            </div>
-
-            {/* vista */}
-            <div style={{ display:"flex",gap:4 }}>
-              {[{v:"table",icon:"≡"},{v:"grid",icon:"⊞"}].map(({v,icon})=>(
-                <button key={v} onClick={()=>setView(v)} className="e-btn"
-                  style={{ ...raj(14,700),color:view===v?C.orange:C.muted,background:view===v?`${C.orange}18`:C.panel,border:`1px solid ${view===v?C.orange:C.navy}`,padding:"7px 12px",cursor:"pointer" }}>
-                  {icon}
-                </button>
-              ))}
-            </div>
-
-            <div style={{ display:"flex",gap:6,marginLeft:"auto",flexWrap:"wrap" }}>
-              {selected.size>0 && (<>
-                <button onClick={()=>bulkToggle(true)}  className="e-btn" style={{ ...raj(11,700),color:C.green,background:`${C.green}14`,border:`1px solid ${C.green}44`,padding:"7px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:5 }}><Check size={12}/> Activar ({selected.size})</button>
-                <button onClick={()=>bulkToggle(false)} className="e-btn" style={{ ...raj(11,700),color:C.orange,background:`${C.orange}14`,border:`1px solid ${C.orange}44`,padding:"7px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:5 }}><X size={12}/> Desactivar ({selected.size})</button>
-                <button onClick={bulkDelete}            className="e-btn" style={{ ...raj(11,700),color:C.red,background:`${C.red}14`,border:`1px solid ${C.red}44`,padding:"7px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:5 }}><Trash2 size={12}/> Eliminar ({selected.size})</button>
-              </>)}
-              <button onClick={refresh} className="e-btn" style={{ ...raj(12,600),color:C.muted,background:C.panel,border:`1px solid ${C.navy}`,padding:"7px 11px",cursor:"pointer",display:"flex",alignItems:"center",gap:5 }}>
-                <RefreshCw size={12} style={{ animation:refreshing?"e-spin .8s linear infinite":"none" }}/> Actualizar
-              </button>
-              <button onClick={()=>setModal({type:"form",ej:null})} className="e-btn" style={{ ...px(7),color:C.bg,background:C.green,border:"none",padding:"7px 14px",cursor:"pointer",boxShadow:`0 3px 14px ${C.green}33`,display:"flex",alignItems:"center",gap:6 }}>
-                <Plus size={13}/> NUEVO
-              </button>
-            </div>
+        {/* Header */}
+        <div style={{ position:"relative" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:6 }}>
+            <div style={{
+              ...orb(20,900),
+              background:`linear-gradient(135deg, ${C.white} 30%, ${C.orange})`,
+              WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent",
+            }}>EJERCICIOS</div>
+            <div style={{ flex:1, height:1, background:`linear-gradient(90deg, ${C.orange}44, transparent)` }}/>
           </div>
-
-          {/* filtros */}
-          <div style={{ display:"flex",gap:6,flexWrap:"wrap",alignItems:"center" }}>
-            <span style={{ ...raj(11,600),color:C.muted }}>Categoría:</span>
-            {["all",...CATEGORIAS].map(v=>(
-              <button key={v} onClick={()=>{setFilterCat(v);setPage(1);}} className="e-btn" style={fBtn(filterCat===v,CAT_COLOR[v]||C.orange)}>
-                {v==="all"?"Todas":v}
-              </button>
-            ))}
-            <div style={{ width:1,background:C.navy,alignSelf:"stretch",margin:"0 4px" }}/>
-            <span style={{ ...raj(11,600),color:C.muted }}>Dificultad:</span>
-            {["all",...DIFICULTADES].map(v=>(
-              <button key={v} onClick={()=>{setFilterDif(v);setPage(1);}} className="e-btn" style={fBtn(filterDif===v,DIFICULTAD_COLOR[v]||C.orange)}>
-                {v==="all"?"Todas":v}
-              </button>
-            ))}
-            <div style={{ width:1,background:C.navy,alignSelf:"stretch",margin:"0 4px" }}/>
-            <span style={{ ...raj(11,600),color:C.muted }}>Estado:</span>
-            {[{v:"all",l:"Todos"},{v:"active",l:"● Activos"},{v:"inactive",l:"● Inactivos"}].map(o=>(
-              <button key={o.v} onClick={()=>{setFilterAct(o.v);setPage(1);}} className="e-btn" style={fBtn(filterAct===o.v,o.v==="active"?C.green:C.red)}>
-                {o.l}
-              </button>
-            ))}
-          </div>
+          <div style={{...raj(12,500), color:C.muted}}>Gestión jerárquica: Categorías → Rutinas → Ejercicios</div>
         </div>
 
-        {/* result count */}
-        <div style={{ ...raj(12,500),color:C.muted }}>
-          {filtered.length} ejercicio{filtered.length!==1?"s":""} · página {page}/{totalPages}
-          {selected.size>0 && <span style={{ color:C.orange,marginLeft:12 }}>{selected.size} seleccionado{selected.size!==1?"s":""}</span>}
-        </div>
-
-        {/* ── TABLE VIEW ── */}
-        {view==="table" && (
-          <div style={{ background:C.card,border:`1px solid ${C.navy}`,overflow:"hidden" }}>
-            {/* thead */}
-            <div style={{ display:"grid",gridTemplateColumns:"36px 2.2fr 1fr 0.9fr 0.8fr 0.7fr 0.7fr 0.7fr 100px",padding:"10px 14px",background:`${C.panel}88`,borderBottom:`1px solid ${C.navy}`,gap:8,alignItems:"center" }}>
-              <input type="checkbox" checked={selected.size===paginated.length&&paginated.length>0} onChange={toggleAll} style={{ accentColor:C.orange,width:14,height:14,cursor:"pointer" }}/>
-              {[
-                {label:"EJERCICIO",key:"nombre"},
-                {label:"CATEGORÍA",key:"categoria"},
-                {label:"DIFICULTAD",key:"dificultad"},
-                {label:"SERIES",   key:"series"},
-                {label:"XP BASE",  key:"xpBase"},
-                {label:"SESIONES", key:"sesiones"},
-                {label:"ESTADO",   key:"activo"},
-              ].map(h=>(
-                <div key={h.key} className="e-sort" onClick={()=>sort(h.key)}
-                  style={{ display:"flex",alignItems:"center",gap:3,...px(5),color:sortKey===h.key?C.orange:C.muted,letterSpacing:".05em" }}>
-                  {h.label}<SortIcon active={sortKey===h.key} dir={sortDir}/>
-                </div>
-              ))}
-              <span style={{ ...px(5),color:C.muted,letterSpacing:".05em" }}>ACCIONES</span>
-            </div>
-
-            {paginated.length===0 ? (
-              <div style={{ padding:40,textAlign:"center",...raj(14,500),color:C.muted }}>Sin resultados para esos filtros.</div>
-            ) : paginated.map((ej,i)=>(
-              <div key={ej.id} className="e-row" style={{ display:"grid",gridTemplateColumns:"36px 2.2fr 1fr 0.9fr 0.8fr 0.7fr 0.7fr 0.7fr 100px",padding:"11px 14px",borderBottom:`1px solid ${C.navy}22`,gap:8,alignItems:"center",animation:`e-slideU .3s ease ${i*.04}s both`,background:selected.has(ej.id)?`${C.orange}08`:"transparent" }}>
-                <input type="checkbox" checked={selected.has(ej.id)} onChange={()=>toggleSelect(ej.id)} style={{ accentColor:C.orange,width:14,height:14,cursor:"pointer" }}/>
-
-                {/* nombre */}
-                <div style={{ display:"flex",alignItems:"center",gap:10,minWidth:0 }}>
-                  <div style={{ width:32,height:32,background:`${CAT_COLOR[ej.categoria]||C.muted}18`,border:`1px solid ${CAT_COLOR[ej.categoria]||C.muted}33`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,flexShrink:0 }}>{ej.imagen}</div>
-                  <div style={{ minWidth:0 }}>
-                    <div style={{ ...raj(13,700),color:C.white,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis" }}>{ej.nombre}</div>
-                    <MusculoChips list={ej.musculos} color={C.blue}/>
+        {/* KPIs */}
+        {!loading && (
+          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14}}>
+            {KPIS.map(k => (
+              <motion.div
+                key={k.label}
+                whileHover={{ y:-3, boxShadow:`0 12px 32px ${k.color}22, 0 4px 12px rgba(0,0,0,0.4)` }}
+                transition={{ duration:.2 }}
+                style={{
+                  background:"rgba(20,26,42,0.84)",
+                  backdropFilter:"blur(14px)",
+                  border:`1px solid ${C.navy}`,
+                  borderTop:`3px solid ${k.color}`,
+                  borderRadius:12, padding:"16px 18px",
+                  boxShadow:"0 2px 14px rgba(0,0,0,0.25)",
+                  position:"relative", overflow:"hidden",
+                }}
+              >
+                {/* Corner glow */}
+                <div style={{ position:"absolute", top:-18, right:-18, width:72, height:72, borderRadius:"50%",
+                  background:`radial-gradient(circle, ${k.color}22, transparent)`, filter:"blur(18px)", pointerEvents:"none" }}/>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+                  <span style={{...raj(10,600),color:C.muted,letterSpacing:".07em"}}>{k.label}</span>
+                  <div style={{ background:`${k.color}18`, border:`1px solid ${k.color}30`,
+                    borderRadius:8, padding:7, display:"flex" }}>
+                    <k.Icon size={13} color={k.color}/>
                   </div>
                 </div>
+                <div style={{...orb(24,900),color:C.white}}>{k.value}</div>
+              </motion.div>
+            ))}
+          </div>
+        )}
 
-                <CatBadge cat={ej.categoria}/>
-                <DifBadge dif={ej.dificultad}/>
+        {/* Toolbar */}
+        <div style={{
+          background:"rgba(20,26,42,0.84)",
+          backdropFilter:"blur(14px)",
+          border:`1px solid ${C.navy}`,
+          borderRadius:12, padding:"12px 16px",
+          display:"flex", gap:10, alignItems:"center", flexWrap:"wrap",
+          boxShadow:"0 2px 16px rgba(0,0,0,0.22)",
+        }}>
+          <div style={{position:"relative",flex:"1 1 200px"}}>
+            <Search size={12} color={C.muted} style={{position:"absolute",left:11,top:"50%",transform:"translateY(-50%)"}}/>
+            <input
+              className="ae-inp" value={search} onChange={e=>setSearch(e.target.value)}
+              placeholder="Buscar rutinas o ejercicios..."
+              style={{width:"100%",padding:"9px 12px 9px 33px",background:"rgba(10,14,26,0.6)",
+                border:`1px solid ${C.navy}`,color:C.white,...raj(12,500),borderRadius:9,boxSizing:"border-box"}}
+            />
+          </div>
+          <button onClick={loadData} style={{...raj(11,600),background:"rgba(10,14,26,0.6)",
+            border:`1px solid ${C.navy}`,color:C.muted,padding:"9px 14px",cursor:"pointer",
+            display:"flex",alignItems:"center",gap:6,borderRadius:9,transition:"border-color .2s"}}
+            onMouseEnter={e=>e.currentTarget.style.borderColor=C.navyL}
+            onMouseLeave={e=>e.currentTarget.style.borderColor=C.navy}>
+            <RefreshCw size={12}/> Recargar
+          </button>
+          <button onClick={()=>setModal({type:"categoria",data:null,isEdit:false})}
+            style={{...raj(11,700),color:"#060D1A",background:C.green,border:"none",
+              padding:"9px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:6,
+              borderRadius:9,boxShadow:`0 2px 12px ${C.green}44`}}>
+            <Plus size={12}/> CATEGORÍA
+          </button>
+          {selectedCat && <>
+            <button onClick={()=>setModal({type:"rutina",data:null,isEdit:false})}
+              style={{...raj(11,700),color:"#060D1A",background:C.orange,border:"none",
+                padding:"9px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:6,
+                borderRadius:9,boxShadow:`0 2px 12px ${C.orange}44`}}>
+              <Plus size={12}/> RUTINA
+            </button>
+            <button onClick={()=>setModal({type:"ejercicio",data:null,isEdit:false})}
+              style={{...raj(11,700),color:"#fff",background:C.blue,border:"none",
+                padding:"9px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:6,
+                borderRadius:9,boxShadow:`0 2px 12px ${C.blue}44`}}>
+              <Plus size={12}/> EJERCICIO
+            </button>
+          </>}
+        </div>
 
-                {/* series×reps o duración */}
-                <span style={{ ...raj(12,600),color:C.mutedL }}>
-                  {ej.duracion ? `${ej.duracion}min` : `${ej.series}×${ej.reps}`}
-                </span>
+        {/* Breadcrumb */}
+        {selectedCat && (
+          <div style={{
+            display:"flex", alignItems:"center", gap:8,
+            background:"rgba(20,26,42,0.6)", backdropFilter:"blur(10px)",
+            border:`1px solid ${selectedCat.color}22`,
+            borderLeft:`3px solid ${selectedCat.color}`,
+            borderRadius:10, padding:"10px 16px",
+          }}>
+            <button onClick={()=>{setSelectedCat(null);setSearch("");}}
+              style={{...raj(11,600),color:C.orange,background:"transparent",border:"none",
+                cursor:"pointer",display:"flex",alignItems:"center",gap:4}}>
+              <Home size={12}/> Todas las categorías
+            </button>
+            <ChevronRight size={12} color={C.muted}/>
+            <span style={{...raj(12,700),color:selectedCat.color}}>{selectedCat.icono} {selectedCat.nombre}</span>
+            <div style={{ flex:1 }}/>
+            <button onClick={()=>setModal({type:"categoria",data:selectedCat,isEdit:true})}
+              style={{...raj(10,600),background:`${C.orange}14`,border:`1px solid ${C.orange}33`,
+                color:C.orange,cursor:"pointer",padding:"4px 10px",borderRadius:7,
+                display:"flex",alignItems:"center",gap:4}}>
+              <Edit2 size={11}/> Editar
+            </button>
+            <button onClick={()=>setModal({type:"deleteCategoria",data:selectedCat})}
+              style={{...raj(10,600),background:`${C.red}14`,border:`1px solid ${C.red}33`,
+                color:C.red,cursor:"pointer",padding:"4px 9px",borderRadius:7,display:"flex",alignItems:"center",gap:4}}>
+              <Trash2 size={11}/>
+            </button>
+          </div>
+        )}
 
-                {/* xp */}
-                <span style={{ ...orb(13,900),color:C.gold }}>+{ej.xpBase}</span>
+        {/* Loading skeleton */}
+        {loading && <SkeletonEjercicios/>}
 
-                {/* sesiones */}
-                <div>
-                  <div style={{ ...raj(12,700),color:C.blue,marginBottom:3 }}>{ej.sesiones}</div>
-                  <MiniBar val={(ej.sesiones/200)*100} color={C.blue} height={4}/>
-                </div>
-
-                {/* estado */}
-                <div style={{ display:"flex",alignItems:"center",gap:5 }}>
-                  <div style={{ width:7,height:7,borderRadius:"50%",background:ej.activo?C.green:C.red,animation:ej.activo?"e-pulse 1.8s infinite":"none" }}/>
-                  <span style={{ ...raj(11,600),color:ej.activo?C.green:C.red }}>{ej.activo?"ON":"OFF"}</span>
-                </div>
-
-                {/* acciones */}
-                <div style={{ display:"flex",gap:5 }}>
-                  {[
-                    {Icon:Eye,   c:C.blue,   fn:()=>setModal({type:"view",ej})},
-                    {Icon:Edit2, c:C.orange, fn:()=>setModal({type:"form",ej})},
-                    {Icon:Trash2,c:C.red,    fn:()=>setModal({type:"delete",ej})},
-                  ].map(({Icon,c,fn},j)=>(
-                    <button key={j} onClick={fn} className="e-icon-btn"
-                      style={{ background:"transparent",border:`1px solid ${c}33`,padding:5,color:c,display:"flex",alignItems:"center" }}
-                      onMouseEnter={e=>{e.currentTarget.style.background=`${c}18`;e.currentTarget.style.borderColor=c;}}
-                      onMouseLeave={e=>{e.currentTarget.style.background="transparent";e.currentTarget.style.borderColor=`${c}33`;}}>
-                      <Icon size={12}/>
-                    </button>
-                  ))}
-                </div>
+        {/* Categories grid */}
+        {!loading && !selectedCat && (
+          <motion.div
+            initial={{opacity:0,y:8}} animate={{opacity:1,y:0}}
+            style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:14}}
+          >
+            {categorias.map((cat,i) => (
+              <motion.div key={cat.id} initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{delay:i*0.05,duration:.22}}>
+                <CatCard cat={cat} rutinas={rutinas} ejercicios={ejercicios}
+                  onClick={()=>{setSelectedCat(cat);setSearch("");}}
+                  onToggleActivo={()=>handleToggleActivoCategoria(cat)}
+                />
+              </motion.div>
+            ))}
+            {categorias.length===0 && (
+              <div style={{...raj(13,400),color:C.muted,gridColumn:"1/-1",textAlign:"center",padding:60,
+                background:"rgba(20,26,42,0.6)",border:`1px dashed ${C.navy}`,borderRadius:14}}>
+                Sin categorías — crea la primera con el botón de arriba.
               </div>
-            ))}
-          </div>
+            )}
+          </motion.div>
         )}
 
-        {/* ── GRID VIEW ── */}
-        {view==="grid" && (
-          <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:14 }}>
-            {paginated.length===0 ? (
-              <div style={{ gridColumn:"1/-1",padding:40,textAlign:"center",...raj(14,500),color:C.muted }}>Sin resultados para esos filtros.</div>
-            ) : paginated.map((ej,i)=>{
-              const c = CAT_COLOR[ej.categoria]||C.orange;
-              const sel = selected.has(ej.id);
-              return (
-                <div key={ej.id} className="e-card" style={{ background:C.card,border:`1px solid ${sel?C.orange:c}33`,boxShadow:sel?`0 0 14px ${C.orange}22`:"0 4px 16px rgba(0,0,0,.3)",padding:0,overflow:"hidden",animation:`e-cardIn .4s ease ${i*.05}s both`,cursor:"default",position:"relative" }}>
-                  {/* checkbox overlay */}
-                  <div style={{ position:"absolute",top:10,left:10,zIndex:2 }}>
-                    <input type="checkbox" checked={sel} onChange={()=>toggleSelect(ej.id)} style={{ accentColor:C.orange,width:14,height:14,cursor:"pointer" }}/>
-                  </div>
-
-                  {/* top accent */}
-                  <div style={{ height:3,background:`linear-gradient(90deg,transparent,${c},transparent)` }}/>
-
-                  <div style={{ padding:"16px 16px 14px" }}>
-                    {/* header */}
-                    <div style={{ display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:12 }}>
-                      <div style={{ fontSize:32,filter:`drop-shadow(0 0 8px ${c}88)` }}>{ej.imagen}</div>
-                      <div style={{ display:"flex",gap:4,flexDirection:"column",alignItems:"flex-end" }}>
-                        <CatBadge cat={ej.categoria}/>
-                        <div style={{ width:7,height:7,borderRadius:"50%",background:ej.activo?C.green:C.red,marginTop:4,alignSelf:"flex-end",animation:ej.activo?"e-pulse 1.8s infinite":"none" }}/>
-                      </div>
-                    </div>
-
-                    <div style={{ ...raj(14,700),color:C.white,marginBottom:4,lineHeight:1.3 }}>{ej.nombre}</div>
-                    <DifBadge dif={ej.dificultad}/>
-
-                    <div style={{ marginTop:10 }}>
-                      <MusculoChips list={ej.musculos} color={C.blue}/>
-                    </div>
-
-                    {/* stats mini */}
-                    <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:12 }}>
-                      {[
-                        {label:"XP",   value:`+${ej.xpBase}`,         color:C.gold },
-                        {label:"SESIONES",value:ej.sesiones,           color:C.blue },
-                        {label:ej.duracion?"MINUTOS":"SERIES",value:ej.duracion?`${ej.duracion}min`:`${ej.series}×${ej.reps}`,color:C.orange},
-                        {label:"VERIF.",value:ej.verificacion.slice(0,3),color:C.teal},
-                      ].map((s,idx)=>(
-                        <div key={idx} style={{ background:C.panel,border:`1px solid ${s.color}18`,padding:"7px 8px" }}>
-                          <div style={{ ...raj(13,700),color:s.color }}>{s.value}</div>
-                          <div style={{ ...px(5),color:C.muted }}>{s.label}</div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* sesiones bar */}
-                    <div style={{ marginTop:10 }}>
-                      <MiniBar val={(ej.sesiones/200)*100} color={c} height={5}/>
-                    </div>
-                  </div>
-
-                  {/* actions footer */}
-                  <div style={{ borderTop:`1px solid ${C.navy}33`,display:"grid",gridTemplateColumns:"1fr 1fr 1fr" }}>
-                    {[
-                      {Icon:Eye,   c:C.blue,   fn:()=>setModal({type:"view",ej}),   label:"Ver"     },
-                      {Icon:Edit2, c:C.orange, fn:()=>setModal({type:"form",ej}),   label:"Editar"  },
-                      {Icon:Trash2,c:C.red,    fn:()=>setModal({type:"delete",ej}), label:"Borrar"  },
-                    ].map(({Icon,c:ic,fn,label},j)=>(
-                      <button key={j} onClick={fn} className="e-btn"
-                        style={{ background:"transparent",border:"none",borderRight:j<2?`1px solid ${C.navy}33`:"none",padding:"10px 0",color:ic,display:"flex",flexDirection:"column",alignItems:"center",gap:3,cursor:"pointer",transition:"background .2s" }}
-                        onMouseEnter={e=>e.currentTarget.style.background=`${ic}14`}
-                        onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-                        <Icon size={13}/>
-                        <span style={{ ...raj(9,600),color:C.muted }}>{label}</span>
-                      </button>
-                    ))}
-                  </div>
+        {/* Split view: Rutinas + Ejercicios */}
+        {!loading && selectedCat && (
+          <motion.div
+            initial={{opacity:0,y:10}} animate={{opacity:1,y:0}}
+            style={{display:"grid",gridTemplateColumns:"1fr 1.4fr",gap:16}}
+          >
+            {/* Rutinas panel */}
+            <div style={{
+              background:"rgba(20,26,42,0.76)", backdropFilter:"blur(14px)",
+              border:`1px solid ${C.navy}`, borderRadius:14, overflow:"hidden",
+              boxShadow:"0 4px 24px rgba(0,0,0,0.28)",
+            }}>
+              <div style={{ background:`${C.orange}0A`, borderBottom:`1px solid ${C.orange}22`,
+                padding:"14px 16px", display:"flex", alignItems:"center", gap:10 }}>
+                <div style={{ background:`${C.orange}18`, border:`1px solid ${C.orange}30`,
+                  borderRadius:8, padding:8, display:"flex" }}>
+                  <BookOpen size={14} color={C.orange}/>
                 </div>
-              );
-            })}
-          </div>
-        )}
+                <div style={{ flex:1 }}>
+                  <div style={{...orb(11,700), color:C.white}}>RUTINAS</div>
+                </div>
+                <span style={{...raj(10,700), color:C.orange, background:`${C.orange}18`,
+                  border:`1px solid ${C.orange}30`, padding:"2px 9px", borderRadius:5}}>
+                  {filteredRutinas.length}
+                </span>
+              </div>
+              <div style={{ height:1, background:`linear-gradient(90deg,${C.orange}33,transparent)` }}/>
+              <div style={{padding:"12px 14px",display:"flex",flexDirection:"column",gap:7}}>
+                <AnimatePresence>
+                  {filteredRutinas.map((rut,i) => (
+                    <motion.div key={rut.id} initial={{opacity:0,x:-8}} animate={{opacity:1,x:0}} transition={{delay:i*0.04}}>
+                      <RutinaCard rut={rut}
+                        onEdit={()=>setModal({type:"rutina",data:rut,isEdit:true})}
+                        onDelete={()=>setModal({type:"deleteRutina",data:rut})}
+                      />
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+                {filteredRutinas.length===0 && (
+                  <div style={{...raj(12,400),color:C.muted,padding:28,textAlign:"center",
+                    background:"rgba(10,14,26,0.35)",borderRadius:10,border:`1px dashed ${C.navy}`}}>
+                    Sin rutinas en esta categoría
+                  </div>
+                )}
+              </div>
+            </div>
 
-        {/* ── Pagination ── */}
-        <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10 }}>
-          <div style={{ display:"flex",alignItems:"center",gap:10 }}>
-            <span style={{ ...raj(13,500),color:C.muted }}>
-              {Math.min((page-1)*pageSize+1,filtered.length)}–{Math.min(page*pageSize,filtered.length)} de {filtered.length}
-            </span>
-            <select value={pageSize} onChange={e=>{setPageSize(Number(e.target.value));setPage(1);}}
-              className="e-input" style={{ padding:"6px 10px",background:C.panel,border:`1px solid ${C.navy}`,color:C.muted,...raj(12,500),cursor:"pointer" }}>
-              {PAGE_SIZE_OPTIONS.map(n=><option key={n} value={n}>{n} por página</option>)}
-            </select>
-          </div>
-          <div style={{ display:"flex",gap:5 }}>
-            <button onClick={()=>setPage(1)}      disabled={page===1}          className="e-btn" style={{ background:C.panel,border:`1px solid ${C.navy}`,color:page===1?C.navy:C.muted,padding:"6px 11px",cursor:page===1?"not-allowed":"pointer" }}>«</button>
-            <button onClick={()=>setPage(p=>p-1)} disabled={page===1}          className="e-btn" style={{ background:C.panel,border:`1px solid ${C.navy}`,color:page===1?C.navy:C.muted,padding:"6px 10px",cursor:page===1?"not-allowed":"pointer",display:"flex",alignItems:"center" }}><ChevronLeft size={13}/></button>
-            {Array.from({length:totalPages},(_,i)=>i+1).filter(n=>Math.abs(n-page)<=2).map(n=>(
-              <button key={n} onClick={()=>setPage(n)} className="e-btn"
-                style={{ background:n===page?C.orange:C.panel,border:`1px solid ${n===page?C.orange:C.navy}`,color:n===page?C.bg:C.muted,padding:"6px 13px",cursor:"pointer",...raj(13,n===page?700:500) }}>
-                {n}
-              </button>
-            ))}
-            <button onClick={()=>setPage(p=>p+1)} disabled={page===totalPages} className="e-btn" style={{ background:C.panel,border:`1px solid ${C.navy}`,color:page===totalPages?C.navy:C.muted,padding:"6px 10px",cursor:page===totalPages?"not-allowed":"pointer",display:"flex",alignItems:"center" }}><ChevronRight size={13}/></button>
-            <button onClick={()=>setPage(totalPages)} disabled={page===totalPages} className="e-btn" style={{ background:C.panel,border:`1px solid ${C.navy}`,color:page===totalPages?C.navy:C.muted,padding:"6px 11px",cursor:page===totalPages?"not-allowed":"pointer" }}>»</button>
-          </div>
-        </div>
+            {/* Ejercicios panel */}
+            <div style={{
+              background:"rgba(20,26,42,0.76)", backdropFilter:"blur(14px)",
+              border:`1px solid ${C.navy}`, borderRadius:14, overflow:"hidden",
+              boxShadow:"0 4px 24px rgba(0,0,0,0.28)",
+            }}>
+              <div style={{ background:`${C.blue}0A`, borderBottom:`1px solid ${C.blue}22`,
+                padding:"14px 16px", display:"flex", alignItems:"center", gap:10 }}>
+                <div style={{ background:`${C.blue}18`, border:`1px solid ${C.blue}30`,
+                  borderRadius:8, padding:8, display:"flex" }}>
+                  <Dumbbell size={14} color={C.blue}/>
+                </div>
+                <div style={{ flex:1 }}>
+                  <div style={{...orb(11,700), color:C.white}}>EJERCICIOS</div>
+                </div>
+                <span style={{...raj(10,700), color:C.blue, background:`${C.blue}18`,
+                  border:`1px solid ${C.blue}30`, padding:"2px 9px", borderRadius:5}}>
+                  {filteredEjercicios.length}
+                </span>
+              </div>
+              <div style={{ height:1, background:`linear-gradient(90deg,${C.blue}33,transparent)` }}/>
+              <div style={{padding:"12px 14px",display:"flex",flexDirection:"column",gap:7,maxHeight:520,overflowY:"auto"}}>
+                <AnimatePresence>
+                  {filteredEjercicios.map((ej,i) => (
+                    <motion.div key={ej.id} initial={{opacity:0,x:8}} animate={{opacity:1,x:0}} transition={{delay:Math.min(i*0.03,0.3)}}>
+                      <EjercicioCard ej={ej}
+                        onEdit={()=>setModal({type:"ejercicio",data:ej,isEdit:true})}
+                        onDelete={()=>setModal({type:"deleteEjercicio",data:ej})}
+                        onToggleActivo={()=>handleToggleActivoEjercicio(ej)}
+                      />
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+                {filteredEjercicios.length===0 && (
+                  <div style={{...raj(12,400),color:C.muted,padding:28,textAlign:"center",
+                    background:"rgba(10,14,26,0.35)",borderRadius:10,border:`1px dashed ${C.navy}`}}>
+                    Sin ejercicios en esta categoría
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
 
       </div>
     </>
