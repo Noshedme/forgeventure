@@ -150,9 +150,9 @@ const REGISTER_CLASS_MEDIA = [
     hero: "/missions/missions-hero-warrior.png",
     floor: "/exercises/hero/hero-floor-glow-warrior.png",
     zone: "/exercises/zones/zone-fuerza-banner.png",
-    route: "Bastion de fuerza",
-    routeCopy: "Empuje, control y trabajo de base para cuentas que quieren sentir progreso firme desde el primer dia.",
-    bullets: ["Fuerza y calistenia", "Impacto y disciplina", "Botin de avance directo"],
+    route: "Bastión de fuerza",
+    routeCopy: "Empuje, control y trabajo de base para cuentas que quieren sentir progreso firme desde el primer día.",
+    bullets: ["Fuerza y calistenia", "Impacto y disciplina", "Botín de avance directo"],
   },
   {
     key: "archer",
@@ -161,8 +161,8 @@ const REGISTER_CLASS_MEDIA = [
     floor: "/exercises/hero/hero-floor-glow-archer.png",
     zone: "/exercises/zones/zone-cardio-banner.png",
     route: "Ruta de impulso",
-    routeCopy: "Pulso, ritmo y sesiones agiles para heroes que quieren entrar al mapa con movilidad y constancia.",
-    bullets: ["Cardio y desplazamiento", "Ritmo y racha", "Sesiones rapidas con retorno"],
+    routeCopy: "Pulso, ritmo y sesiones ágiles para héroes que quieren entrar al mapa con movilidad y constancia.",
+    bullets: ["Cardio y desplazamiento", "Ritmo y racha", "Sesiones rápidas con retorno"],
   },
   {
     key: "mage",
@@ -171,7 +171,7 @@ const REGISTER_CLASS_MEDIA = [
     floor: "/exercises/hero/hero-floor-glow-mage.png",
     zone: "/exercises/zones/zone-flexibilidad-banner.png",
     route: "Santuario del foco",
-    routeCopy: "Respiracion, control y movilidad para una cuenta que prioriza tecnica sin perder presencia visual.",
+    routeCopy: "Respiración, control y movilidad para una cuenta que prioriza técnica sin perder presencia visual.",
     bullets: ["Foco y recuperacion", "Flexibilidad y control", "Lectura limpia del progreso"],
   },
 ];
@@ -183,7 +183,7 @@ const REGISTER_NEUTRAL_MEDIA = {
   zone: "/videos/quest-map.mp4",
   route: "Mesa de bienvenida",
   routeCopy: "Crea tu cuenta, elige clase y entra al mapa con una base clara para misiones, entrenamiento y progreso real.",
-  bullets: ["Cuenta lista en 2 pasos", "Clase personal desde el inicio", "Botin de bienvenida y mapa abierto"],
+  bullets: ["Cuenta lista en 2 pasos", "Clase personal desde el inicio", "Botín de bienvenida y mapa abierto"],
 };
 
 const REGISTER_VALUE_STRIPS = [
@@ -193,8 +193,8 @@ const REGISTER_VALUE_STRIPS = [
     icon: Shield,
   },
   {
-    title: "Bonos visibles desde el dia uno",
-    copy: "Cada clase ya deja ver su afinidad para que la eleccion se sienta util y no decorativa.",
+    title: "Bonos visibles desde el día uno",
+    copy: "Cada clase ya deja ver su afinidad para que la elección se sienta útil y no decorativa.",
     icon: Sparkles,
   },
   {
@@ -217,15 +217,15 @@ const REGISTER_REWARD_PREVIEW = [
   },
   {
     title: "Cofre del contrato",
-    copy: "Botin base para la primera ruta.",
+    copy: "Botín base para la primera ruta.",
     image: "/routines/daily-reward-chest.png",
   },
 ];
 
 const REGISTER_CLASS_GUIDANCE = [
-  "Guerrero vera primero fuerza, calistenia y rutas de impacto directo.",
-  "Arquero vera primero cardio, ritmo y sesiones mas agiles.",
-  "Mago vera primero flexibilidad, foco y control corporal.",
+  "Guerrero verá primero fuerza, calistenia y rutas de impacto directo.",
+  "Arquero verá primero cardio, ritmo y sesiones más ágiles.",
+  "Mago verá primero flexibilidad, foco y control corporal.",
 ];
 
 const REGISTER_DRAFT_KEY = "fv_register_draft_v1";
@@ -276,7 +276,7 @@ const FV = {
 const BOOT_SEQUENCE = [
   "> PREPARANDO EL ALTAR DE REGISTRO",
   "> ABRIENDO EL LIBRO DE CLASES",
-  "> RESERVANDO TU SELLO DE HEROE",
+  "> RESERVANDO TU SELLO DE HÉROE",
   "> MARCANDO LA RUTA INICIAL",
   "> TODO LISTO PARA FORJAR TU CUENTA",
 ];
@@ -1230,106 +1230,30 @@ function RegisterLandingPanel({
           </div>
         </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-            gap: 8,
-          }}
-        >
-          {registerStats.map((stat, i) => (
-            <div
-              key={`${stat.label}-${i}`}
+        {step === 1 && (
+          <div style={{ display: "flex", gap: 10 }}>
+            <motion.button
+              type="button"
+              onClick={onReturnHome}
+              whileHover={{ y: -2, borderColor: `${accent}66`, color: accent }}
+              whileTap={{ scale: 0.98 }}
               style={{
-                ...makeHomePanel({ radius: 16, surface: "rgba(20,26,42,0.65)", outerGlow: "rgba(0,0,0,0.16)" }),
-                position: "relative",
-                overflow: "hidden",
-                borderTop: `2px solid ${stat.color}`,
-                padding: "10px 11px",
-                minHeight: 74,
+                ...sans(12, 700),
+                ...makeHomePill(accent),
+                minHeight: 44,
+                padding: "0 20px",
+                color: P.muted,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                letterSpacing: ".06em",
               }}
             >
-              <div
-                style={{
-                  position: "absolute",
-                  top: -12,
-                  right: -12,
-                  width: 48,
-                  height: 48,
-                  borderRadius: "50%",
-                  background: `radial-gradient(circle, ${stat.color}22 0%, transparent 70%)`,
-                  filter: "blur(8px)",
-                  pointerEvents: "none",
-                }}
-              />
-              <div style={{ ...mono(7, 700), color: stat.color, letterSpacing: ".08em", marginBottom: 6 }}>{stat.label}</div>
-              <div style={{ ...homeHeading(18, 700), color: "#f4f1ff", lineHeight: 1.02, marginBottom: 4 }}>{stat.value}</div>
-              <div style={{ ...sans(10, 500), color: "#bcc8de", lineHeight: 1.4 }}>
-                {stat.label === "PASOS"
-                  ? "Entrada corta y clara."
-                  : stat.label === "ACCESO"
-                    ? "Elige tu puerta de entrada."
-                    : stat.label === "CLASE"
-                      ? "Define el tono de tu mapa."
-                      : "Confirma la activacion del portal."}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.35fr) minmax(220px, 0.95fr)", gap: 12 }}>
-          <div style={{ ...makeHomePanel({ radius: 18, surface: "rgba(11,13,22,0.72)", outerGlow: "rgba(0,0,0,0.16)" }), padding: "12px 14px" }}>
-            <div style={{ ...mono(8, 700), color: accent, letterSpacing: ".1em", marginBottom: 10 }}>
-              DESPUES DE ENTRAR
-            </div>
-            <div style={{ display: "grid", gap: 8 }}>
-              {afterEnterSteps.map((item, index) => (
-                <div key={item.title} style={{ ...makeHomePanel({ radius: 14, surface: "rgba(255,255,255,0.03)", outerGlow: "rgba(0,0,0,0.10)" }), padding: "10px 12px", display: "grid", gridTemplateColumns: "28px 1fr", gap: 10, alignItems: "start" }}>
-                  <div style={{ display: "grid", placeItems: "center", width: 28, height: 28, borderRadius: 999, background: `${accent}16`, border: `1px solid ${accent}2a`, ...mono(8, 700), color: accent }}>
-                    {index + 1}
-                  </div>
-                  <div>
-                    <div style={{ ...sans(12, 700), color: "#f4f1ff", marginBottom: 2 }}>{item.title}</div>
-                    <div style={{ ...sans(11, 500), color: "#cad4e7", lineHeight: 1.45 }}>{item.copy}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            {step === 1 && (
-              <motion.button
-                type="button"
-                onClick={onReturnHome}
-                aria-label="Volver al portal"
-                whileHover={{ y: -2, borderColor: `${accent}66`, color: accent }}
-                whileTap={{ scale: 0.98 }}
-                style={{
-                  ...sans(12, 700),
-                  ...makeHomePill(accent),
-                  marginTop: 10,
-                  minHeight: 44,
-                  width: "100%",
-                  color: P.muted,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  letterSpacing: ".06em",
-                }}
-              >
-                Volver al portal
-              </motion.button>
-            )}
+              Volver al portal
+            </motion.button>
           </div>
-
-          <div style={{ display: "grid", gap: 8 }}>
-            {registerTrustBand.map((item) => (
-              <div key={item.title} style={{ ...makeHomePanel({ radius: 16, surface: "rgba(14,16,28,0.72)", outerGlow: "rgba(0,0,0,0.10)" }), padding: "10px 12px" }}>
-                <div style={{ ...mono(8, 700), color: accent, letterSpacing: ".08em", marginBottom: 4 }}>{item.title}</div>
-                <div style={{ ...sans(11, 500), color: "#cfd7e8", lineHeight: 1.45 }}>{item.copy}</div>
-              </div>
-            ))}
-          </div>
-        </div>
+        )}
       </div>
     </motion.div>
   );
@@ -1529,7 +1453,7 @@ export default function RegisterPage({ onGoLogin, onGoBack, onSuccess, googleDat
     setUsernameStatus("checking");
     try {
       const { available } = await checkUsername(trimmed);
-      const error = available ? null : "Este nombre de heroe ya esta en uso";
+      const error = available ? null : "Este nombre de héroe ya está en uso";
       const result = { available, error };
       usernameAvailabilityCache.current.set(trimmed, result);
       setUsernameStatus(available ? "available" : "taken");
@@ -1591,7 +1515,7 @@ export default function RegisterPage({ onGoLogin, onGoBack, onSuccess, googleDat
         : await verifyUsernameAvailability(username);
       if (!availability.available) errs.username = availability.error;
     }
-    if (!fromGoogle && !tosAccepted) errs.tos = "Debes aceptar los Terminos de servicio para continuar";
+    if (!fromGoogle && !tosAccepted) errs.tos = "Debes aceptar los Términos de servicio para continuar";
     if (Object.keys(errs).length) {
       setErrors(errs);
       setTouched({ username: true, email: true, password: true, confirmPwd: true });
@@ -1670,31 +1594,10 @@ export default function RegisterPage({ onGoLogin, onGoBack, onSuccess, googleDat
   );
   const activeAccent = getRegisterAccent(step, classIdx);
   const activeTitle = step === 2 ? (CLASSES[classIdx]?.name ?? "Tu clase") : "Tu cuenta";
-  const verificationLabel = fromGoogle ? "Acceso validado" : "Correo de verificacion";
+  const verificationLabel = fromGoogle ? "Acceso validado" : "Correo de verificación";
   const verificationValue = fromGoogle ? "Google listo" : "Se envia al crear";
-  const registerStats = [
-    { label: "PASOS", value: fromGoogle ? "1 tramo" : "2 pasos", color: HOME_PUBLIC_COLORS.archer },
-    { label: "ACCESO", value: fromGoogle ? "Google" : "Correo", color: HOME_PUBLIC_COLORS.mage },
-    { label: "CLASE", value: step === 2 ? (CLASSES[classIdx]?.name ?? "Por definir") : "Por definir", color: activeAccent },
-    { label: verificationLabel.toUpperCase(), value: verificationValue, color: HOME_PUBLIC_COLORS.warrior },
-  ];
-  const registerTrustBand = [
-    { title: "Sin vueltas raras", copy: fromGoogle ? "Entras con Google y sigues directo al paso de clase." : "Cuenta, correo y clase quedan ordenados en la misma ruta." },
-    { title: "Clase con impacto real", copy: step === 2 ? "La afinidad elegida mueve color, recomendaciones y primeras zonas." : "Tu eleccion altera la lectura visual y lo primero que veras dentro del mapa." },
-    { title: "Alta protegida", copy: fromGoogle ? "La sesion llega validada desde Google." : "El correo de verificacion protege la entrada completa al sistema." },
-  ];
-  const entryContextPills = [
-    fromGoogle ? "Google activo" : "Alta por correo",
-    fromHome ? "Llegas con clase sugerida" : "Eleccion abierta",
-  ];
-  const afterEnterSteps = [
-    { title: "Elige clase", copy: "Marca la afinidad que ordena colores, zonas y primeras recomendaciones." },
-    { title: "Abre tu home", copy: "Encuentra tu portada personal con progreso, recompensas y lectura clara." },
-    { title: "Empieza tu ruta", copy: "Salta a la primera sugerencia del mapa y deja tu primer avance real." },
-  ];
-  const introCopy = step === 2
-    ? `Elige con calma. ${activeTitle} va a empujar colores, recomendaciones y el tono general de tu tablero dentro del juego.`
-    : "Abre tu cuenta con una lectura clara: nombre de heroe, acceso seguro y una forja que no se sienta como un formulario plano.";
+
+
   return (
     <>
       <style>{CSS}</style>
@@ -1708,8 +1611,6 @@ export default function RegisterPage({ onGoLogin, onGoBack, onSuccess, googleDat
           progressLabel="PREPARANDO TU SELLO"
         />
       )}
-      <CustomCursor />
-      {loaded && <Particles count={12} />}
       {successState && <AchievementToast />}
 
       <AnimatePresence>
@@ -1721,12 +1622,6 @@ export default function RegisterPage({ onGoLogin, onGoBack, onSuccess, googleDat
             onDone={() => { setSuccessState(null); onSuccess?.(); }} />
         )}
       </AnimatePresence>
-
-      {/* Global scan line */}
-      <motion.div animate={{ top: ["-2px", "100%"] }} transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-        style={{ position: "fixed", left: 0, right: 0, height: 2, zIndex: 5, pointerEvents: "none",
-          background: `linear-gradient(90deg, transparent, ${HOME_PUBLIC_COLORS.archer}2f, ${HOME_PUBLIC_COLORS.mage}66, ${HOME_PUBLIC_COLORS.warrior}2f, transparent)` }} />
-
       {/* ── MAIN LAYOUT ── */}
       <motion.div
         initial={{ opacity: 0 }} animate={{ opacity: 1 }}
@@ -1757,23 +1652,12 @@ export default function RegisterPage({ onGoLogin, onGoBack, onSuccess, googleDat
             }}
             transition={{ duration: 0.5 }}
             style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, zIndex: 20 }} />
-
-          {/* Title bar */}
-          <div style={{ position: "absolute", top: 2, left: 0, right: 0, zIndex: 15, height: 22,
-            background: `linear-gradient(90deg, rgba(9,8,18,0.95), rgba(9,8,18,0.78) 52%, rgba(9,8,18,0.64))`, borderBottom: `1px solid rgba(255,255,255,0.08)`,
-            display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <span style={{ ...mono(7, 600), color: P.muted, letterSpacing: ".18em" }}>[ PORTAL DE INGRESO DEL GREMIO ]</span>
-          </div>
-
           {/* Left panel */}
           <RegisterLandingPanel
             step={step}
             classIdx={classIdx}
             fromGoogle={fromGoogle}
             fromHome={fromHome}
-            afterEnterSteps={afterEnterSteps}
-            registerTrustBand={registerTrustBand}
-            registerStats={registerStats}
             onReturnHome={() => {
               if (onGoBack) {
                 onGoBack();
@@ -1819,7 +1703,7 @@ export default function RegisterPage({ onGoLogin, onGoBack, onSuccess, googleDat
               {step !== 1 && (
                 <motion.button type="button"
                   onClick={() => onGoLogin?.()}
-                  aria-label="Ir a iniciar sesion"
+                  aria-label="Ir a iniciar sesión"
                   whileHover={{ scale: 1.05, borderColor: `${activeAccent}66`, color: activeAccent, y: -2 }}
                   whileTap={{ scale: 0.93 }}
                   style={{ ...sans(11, 700), color: P.muted, letterSpacing: ".08em",
@@ -1834,43 +1718,24 @@ export default function RegisterPage({ onGoLogin, onGoBack, onSuccess, googleDat
 
             <div style={{ width: "100%", maxWidth: 760, marginRight: "auto" }}>
             {/* Header */}
-            <motion.div variants={FV.stagger} initial="hidden" animate="show" style={{ ...makeHomePanel({ radius: 22, surface: "rgba(11,14,24,0.7)", outerGlow: "rgba(0,0,0,0.25)" }), marginBottom: 10, padding: "14px 16px 12px" }}>
-              <motion.div variants={FV.up} style={{ marginBottom: 10, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 6,
-                  ...makeHomePill(activeAccent, true),
-                  padding: "3px 14px", ...mono(8, 700), color: activeAccent, letterSpacing: ".1em" }}>
-                  <span className="fv6r-blink">▶</span> PORTAL DEL GREMIO
-                </span>
-                <span style={{ ...sans(11, 600), color: P.muted }}>{step === 1 ? "Tu entrada al mapa" : "Tu afinidad inicial"}</span>
-              </motion.div>
-
-              <motion.div variants={FV.up} style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
-                {entryContextPills.map((pill) => (
-                  <span key={pill} style={{ ...makeHomePill(activeAccent, true), padding: "7px 10px", ...sans(11, 600), color: "#eef3ff" }}>
-                    {pill}
-                  </span>
-                ))}
-              </motion.div>
-
-              <motion.h1 variants={FV.up} style={{ marginBottom: 8, lineHeight: 1.2 }}>
-                <span style={{ ...homeHeading("clamp(26px,3vw,34px)", 700), color: P.text }}>
-                  {step === 1 ? "FORJA TU " : "MARCA TU "}
-                </span>
-                <span className="grad-text-r" style={{ ...homeHeading("clamp(26px,3vw,34px)", 700) }}>
-                  {step === 1 ? "LLEGADA" : "CLASE"}
-                </span>
-              </motion.h1>
-
-              <motion.p variants={FV.up} style={{ ...sans(13, 500), color: "#cbd4e6", lineHeight: 1.65, marginBottom: 12 }}>
-                {introCopy}
-              </motion.p>
-
-              <motion.div variants={FV.up} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-                <div style={{ height: 1, width: 28, background: `linear-gradient(90deg, transparent, ${activeAccent}66)` }} />
-                <div style={{ width: 5, height: 5, background: activeAccent, clipPath: "polygon(50% 0%,100% 50%,50% 100%,0% 50%)" }} />
-                <div style={{ height: 1, width: 28, background: `linear-gradient(90deg, ${activeAccent}66, transparent)` }} />
-              </motion.div>
-
+            <motion.div variants={FV.up} initial="hidden" animate="show" style={{ marginBottom: 28 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
+                <div style={{ ...makeHomePanel({ radius: 14, surface: "rgba(10,12,20,0.72)", outerGlow: "rgba(0,0,0,0.22)" }), width: 44, height: 44, display: "grid", placeItems: "center", flexShrink: 0 }}>
+                  <img src="/logo.png" alt="ForgeVenture" style={{ width: 26, height: 26, objectFit: "contain" }} />
+                </div>
+                <div>
+                  <div style={{ ...homeHeading(14, 700), color: "#f5f1ff" }}>ForgeVenture</div>
+                  <div style={{ ...mono(7, 600), color: HOME_PUBLIC_COLORS.neutral, letterSpacing: ".12em" }}>PORTAL DE REGISTRO</div>
+                </div>
+              </div>
+              <h1 style={{ ...homeHeading("clamp(26px,3vw,38px)", 700), color: "#f7f3ff", marginBottom: 10, lineHeight: 1.04 }}>
+                {step === 1 ? "Crea tu cuenta." : "Elige tu clase."}
+              </h1>
+              <p style={{ ...sans(14, 500), color: "#ccd5e7", lineHeight: 1.65, maxWidth: 480 }}>
+                {step === 1
+                  ? "Nombre de héroe, acceso seguro y clase en dos pasos. Sin ruido."
+                  : "La clase define tu mapa, colores y primeras recomendaciones."}
+              </p>
             </motion.div>
 
             <div style={{ ...makeHomePanel({ radius: 22, surface: "rgba(9,10,18,0.86)", outerGlow: "rgba(0,0,0,0.28)" }), marginBottom: 12, padding: "14px 16px 14px" }}>
@@ -1888,10 +1753,10 @@ export default function RegisterPage({ onGoLogin, onGoBack, onSuccess, googleDat
                         style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
                         <span style={{ ...sans(12, 400), color: P.mutedL }}>¿Ya tienes cuenta?</span>
                         <motion.button type="button" onClick={() => onGoLogin?.()}
-                          aria-label="Ir a iniciar sesion"
+                          aria-label="Ir a iniciar sesión"
                           whileHover={{ color: HOME_PUBLIC_COLORS.mage }} whileTap={{ scale: 0.95 }}
                           style={{ ...sans(12, 700), color: HOME_PUBLIC_COLORS.mage, background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
-                          Iniciar sesion
+                          Iniciar sesión
                         </motion.button>
                       </motion.div>
                     )}
@@ -2038,7 +1903,7 @@ export default function RegisterPage({ onGoLogin, onGoBack, onSuccess, googleDat
                             AL TERMINAR
                           </div>
                           <p style={{ ...sans(11, 500), color: "#d5dcef", lineHeight: 1.55, margin: 0 }}>
-                            Creamos tu acceso, guardamos la clase elegida y enviamos un correo de verificacion para activar la entrada completa al mapa.
+                            Creamos tu acceso, guardamos la clase elegida y enviamos un correo de verificación para activar la entrada completa al mapa.
                           </p>
                         </motion.div>
                       </>
@@ -2068,10 +1933,10 @@ export default function RegisterPage({ onGoLogin, onGoBack, onSuccess, googleDat
                   <div style={{ textAlign: "center", marginTop: 12 }}>
                     <span style={{ ...sans(13, 400), color: P.muted }}>¿Ya tienes cuenta?{" "}</span>
                     <motion.button type="button" onClick={() => onGoLogin?.()}
-                      aria-label="Ir a iniciar sesion"
+                      aria-label="Ir a iniciar sesión"
                       whileHover={{ color: HOME_PUBLIC_COLORS.mage }}
                       style={{ ...sans(13, 700), color: HOME_PUBLIC_COLORS.mage, background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
-                      Iniciar sesion
+                      Iniciar sesión
                     </motion.button>
                   </div>
                 </motion.div>
@@ -2149,15 +2014,6 @@ export default function RegisterPage({ onGoLogin, onGoBack, onSuccess, googleDat
               </AnimatePresence>
             </div>
 
-            </div>
-
-            {/* Corner dots */}
-            <div style={{ position: "absolute", bottom: 14, right: 16, display: "flex", gap: 5, opacity: 0.35 }}>
-              {[HOME_PUBLIC_COLORS.archer, HOME_PUBLIC_COLORS.mage, HOME_PUBLIC_COLORS.warrior].map((c, i) => (
-                <motion.div key={i} animate={{ scale: [1, 1.15, 1], opacity: [0.8, 1, 0.8] }}
-                  transition={{ duration: 1.2 + i * 0.4, delay: i * 0.2, repeat: Infinity }}
-                  style={{ width: 4, height: 4, background: c, boxShadow: `0 0 4px ${c}`, imageRendering: "pixelated" }} />
-              ))}
             </div>
           </div>
         </motion.div>

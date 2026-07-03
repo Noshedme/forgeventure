@@ -134,7 +134,7 @@ const LOGIN_SCENE = {
   crest: "/logo.png",
   hero: "/missions/missions-hero-default.png",
   route: "Portal del regreso",
-  bullets: ["Acceso con Google o correo", "Recuperacion guiada", "Entrada directa al dashboard"],
+  bullets: ["Acceso con Google o correo", "Recuperación guiada", "Entrada directa al dashboard"],
 };
 
 const LOGIN_SUPPORT_STEPS = [
@@ -151,24 +151,24 @@ const LOGIN_TRUST_BAND = [
 
 const LOGIN_STATS = [
   { label: "ACCESO", value: "Google o correo", copy: "Dos entradas para volver al mismo perfil del gremio.", color: HOME_PUBLIC_COLORS.mage },
-  { label: "RECUPERACION", value: "Codigo temporal", copy: "Si el correo existe, recibes una clave breve para restaurar acceso.", color: HOME_PUBLIC_COLORS.archer },
+  { label: "RECUPERACIÓN", value: "Código temporal", copy: "Si el correo existe, recibes una clave breve para restaurar acceso.", color: HOME_PUBLIC_COLORS.archer },
   { label: "DESTINO", value: "Home y dashboard", copy: "La entrada te devuelve a misiones, rutas y panel personal.", color: HOME_PUBLIC_COLORS.warrior },
   { label: "SNAPSHOT", value: "Vista del gremio", copy: "Resumen orientativo del portal, no progreso exacto del personaje.", color: HOME_PUBLIC_COLORS.neutral },
 ];
 
 const LOGIN_SECURITY_NOTES = [
   {
-    label: "Google no comparte tu contrasena.",
+    label: "Google no comparte tu contraseña.",
     icon: "/missions/journal/journal-seal-today.png",
     accent: HOME_PUBLIC_COLORS.mage,
   },
   {
-    label: "Puedes cerrar sesion en cualquier momento.",
+    label: "Puedes cerrar sesión en cualquier momento.",
     icon: "/ui/header/notifications/notif-shield.png",
     accent: HOME_PUBLIC_COLORS.neutral,
   },
   {
-    label: "La recuperacion usa un codigo temporal.",
+    label: "La recuperación usa un código temporal.",
     icon: "/missions/rewards/reward-xp-scroll.png",
     accent: HOME_PUBLIC_COLORS.archer,
   },
@@ -176,7 +176,7 @@ const LOGIN_SECURITY_NOTES = [
 
 const LOGIN_RECOVERY_PORTAL_NOTES = [
   {
-    label: "Codigo temporal",
+    label: "Código temporal",
     copy: "Expira en 15 min",
     icon: "/missions/rewards/reward-xp-scroll.png",
     accent: HOME_PUBLIC_COLORS.archer,
@@ -191,7 +191,7 @@ const LOGIN_RECOVERY_PORTAL_NOTES = [
 
 const LOGIN_METHOD_BAND = [
   {
-    title: "Correo del heroe",
+    title: "Correo del héroe",
     copy: "Ideal si ya vienes con tus credenciales.",
     accent: HOME_PUBLIC_COLORS.neutral,
     icon: "/ui/header/notifications/notif-message.png",
@@ -203,8 +203,8 @@ const LOGIN_METHOD_BAND = [
     icon: "/missions/journal/journal-seal-today.png",
   },
   {
-    title: "Recuperacion en 2 pasos",
-    copy: "Codigo temporal y nueva clave.",
+    title: "Recuperación en 2 pasos",
+    copy: "Código temporal y nueva clave.",
     accent: HOME_PUBLIC_COLORS.archer,
     icon: "/missions/rewards/reward-xp-scroll.png",
   },
@@ -213,10 +213,10 @@ const LOGIN_METHOD_BAND = [
 function getLoginHeroState({ hasCurrentUser, showForgot, emailSentTo, lastLoginMethod }) {
   if (showForgot || emailSentTo) {
     return {
-      kicker: "RECUPERACION DISPONIBLE",
+      kicker: "RECUPERACIÓN DISPONIBLE",
       title: "El portal ya tiene una ruta para devolverte el acceso",
-      copy: "Puedes pedir codigo temporal, revisar tu correo y volver al tablero sin rehacer tu entrada completa.",
-      chips: ["Codigo temporal", "Correo del gremio", "Retorno guiado"],
+      copy: "Puedes pedir código temporal, revisar tu correo y volver al tablero sin rehacer tu entrada completa.",
+      chips: ["Código temporal", "Correo del gremio", "Retorno guiado"],
       accent: HOME_PUBLIC_COLORS.archer,
     };
   }
@@ -225,14 +225,14 @@ function getLoginHeroState({ hasCurrentUser, showForgot, emailSentTo, lastLoginM
       kicker: "VUELVES CON RASTRO GUARDADO",
       title: "Tu ultima entrada sigue reconocida por el portal",
       copy: "El sistema recuerda tu puerta de acceso y deja lista la vuelta a dashboard, rutas y misiones.",
-      chips: ["Sesion previa", "Ruta en espera", "Retorno agil"],
+      chips: ["Sesión previa", "Ruta en espera", "Retorno ágil"],
       accent: HOME_PUBLIC_COLORS.mage,
     };
   }
   return {
     kicker: "PRIMERA ENTRADA DEL DIA",
     title: "Cruza el portal sin romper el tono del mapa",
-    copy: "Acceso, recuperacion y continuidad entran por la misma lectura visual para que el regreso se sienta natural.",
+    copy: "Acceso, recuperación y continuidad entran por la misma lectura visual para que el regreso se sienta natural.",
     chips: ["Google o correo", "Paso claro", "Entrada segura"],
     accent: HOME_PUBLIC_COLORS.neutral,
   };
@@ -249,7 +249,7 @@ function getLoginErrorMeta(code) {
   }
   if (code === "auth/user-not-found") {
     return {
-      title: "No encontramos ese heroe",
+      title: "No encontramos ese héroe",
       copy: "Parece que este correo aun no tiene personaje ligado dentro del gremio.",
       accent: HOME_PUBLIC_COLORS.archer,
       icon: "/missions/rewards/reward-claimed-seal.png",
@@ -350,9 +350,9 @@ function makeHomePill(accent = HOME_PUBLIC_COLORS.neutral, filled = false) {
 
 function makePrimaryButtonBackground() {
   return `linear-gradient(135deg,
-    ${HOME_PUBLIC_COLORS.archer} 0%,
-    color-mix(in srgb, ${HOME_PUBLIC_COLORS.mage} 86%, white 8%) 52%,
-    color-mix(in srgb, ${HOME_PUBLIC_COLORS.warrior} 84%, white 10%) 100%)`;
+    rgba(238, 244, 255, 0.96) 0%,
+    rgba(212, 223, 242, 0.94) 48%,
+    rgba(182, 196, 220, 0.92) 100%)`;
 }
 
 // â”€â”€ Typography helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -364,7 +364,7 @@ const px8  = (s)          => px(s);
 const BOOT_SEQUENCE = [
   "> ABRIENDO ACCESO DEL GREMIO",
   "> AJUSTANDO SELLOS DE ENTRADA",
-  "> VERIFICANDO CREDENCIALES DEL HEROE",
+  "> VERIFICANDO CREDENCIALES DEL HÉROE",
   "> PREPARANDO LA BITACORA PERSONAL",
   "> ACCESO LISTO",
 ];
@@ -442,7 +442,8 @@ function SpriteIdle({ size = 180, fps = 8, style = {} }) {
 const CSS = `
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
-  body { background: ${C.bg}; overflow-x: hidden; font-family: 'Rajdhani', sans-serif; }
+  html, body, #root { min-height: 100%; }
+  body { background: ${C.bg}; overflow: hidden; font-family: 'Rajdhani', sans-serif; }
 
   @media (prefers-reduced-motion:reduce) {
     *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
@@ -544,12 +545,45 @@ const CSS = `
       linear-gradient(var(--cc,${C.orange}),var(--cc,${C.orange})) 100% 100%/2px 14px no-repeat;
   }
 
+  .lp6-shell {
+    min-height: 100dvh;
+    height: 100dvh;
+    padding: clamp(10px, 1.35vw, 18px);
+    overflow: hidden;
+    overflow-x: hidden;
+  }
+  .lp6-frame {
+    width: min(1380px, 100%);
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    min-width: 0;
+    overflow-x: hidden;
+  }
+  .lp6-left,
+  .lp6-right {
+    min-height: 0;
+    min-width: 0;
+  }
+  .lp6-right-scroll {
+    overflow-y: hidden;
+    overflow-x: hidden;
+  }
+
   /* â”€â”€ Responsive â”€â”€ */
   @media (max-width: 980px) { .lp6-grid { grid-template-columns: 0.7fr 1.3fr !important; } }
   @media (max-width: 640px) {
+    body { overflow-y: auto; overflow-x: hidden; }
+    .lp6-shell { height: auto; min-height: 100dvh; overflow: visible; padding: 0; }
+    .lp6-frame { height: auto; max-height: none; width: 100%; }
     .lp6-grid { grid-template-columns: 1fr !important; }
     .lp6-left { display: none !important; }
     .lp6-right { padding: 72px clamp(16px,5vw,36px) 32px !important; }
+    .lp6-right-scroll { overflow-y: auto; }
+  }
+
+  @media (max-height: 860px) and (min-width: 641px) {
+    .lp6-shell { padding: 10px; }
   }
 
   /* â”€â”€ Radix confirm dialog â”€â”€ */
@@ -782,7 +816,7 @@ function InputField({ id, label, type = "text", value, onChange, onBlur, placeho
   const strength  = showStrength ? pwdStrength(value) : null;
 
   return (
-    <motion.div variants={FV.up} style={{ marginBottom: 16 }}>
+    <motion.div variants={FV.up} style={{ marginBottom: 14 }}>
       {label && (
         <motion.label htmlFor={inputId}
           animate={{ color: focused ? P.accent : P.muted }}
@@ -814,7 +848,7 @@ function InputField({ id, label, type = "text", value, onChange, onBlur, placeho
           aria-invalid={!!error}
           aria-describedby={error ? `${inputId}-error` : undefined}
           style={{ position: "relative", zIndex: 1, width: "100%",
-            padding: type === "password" ? "12px 44px 12px 14px" : "12px 14px",
+            padding: type === "password" ? "11px 42px 11px 14px" : "11px 14px",
             background: focused ? P.bg1 : P.bg0,
             border: `1px solid ${error ? P.error : focused ? P.accent : P.line}`,
             color: P.text,
@@ -822,7 +856,7 @@ function InputField({ id, label, type = "text", value, onChange, onBlur, placeho
         {type === "password" && (
           <motion.button type="button" onClick={() => setShow(s => !s)}
             whileHover={{ scale: 1.15, color: P.accent }} whileTap={{ scale: 0.9 }}
-            aria-label={show ? "Ocultar contrasena" : "Mostrar contrasena"}
+            aria-label={show ? "Ocultar contraseña" : "Mostrar contraseña"}
             style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
               background: "none", border: "none", cursor: "pointer", color: P.muted,
               display: "flex", alignItems: "center", justifyContent: "center",
@@ -1078,7 +1112,7 @@ function ForgotPasswordModal({ onClose, onEmailSent, initialEmail = "" }) {
         <RadixDialog.Content className="fv6-dialog-content" aria-describedby="confirm-close-desc">
           <div style={{ height: 2, background: `linear-gradient(90deg,${P.accent},${P.accent2},transparent)`, marginBottom: 18 }} />
           <RadixDialog.Title style={{ ...mono(9, 700), color: P.accent, letterSpacing: ".1em", marginBottom: 10 }}>
-            ¿ABANDONAR LA RECUPERACION?
+            ¿ABANDONAR LA RECUPERACIÓN?
           </RadixDialog.Title>
           <RadixDialog.Description id="confirm-close-desc" style={{ ...sans(13, 400), color: P.muted, lineHeight: 1.6, marginBottom: 22 }}>
             Perderás el código y la contraseña ingresados. ¿Seguro que quieres salir?
@@ -1151,7 +1185,7 @@ function ForgotPasswordModal({ onClose, onEmailSent, initialEmail = "" }) {
 
         {/* Steps bar */}
         <div style={{ position: "relative", zIndex: 1, display: "flex", gap: 8, padding: "10px 14px", background: "rgba(8,10,18,0.84)", borderBottom: `1px solid ${P.line}` }}>
-          {["CORREO", "CODIGO", "LISTO"].map((label, i) => (
+          {["CORREO", "CÓDIGO", "LISTO"].map((label, i) => (
             <div key={i} style={{ flex: 1, display: "grid", gap: 5 }}>
               <div style={{ ...mono(7, 700), color: stepIdx >= i ? P.accent : P.muted, letterSpacing: ".1em" }}>
                 {stepIdx > i ? "OK" : stepIdx === i ? ">" : "o"} {label}
@@ -1225,7 +1259,7 @@ function ForgotPasswordModal({ onClose, onEmailSent, initialEmail = "" }) {
                     El código expira en <strong style={{ color: P.accent2 }}>15 minutos</strong>. Revisa también tu carpeta de spam.
                   </p>
                 </div>
-                <InputField id="forgot-email" label="CORREO DEL HEROE" type="email" value={email}
+                <InputField id="forgot-email" label="CORREO DEL HÉROE" type="email" value={email}
                   onChange={e => setEmail(e.target.value)} placeholder="heroe@forgeventure.com" error={error} autoComplete="email"
                   inputMode="email" />
                 <motion.button type="button" onClick={handleRequestCode} disabled={loading || cooldown > 0}
@@ -1236,7 +1270,7 @@ function ForgotPasswordModal({ onClose, onEmailSent, initialEmail = "" }) {
                     background: loading || cooldown > 0 ? `${P.accent}55` : P.accent,
                     border: "none", padding: "13px", cursor: loading || cooldown > 0 ? "not-allowed" : "pointer",
                     display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
-                  {loading ? <><Spinner size={12} /> Enviando...</> : cooldown > 0 ? `Espera ${cooldown}s` : "Enviar codigo"}
+                  {loading ? <><Spinner size={12} /> Enviando...</> : cooldown > 0 ? `Espera ${cooldown}s` : "Enviar código"}
                 </motion.button>
               </motion.div>
             )}
@@ -1246,7 +1280,7 @@ function ForgotPasswordModal({ onClose, onEmailSent, initialEmail = "" }) {
                 <div style={{ ...makeHomePanel({ radius: 16, surface: "rgba(9,12,22,0.78)", outerGlow: "rgba(0,0,0,0.14)" }), borderLeft: `3px solid ${P.success}`, padding: "12px 16px", marginBottom: 18 }}>
                   <div style={{ display: "grid", gridTemplateColumns: "24px 1fr", gap: 10, alignItems: "center", marginBottom: 4 }}>
                     <img src="/missions/journal/journal-seal-claimed.png" alt="" aria-hidden="true" style={{ width: 24, height: 24, objectFit: "contain" }} />
-                    <div style={{ ...mono(8, 700), color: P.success, letterSpacing: ".1em" }}>[ CODIGO ENVIADO ]</div>
+                    <div style={{ ...mono(8, 700), color: P.success, letterSpacing: ".1em" }}>[ CÓDIGO ENVIADO ]</div>
                   </div>
                   <p style={{ ...sans(12, 500), color: P.muted, margin: 0 }}>Revisa: <strong style={{ color: P.text }}>{email}</strong><br />
                     <span style={{ ...mono(8, 500), color: P.muted }}>Expira en 15 minutos</span></p>
@@ -1260,7 +1294,7 @@ function ForgotPasswordModal({ onClose, onEmailSent, initialEmail = "" }) {
                     </motion.div>
                   )}
                 </AnimatePresence>
-                <InputField id="new-password"     label="NUEVA CONTRASENA" type="password" value={newPwd}     onChange={e => setNewPwd(e.target.value)}     placeholder="********" autoComplete="new-password"  showStrength />
+                <InputField id="new-password"     label="NUEVA CONTRASEÑA" type="password" value={newPwd}     onChange={e => setNewPwd(e.target.value)}     placeholder="********" autoComplete="new-password"  showStrength />
                 <InputField id="confirm-password" label="CONFIRMAR"        type="password" value={confirmPwd} onChange={e => setConfirmPwd(e.target.value)} placeholder="********" error={!codeError ? error : undefined} autoComplete="new-password" />
                 <div style={{ display: "flex", gap: 8 }}>
                   <motion.button type="button" onClick={() => { setStep("email"); setError(""); setCode(""); }}
@@ -1290,7 +1324,7 @@ function ForgotPasswordModal({ onClose, onEmailSent, initialEmail = "" }) {
                 <div style={{ ...orb(13, 900), color: P.accent, marginBottom: 8, letterSpacing: ".08em" }}>ACCESO RESTAURADO</div>
                 <p style={{ ...sans(13, 400), color: P.muted, lineHeight: 1.7, marginBottom: 22 }}>Tu contraseña quedó renovada. El portal ya puede devolverte al login para abrir tu tablero.</p>
                 <motion.button type="button" onClick={onClose} whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.97 }} className="fv6-btn"
-                  style={{ ...sans(13, 700), color: "#fff", background: P.accent, border: "none", padding: "13px 28px", cursor: "pointer" }}>Iniciar sesion</motion.button>
+                  style={{ ...sans(13, 700), color: "#fff", background: P.accent, border: "none", padding: "13px 28px", cursor: "pointer" }}>Iniciar sesión</motion.button>
               </motion.div>
             )}
           </AnimatePresence>
@@ -1338,10 +1372,10 @@ const LeftPanel = memo(function LeftPanel({ onGoToDashboard, onGoBack, onGoRegis
         position: "relative",
         overflow: "hidden",
         borderRight: `1px solid rgba(255,255,255,0.08)`,
-        padding: "24px",
+        padding: "20px",
         display: "grid",
         alignContent: "start",
-        gap: 16,
+        gap: 12,
         perspective: 1200,
         background: `linear-gradient(180deg, rgba(9,8,18,0.96), rgba(8,7,16,0.92))`,
       }}
@@ -1371,7 +1405,7 @@ const LeftPanel = memo(function LeftPanel({ onGoToDashboard, onGoBack, onGoRegis
         }}
       />
 
-      <div style={{ position: "relative", zIndex: 2, display: "grid", gap: 16 }}>
+      <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", gap: 12, minHeight: "100%" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ ...makeHomePanel({ radius: 16, surface: "rgba(10,12,20,0.72)", outerGlow: "rgba(0,0,0,0.22)" }), width: 48, height: 48, display: "grid", placeItems: "center" }}>
@@ -1385,19 +1419,19 @@ const LeftPanel = memo(function LeftPanel({ onGoToDashboard, onGoBack, onGoRegis
           <span style={{ ...sans(11, 600), color: P.muted }}>{currentUser ? "Retoma tu ruta" : "Entrada al gremio"}</span>
         </div>
 
-        <div style={{ ...makeHomePanel({ radius: 26, surface: "rgba(7,8,18,0.66)", outerGlow: "rgba(0,0,0,0.32)" }), position: "relative", minHeight: 500, overflow: "hidden" }}>
+        <div style={{ ...makeHomePanel({ radius: 24, surface: "rgba(7,8,18,0.66)", outerGlow: "rgba(0,0,0,0.32)" }), position: "relative", minHeight: "clamp(360px, 50vh, 560px)", flex: 1, overflow: "hidden" }}>
           <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(8,8,16,0.18), rgba(8,8,16,0.68)), url('${LOGIN_SCENE.hero}') center / cover no-repeat` }} />
           <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(9,8,18,0.02), rgba(9,8,18,0.44)), radial-gradient(circle at 18% 16%, ${HOME_PUBLIC_COLORS.warrior}12 0%, transparent 24%), radial-gradient(circle at 84% 12%, ${HOME_PUBLIC_COLORS.mage}12 0%, transparent 22%)` }} />
 
-          <div style={{ position: "relative", zIndex: 1, height: "100%", padding: "20px 20px 18px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+          <div style={{ position: "relative", zIndex: 1, height: "100%", padding: "16px 16px 14px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
             <div style={{ display: "flex", justifyContent: "flex-end" }}>
               <div style={{ ...makeHomePill(activeHeroState.accent), ...mono(7, 700), color: activeHeroState.accent, padding: "5px 10px", letterSpacing: ".1em" }}>
-                {currentUser ? "SESION ACTIVA" : "ACCESO LISTO"}
+                {currentUser ? "SESIÓN ACTIVA" : "ACCESO LISTO"}
               </div>
             </div>
 
-            <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-end", flex: 1, paddingBlock: 16 }}>
-              <SpriteIdle size={220} fps={8} />
+            <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-end", flex: 1, paddingBlock: 10 }}>
+              <SpriteIdle size={168} fps={8} />
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8 }}>
@@ -1405,7 +1439,7 @@ const LeftPanel = memo(function LeftPanel({ onGoToDashboard, onGoBack, onGoRegis
                 ? ["Dashboard listo", "Racha guardada", "Ruta esperandote"]
                 : activeHeroState.chips
               ).map((bullet) => (
-                <div key={bullet} style={{ ...makeHomePanel({ radius: 12, surface: "rgba(8,9,18,0.72)", outerGlow: "rgba(0,0,0,0.14)" }), padding: "9px 10px", ...sans(11, 600), color: "#f3f6ff", textAlign: "center" }}>
+                <div key={bullet} style={{ ...makeHomePanel({ radius: 12, surface: "rgba(8,9,18,0.72)", outerGlow: "rgba(0,0,0,0.14)" }), padding: "8px 9px", ...sans(10, 600), color: "#f3f6ff", textAlign: "center", lineHeight: 1.25 }}>
                   {bullet}
                 </div>
               ))}
@@ -1419,7 +1453,7 @@ const LeftPanel = memo(function LeftPanel({ onGoToDashboard, onGoBack, onGoRegis
             onClick={onGoBack}
             whileHover={{ y: -2, borderColor: `${HOME_PUBLIC_COLORS.neutral}66`, color: HOME_PUBLIC_COLORS.neutral }}
             whileTap={{ scale: 0.98 }}
-            style={{ ...sans(12, 700), ...makeHomePill(HOME_PUBLIC_COLORS.neutral), minHeight: 44, flex: 1, color: P.muted, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", letterSpacing: ".06em" }}
+            style={{ ...sans(12, 700), ...makeHomePill(HOME_PUBLIC_COLORS.neutral), minHeight: 40, flex: 1, color: P.muted, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", letterSpacing: ".06em" }}
           >
             Volver al portal
           </motion.button>
@@ -1429,7 +1463,7 @@ const LeftPanel = memo(function LeftPanel({ onGoToDashboard, onGoBack, onGoRegis
               onClick={onGoRegister}
               whileHover={{ y: -2, borderColor: `${HOME_PUBLIC_COLORS.archer}66`, color: HOME_PUBLIC_COLORS.archer }}
               whileTap={{ scale: 0.98 }}
-              style={{ ...sans(12, 700), ...makeHomePill(HOME_PUBLIC_COLORS.archer), minHeight: 44, flex: 1, color: P.muted, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", letterSpacing: ".06em" }}
+              style={{ ...sans(12, 700), ...makeHomePill(HOME_PUBLIC_COLORS.archer), minHeight: 40, flex: 1, color: P.muted, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", letterSpacing: ".06em" }}
             >
               Crear cuenta
             </motion.button>
@@ -1550,7 +1584,7 @@ export default function LoginPage({ onGoRegister, onGoBack, onSuccess }) {
       if (!/\S+@\S+\.\S+/.test(val)) return "Correo invalido";
     }
     if (field === "password") {
-      if (!val)           return "La contrasena es obligatoria";
+      if (!val)           return "La contraseña es obligatoria";
       if (val.length < 6) return "Minimo 6 caracteres";
     }
     return null;
@@ -1699,15 +1733,14 @@ export default function LoginPage({ onGoRegister, onGoBack, onSuccess }) {
       <motion.div
         initial={{ opacity: 0 }} animate={{ opacity: 1 }}
         transition={{ duration: skipBoot ? 0.3 : 0.01 }}
-        className={skipBoot ? "" : "page-enter"}
-        style={{ minHeight: "100vh", display: "flex", alignItems: "stretch", justifyContent: "center", position: "relative", zIndex: 2 }}>
+        className={`lp6-shell ${skipBoot ? "" : "page-enter"}`}
+        style={{ display: "flex", alignItems: "stretch", justifyContent: "center", position: "relative", zIndex: 2 }}>
 
         <motion.div
           initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.55, ease }}
-          className="px6-corners lp6-grid"
+          className="px6-corners lp6-grid lp6-frame"
           style={{
             "--cc": HOME_PUBLIC_COLORS.neutral,
-            width: "100%", maxWidth: 1380,
             display: "grid", gridTemplateColumns: "minmax(420px, 0.92fr) minmax(560px, 1.08fr)",
             background: `linear-gradient(180deg, rgba(9,8,18,0.94), rgba(8,7,16,0.9))`, border: `1px solid rgba(255,255,255,0.08)`,
             boxShadow: `${HOME_PANEL_INSET}, 0 30px 80px rgba(0,0,0,0.6)`,
@@ -1730,9 +1763,9 @@ export default function LoginPage({ onGoRegister, onGoBack, onSuccess }) {
           />
 
           {/* â”€â”€ RIGHT PANEL â”€â”€ */}
-          <div className="lp6-right"
-            style={{ padding: "40px 40px 28px", display: "flex", flexDirection: "column", justifyContent: "flex-start",
-              position: "relative", background: `linear-gradient(180deg, rgba(9,8,18,0.9), rgba(8,7,16,0.96))`, backdropFilter: "blur(16px)", overflowY: "auto" }}>
+          <div className="lp6-right lp6-right-scroll"
+            style={{ padding: "28px 30px 20px", display: "flex", flexDirection: "column", justifyContent: "flex-start",
+              position: "relative", background: `linear-gradient(180deg, rgba(9,8,18,0.9), rgba(8,7,16,0.96))`, backdropFilter: "blur(16px)" }}>
 
             {/* Ambient orbs */}
             <div style={{ position: "absolute", right: "-10%", top: "5%", width: 280, height: 280, borderRadius: "50%",
@@ -1741,7 +1774,7 @@ export default function LoginPage({ onGoRegister, onGoBack, onSuccess }) {
               background: `radial-gradient(circle, ${P.blue}0A 0%, transparent 70%)`, filter: "blur(50px)", pointerEvents: "none" }} />
 
             {/* Mobile banner */}
-            <div style={{ width: "100%", maxWidth: 760, marginRight: "auto", position: "relative", zIndex: 1 }}>
+            <div style={{ width: "100%", maxWidth: 700, marginRight: "auto", position: "relative", zIndex: 1 }}>
               <div className="lp6-mobile-top" style={{ marginBottom: 16 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <div style={{ ...makeHomePanel({ radius: 12, surface: "rgba(10,12,20,0.74)", outerGlow: "rgba(0,0,0,0.16)" }), width: 34, height: 34, display: "grid", placeItems: "center" }}>
@@ -1758,8 +1791,8 @@ export default function LoginPage({ onGoRegister, onGoBack, onSuccess }) {
               </div>
 
               {/* Header */}
-              <motion.div variants={FV.up} initial="hidden" animate="show" style={{ marginBottom: 28 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
+              <motion.div variants={FV.up} initial="hidden" animate="show" style={{ marginBottom: 18 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
                   <div style={{ ...makeHomePanel({ radius: 14, surface: "rgba(10,12,20,0.8)", outerGlow: "rgba(0,0,0,0.18)" }), width: 44, height: 44, display: "grid", placeItems: "center", flexShrink: 0 }}>
                     <img src="/logo.png" alt="ForgeVenture" style={{ width: 26, height: 26, objectFit: "contain" }} />
                   </div>
@@ -1768,10 +1801,10 @@ export default function LoginPage({ onGoRegister, onGoBack, onSuccess }) {
                     <div style={{ ...mono(7, 600), color: HOME_PUBLIC_COLORS.neutral, letterSpacing: ".12em" }}>PORTAL DE ACCESO</div>
                   </div>
                 </div>
-                <h1 style={{ ...homeHeading("clamp(28px,3vw,42px)", 700), color: "#f7f3ff", marginBottom: 10, lineHeight: 1.04 }}>
+                <h1 style={{ ...homeHeading("clamp(26px,2.45vw,38px)", 700), color: "#f7f3ff", marginBottom: 8, lineHeight: 1.04 }}>
                   Vuelve a tu camino.
                 </h1>
-                <p style={{ ...sans(14, 500), color: "#ccd5e7", lineHeight: 1.65, maxWidth: 480 }}>
+                <p style={{ ...sans(13, 500), color: "#ccd5e7", lineHeight: 1.55, maxWidth: 480 }}>
                   Entra con Google o correo. Tu racha, rutinas y misiones te esperan donde las dejaste.
                 </p>
               </motion.div>
@@ -1921,14 +1954,14 @@ export default function LoginPage({ onGoRegister, onGoBack, onSuccess }) {
               backdropFilter: "blur(16px)", border: `1px solid rgba(255,255,255,0.08)`,
               borderRadius: 24, overflow: "hidden",
               boxShadow: `${HOME_PANEL_INSET}, 0 24px 54px rgba(0,0,0,0.42)`,
-              padding: "20px 20px 18px" }}>
+              padding: "18px 18px 16px" }}>
               {/* inner top accent */}
               <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2,
                 background: `linear-gradient(90deg, ${HOME_PUBLIC_COLORS.archer}, ${HOME_PUBLIC_COLORS.mage}, ${HOME_PUBLIC_COLORS.warrior}, transparent)` }} />
 
-            <div style={{ marginBottom: 20 }}>
+            <div style={{ marginBottom: 16 }}>
               <div style={{ ...homeHeading(18, 700), color: "#f7f3ff", lineHeight: 1.1, marginBottom: 4 }}>
-                Iniciar sesion
+                Iniciar sesión
               </div>
               <p style={{ ...sans(12, 500), color: "#b8c4d8", lineHeight: 1.5, margin: 0 }}>
                 Google o correo — mismo perfil, misma ruta.
@@ -1943,7 +1976,7 @@ export default function LoginPage({ onGoRegister, onGoBack, onSuccess }) {
               initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.45, ease }}
               aria-label="Continuar con Google"
               title="Entrada rápida del portal"
-              style={{ width: "100%", padding: "13px 16px", marginBottom: 18,
+              style={{ width: "100%", padding: "12px 16px", marginBottom: 14,
                 background: `linear-gradient(135deg, rgba(10,14,26,0.9), rgba(12,18,34,0.86))`, border: `1px solid rgba(66,133,244,0.25)`,
                 borderRadius: 14,
                 boxShadow: "0 8px 20px rgba(0,0,0,0.28)", backdropFilter: "blur(8px)",
@@ -1967,7 +2000,7 @@ export default function LoginPage({ onGoRegister, onGoBack, onSuccess }) {
 
             {/* Divider */}
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
-              style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 22 }}>
+              style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
               <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg, transparent, ${P.line})` }} />
               <span style={{ ...sans(11, 500), color: P.muted, letterSpacing: ".06em" }}>o inicia con correo</span>
               <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg, ${P.line}, transparent)` }} />
@@ -1978,17 +2011,17 @@ export default function LoginPage({ onGoRegister, onGoBack, onSuccess }) {
               animate={shaking ? { x: [-7, 7, -5, 5, -3, 3, 0] } : { x: 0 }} transition={{ duration: 0.45 }}
               variants={FV.stagger} initial="hidden" whileInView="show" viewport={{ once: true }}>
 
-              <InputField id="login-email" label="CORREO DEL HEROE" type="email"
+              <InputField id="login-email" label="CORREO DEL HÉROE" type="email"
                 value={email} onChange={handleEmailChange} onBlur={() => handleBlur("email")}
                 placeholder="heroe@forgeventure.com" error={errors.email} autoComplete="email"
                 inputMode="email" autoFocus />
 
-              <InputField id="login-password" label="CONTRASENA DE ACCESO" type="password"
+              <InputField id="login-password" label="CONTRASEÑA DE ACCESO" type="password"
                 value={password} onChange={handlePasswordChange} onBlur={() => handleBlur("password")}
                 placeholder="********" error={errors.password} autoComplete="current-password"
                 showStrength />
 
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginTop: -2, marginBottom: 20, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginTop: -2, marginBottom: 16, flexWrap: "wrap" }}>
                 <label title="Mantiene lista esta ruta en este dispositivo" style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", userSelect: "none" }}>
                   <button
                     type="button"
@@ -2050,7 +2083,7 @@ export default function LoginPage({ onGoRegister, onGoBack, onSuccess }) {
                   background: (loading || rateLimitSecs > 0)
                     ? `${P.accent}44`
                     : makePrimaryButtonBackground(),
-                  border: "none", padding: "15px", borderRadius: 16,
+                  border: "none", padding: "13px", borderRadius: 16,
                   cursor: (loading || rateLimitSecs > 0) ? "not-allowed" : "pointer",
                   display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
                   boxShadow: `0 12px 28px rgba(32,14,46,0.34), 0 0 0 1px rgba(255,255,255,0.04)` }}>
@@ -2060,7 +2093,7 @@ export default function LoginPage({ onGoRegister, onGoBack, onSuccess }) {
             </motion.form>
 
             {/* Register link */}
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} style={{ marginTop: 24 }}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} style={{ marginTop: 16 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
                 <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg, transparent, ${P.line})` }} />
                 <div style={{ width: 4, height: 4, background: P.line, clipPath: "polygon(50% 0%,100% 50%,50% 100%,0% 50%)" }} />
