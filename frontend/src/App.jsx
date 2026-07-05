@@ -152,6 +152,8 @@ function GlobalCursor() {
 const LOAD_CSS = `
   @keyframes appPulse { 0%,100%{transform:scale(1);filter:drop-shadow(0 0 14px #E85D04)} 50%{transform:scale(1.1);filter:drop-shadow(0 0 28px #E85D04)} }
   @keyframes appDot   { 0%,80%,100%{transform:scale(0);opacity:0} 40%{transform:scale(1);opacity:1} }
+  @keyframes appStatusFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+  @keyframes appStatusGlow  { 0%,100%{opacity:.55;transform:scale(1)} 50%{opacity:.9;transform:scale(1.06)} }
 `;
 function LoadingScreen({ msg = "VERIFICANDO SESIÓN..." }) {
   return (
@@ -173,33 +175,451 @@ function LoadingScreen({ msg = "VERIFICANDO SESIÓN..." }) {
 // ── Acceso denegado ───────────────────────────────────────────────
 function AccessDenied({ onBack }) {
   return (
-    <div style={{ height:"100vh", background:"#060D1A", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:14 }}>
-      <div style={{ fontSize:52 }}>🚫</div>
-      <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:20, fontWeight:900, color:"#E74C3C" }}>ACCESO DENEGADO</div>
-      <div style={{ fontFamily:"'Rajdhani',sans-serif", fontSize:14, color:"#6B8CAE", textAlign:"center", maxWidth:320, lineHeight:1.6 }}>
-        No tienes permisos para acceder a este panel. Contacta al administrador.
+    <>
+      <style>{LOAD_CSS}</style>
+      <div
+        style={{
+          minHeight: "100vh",
+          position: "relative",
+          overflow: "hidden",
+          background:
+            "radial-gradient(circle at 16% 18%, rgba(107,200,122,.12), transparent 30%), radial-gradient(circle at 82% 16%, rgba(76,201,240,.1), transparent 28%), radial-gradient(circle at 74% 82%, rgba(255,71,87,.12), transparent 30%), linear-gradient(180deg, #060816 0%, #090b18 50%, #05070f 100%)",
+          color: "#f7f5ff",
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage:
+              "linear-gradient(rgba(112, 133, 173, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(112, 133, 173, 0.08) 1px, transparent 1px)",
+            backgroundSize: "72px 72px",
+            opacity: 0.18,
+            pointerEvents: "none",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "radial-gradient(circle at center, transparent 30%, rgba(4, 6, 12, 0.64) 100%)",
+            pointerEvents: "none",
+          }}
+        />
+        <div
+          style={{
+            position: "relative",
+            zIndex: 1,
+            minHeight: "100vh",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "32px 24px",
+          }}
+        >
+          <div
+            style={{
+              width: "min(1180px, 100%)",
+              display: "grid",
+              gridTemplateColumns: "minmax(0, 1.2fr) minmax(280px, 0.72fr)",
+              gap: 22,
+            }}
+          >
+            <section
+              style={{
+                position: "relative",
+                minHeight: 560,
+                borderRadius: 32,
+                overflow: "hidden",
+                border: "1px solid rgba(128, 223, 145, 0.2)",
+                boxShadow:
+                  "0 28px 80px rgba(0, 0, 0, 0.44), 0 0 0 1px rgba(100, 214, 122, 0.06) inset",
+                background:
+                  "linear-gradient(135deg, rgba(11, 14, 27, 0.94), rgba(9, 11, 21, 0.9))",
+              }}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  backgroundImage:
+                    "linear-gradient(180deg, rgba(5, 8, 16, 0.06), rgba(5, 8, 16, 0.84)), url('/ui/scene-bg.png')",
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  filter: "blur(2px) saturate(1.06)",
+                  transform: "scale(1.04)",
+                }}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  background:
+                    "linear-gradient(110deg, rgba(7, 10, 20, 0.96) 10%, rgba(7, 10, 20, 0.78) 48%, rgba(7, 10, 20, 0.46) 100%)",
+                }}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 2,
+                  background:
+                    "linear-gradient(90deg, rgba(123,220,59,0), rgba(123,220,59,.9), rgba(76,201,240,.85), rgba(255,77,94,.75), rgba(123,220,59,0))",
+                }}
+              />
+              <div
+                style={{
+                  position: "relative",
+                  zIndex: 1,
+                  height: "100%",
+                  padding: "32px clamp(24px, 4vw, 40px)",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  gap: 28,
+                }}
+              >
+                <div style={{ maxWidth: 620, display: "grid", gap: 18 }}>
+                  <div
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 10,
+                      width: "fit-content",
+                      padding: "10px 16px",
+                      borderRadius: 999,
+                      border: "1px solid rgba(127, 220, 59, 0.24)",
+                      background: "rgba(10, 15, 28, 0.72)",
+                      boxShadow: "0 0 24px rgba(123, 220, 59, 0.08)",
+                    }}
+                  >
+                    <img
+                      src="/ui/header/section-home.png"
+                      alt=""
+                      aria-hidden="true"
+                      style={{ width: 20, height: 20, objectFit: "contain" }}
+                    />
+                    <span
+                      style={{
+                        fontFamily: "'Rajdhani', sans-serif",
+                        fontSize: 13,
+                        fontWeight: 700,
+                        letterSpacing: "0.16em",
+                        color: "#9cf065",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      Portal protegido
+                    </span>
+                  </div>
+
+                  <div style={{ display: "grid", gap: 12 }}>
+                    <p
+                      style={{
+                        margin: 0,
+                        fontFamily: "'Rajdhani', sans-serif",
+                        fontSize: 14,
+                        fontWeight: 700,
+                        letterSpacing: "0.18em",
+                        textTransform: "uppercase",
+                        color: "rgba(241, 243, 255, 0.66)",
+                      }}
+                    >
+                      Estado del acceso
+                    </p>
+                    <h1
+                      style={{
+                        margin: 0,
+                        fontFamily: "'Sora', 'Inter', sans-serif",
+                        fontSize: "clamp(2.6rem, 6vw, 4.75rem)",
+                        lineHeight: 0.98,
+                        letterSpacing: "-0.04em",
+                        fontWeight: 800,
+                      }}
+                    >
+                      Esta ruta
+                      <br />
+                      <span
+                        style={{
+                          color: "#ff6a74",
+                          textShadow: "0 0 28px rgba(255, 106, 116, 0.28)",
+                        }}
+                      >
+                        no esta abierta para tu cuenta.
+                      </span>
+                    </h1>
+                    <p
+                      style={{
+                        margin: 0,
+                        maxWidth: 560,
+                        fontFamily: "'Inter', sans-serif",
+                        fontSize: 16,
+                        lineHeight: 1.7,
+                        color: "rgba(228, 232, 246, 0.8)",
+                      }}
+                    >
+                      El panel que intentaste abrir pide permisos mas altos.
+                      Vuelve al portal principal o entra con una cuenta que si
+                      tenga acceso a esta zona.
+                    </p>
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gap: 16,
+                    maxWidth: 640,
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: 14,
+                    }}
+                  >
+                    <button
+                      onClick={onBack}
+                      style={{
+                        border: "1px solid rgba(120, 215, 102, 0.36)",
+                        background:
+                          "linear-gradient(135deg, rgba(110, 218, 101, 0.22), rgba(76, 201, 240, 0.18))",
+                        color: "#f4fff6",
+                        padding: "14px 20px",
+                        borderRadius: 16,
+                        fontFamily: "'Rajdhani', sans-serif",
+                        fontSize: 15,
+                        fontWeight: 700,
+                        letterSpacing: "0.04em",
+                        cursor: "pointer",
+                        boxShadow: "0 14px 34px rgba(44, 112, 69, 0.22)",
+                      }}
+                    >
+                      Volver al portal
+                    </button>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                      gap: 12,
+                    }}
+                  >
+                    {[
+                      "Tu sesion sigue viva, solo esta zona no te deja pasar.",
+                      "Si deberias tener acceso, cambia de cuenta o revisa permisos.",
+                      "El resto del portal puede seguir usandose con normalidad.",
+                    ].map((line) => (
+                      <div
+                        key={line}
+                        style={{
+                          padding: "14px 16px",
+                          borderRadius: 18,
+                          border: "1px solid rgba(128, 139, 175, 0.18)",
+                          background: "rgba(9, 12, 23, 0.72)",
+                          color: "rgba(220, 225, 242, 0.74)",
+                          fontFamily: "'Inter', sans-serif",
+                          fontSize: 13,
+                          lineHeight: 1.55,
+                        }}
+                      >
+                        {line}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <aside
+              style={{
+                position: "relative",
+                borderRadius: 28,
+                border: "1px solid rgba(118, 130, 168, 0.18)",
+                background:
+                  "linear-gradient(180deg, rgba(11, 14, 27, 0.96), rgba(8, 10, 18, 0.92))",
+                boxShadow: "0 28px 70px rgba(0, 0, 0, 0.32)",
+                padding: 24,
+                display: "grid",
+                alignContent: "start",
+                gap: 18,
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  background:
+                    "radial-gradient(circle at top, rgba(76, 201, 240, 0.08), transparent 34%), radial-gradient(circle at bottom, rgba(123, 220, 59, 0.08), transparent 28%)",
+                  pointerEvents: "none",
+                }}
+              />
+              <div
+                style={{
+                  position: "relative",
+                  zIndex: 1,
+                  width: 124,
+                  height: 124,
+                  margin: "6px auto 2px",
+                  borderRadius: "50%",
+                  display: "grid",
+                  placeItems: "center",
+                  border: "1px solid rgba(255,255,255,0.14)",
+                  background:
+                    "radial-gradient(circle, rgba(255,255,255,0.1), rgba(10,14,26,0.34) 58%, rgba(8,10,20,0.08) 72%)",
+                  boxShadow:
+                    "0 0 0 1px rgba(255,255,255,0.04) inset, 0 0 36px rgba(255, 77, 94, 0.12)",
+                }}
+              >
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 8,
+                    borderRadius: "50%",
+                    border: "1px solid rgba(255, 106, 116, 0.2)",
+                    animation: "appStatusGlow 3.2s ease-in-out infinite",
+                  }}
+                />
+                <img
+                  src="/logo.png"
+                  alt="ForgeVenture"
+                  style={{
+                    width: 82,
+                    height: 82,
+                    objectFit: "contain",
+                    animation: "appStatusFloat 4s ease-in-out infinite",
+                  }}
+                />
+              </div>
+
+              <div
+                style={{
+                  position: "relative",
+                  zIndex: 1,
+                  textAlign: "center",
+                  display: "grid",
+                  gap: 8,
+                }}
+              >
+                <p
+                  style={{
+                    margin: 0,
+                    fontFamily: "'Rajdhani', sans-serif",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    letterSpacing: "0.16em",
+                    textTransform: "uppercase",
+                    color: "#9cc7ff",
+                  }}
+                >
+                  Estado del portal
+                </p>
+                <h2
+                  style={{
+                    margin: 0,
+                    fontFamily: "'Sora', 'Inter', sans-serif",
+                    fontSize: 28,
+                    lineHeight: 1.02,
+                    fontWeight: 800,
+                  }}
+                >
+                  Ruta bloqueada
+                </h2>
+                <p
+                  style={{
+                    margin: 0,
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: 14,
+                    lineHeight: 1.65,
+                    color: "rgba(221, 226, 240, 0.72)",
+                  }}
+                >
+                  Tu acceso al mapa sigue activo, pero este tramo necesita otra
+                  llave.
+                </p>
+              </div>
+
+              <div
+                style={{
+                  position: "relative",
+                  zIndex: 1,
+                  display: "grid",
+                  gap: 12,
+                }}
+              >
+                {[
+                  ["Estado", "Acceso denegado"],
+                  ["Sesion", "Activa pero sin permiso"],
+                  ["Siguiente paso", "Volver al portal o cambiar de cuenta"],
+                ].map(([label, value], index) => (
+                  <div
+                    key={label}
+                    style={{
+                      padding: "14px 16px",
+                      borderRadius: 18,
+                      border:
+                        index === 0
+                          ? "1px solid rgba(255, 106, 116, 0.26)"
+                          : "1px solid rgba(120, 129, 162, 0.16)",
+                      background:
+                        index === 0
+                          ? "linear-gradient(135deg, rgba(255, 90, 101, 0.1), rgba(11, 14, 27, 0.84))"
+                          : "rgba(10, 13, 24, 0.78)",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontFamily: "'Rajdhani', sans-serif",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        letterSpacing: "0.14em",
+                        textTransform: "uppercase",
+                        color: "rgba(162, 176, 212, 0.72)",
+                        marginBottom: 6,
+                      }}
+                    >
+                      {label}
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: "'Inter', sans-serif",
+                        fontSize: 14,
+                        lineHeight: 1.5,
+                        color: "#f5f7ff",
+                      }}
+                    >
+                      {value}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </aside>
+          </div>
+        </div>
       </div>
-      <button onClick={onBack} style={{ fontFamily:"'Press Start 2P'", fontSize:8, background:"#E85D04", border:"none", color:"#060D1A", padding:"12px 24px", cursor:"pointer", marginTop:6 }}>
-        ← VOLVER
-      </button>
-    </div>
+    </>
   );
 }
-
-// ═══════════════════════════════════════════════════════════════
+// ---------------------------------------------------------------
 //  AUTH CONTEXT
-// ═══════════════════════════════════════════════════════════════
+// ---------------------------------------------------------------
 const AuthContext = createContext(null);
 const useAuth = () => useContext(AuthContext);
 
-// ── Avatar Flex — visible solo con sesión activa y perfil cargado ─
+// -- Avatar Flex - visible solo con sesion activa y perfil cargado --
 function FlexWidget() {
   const { sessionState, logout } = useAuth();
   const [activeSkin, setActiveSkin] = useState(
     sessionState.profile?.activeSkin ?? 'default'
   );
 
-  // Escucha cambios de skin desde UserPerfil (sin re-montar el widget)
+  // Escucha cambios de skin desde UserPerfil sin re-montar el widget.
   useEffect(() => {
     const handler = (e) => setActiveSkin(e.detail.skin);
     window.addEventListener('skinChanged', handler);
@@ -216,6 +636,7 @@ function FlexWidget() {
     />
   );
 }
+
 
 // ── Settings panel wrapper — always mounted at root ──────────
 function SettingsPanelWrapper() {
@@ -430,3 +851,4 @@ export default function App() {
     </ToastProvider>
   );
 }
+

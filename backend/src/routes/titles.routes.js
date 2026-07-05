@@ -6,6 +6,32 @@ import { bustUserCache } from "../utils/userCache.js";
 
 const router = Router();
 
+function buildTitleProfilePatch(userData = {}, updates = {}, now = new Date().toISOString()) {
+  const merged = { ...userData, ...updates, updatedAt: now };
+  const ownedTitles = Array.isArray(merged.ownedTitles)
+    ? merged.ownedTitles
+    : (merged.titulo ? [merged.titulo] : []);
+
+  return {
+    coins: Number(merged.coins || 0),
+    level: Number(merged.level || 1),
+    xp: Number(merged.xp || 0),
+    xpTotal: Number(merged.xpTotal || 0),
+    xpNext: Number(merged.xpNext || 100),
+    skillPoints: Number(merged.skillPoints || 0),
+    heroClass: merged.heroClass || "",
+    titulo: merged.titulo || "",
+    ownedTitles,
+    ownedAvatars: Array.isArray(merged.ownedAvatars) ? merged.ownedAvatars : ["avatar_01"],
+    ownedFrames: Array.isArray(merged.ownedFrames) ? merged.ownedFrames : [],
+    ownedSkins: Array.isArray(merged.ownedSkins) ? merged.ownedSkins : ["default"],
+    activeAvatar: merged.activeAvatar || "avatar_01",
+    activeFrame: merged.activeFrame ?? null,
+    activeSkin: merged.activeSkin || "default",
+    updatedAt: now,
+  };
+}
+
 const TITULOS_CATALOG = [
   { id: "guardian_mental", nombre: "Guardián Mental", desc: "Concedido por mantener 7 días de bienestar mental consecutivos.", rareza: "Raro", color: "#4CC9F0", fuente: "ganado", precio: 0, hint: "Completa la misión de Zona Mente" },
   { id: "ser_fortalecido", nombre: "Ser Fortalecido", desc: "Otorgado al completar el test VIA de fortalezas personales.", rareza: "Poco común", color: "#4ADE80", fuente: "ganado", precio: 0, hint: "Completa el test de fortalezas VIA" },
@@ -75,7 +101,14 @@ router.post("/buy", verifyToken, async (req, res) => {
         updatedAt: now,
       });
 
-      return { newCoins, newOwnedTitles };
+      return {
+        newCoins,
+        newOwnedTitles,
+        profilePatch: buildTitleProfilePatch(user, {
+          coins: newCoins,
+          ownedTitles: newOwnedTitles,
+        }, now),
+      };
     });
 
     Promise.all([
@@ -103,7 +136,12 @@ router.post("/buy", verifyToken, async (req, res) => {
 
     bustUserCache(uid);
 
-    return res.json({ ok: true, coins: result.newCoins, ownedTitles: result.newOwnedTitles });
+    return res.json({
+      ok: true,
+      coins: result.newCoins,
+      ownedTitles: result.newOwnedTitles,
+      profilePatch: result.profilePatch,
+    });
   } catch (err) {
     const status = err.code === 400 || err.code === 404 ? err.code : 500;
     if (status === 500) console.error("Error en POST /titles/buy:", err);
@@ -124,18 +162,28 @@ router.post("/equip", verifyToken, async (req, res) => {
     const ownedTitles = Array.isArray(user.ownedTitles) ? user.ownedTitles : (user.titulo ? [user.titulo] : []);
 
     if (!titulo) {
-      await ref.update({ titulo: "", updatedAt: new Date().toISOString() });
+      const now = new Date().toISOString();
+      await ref.update({ titulo: "", updatedAt: now });
       bustUserCache(uid);
-      return res.json({ ok: true, titulo: "" });
+      return res.json({
+        ok: true,
+        titulo: "",
+        profilePatch: buildTitleProfilePatch(user, { titulo: "" }, now),
+      });
     }
 
     if (!ownedTitles.includes(titulo)) {
       return res.status(403).json({ ok: false, message: "No tienes este título desbloqueado" });
     }
 
-    await ref.update({ titulo, updatedAt: new Date().toISOString() });
+    const now = new Date().toISOString();
+    await ref.update({ titulo, updatedAt: now });
     bustUserCache(uid);
-    return res.json({ ok: true, titulo });
+    return res.json({
+      ok: true,
+      titulo,
+      profilePatch: buildTitleProfilePatch(user, { titulo }, now),
+    });
   } catch (err) {
     console.error("Error en POST /titles/equip:", err);
     return res.status(500).json({ ok: false, message: err.message });

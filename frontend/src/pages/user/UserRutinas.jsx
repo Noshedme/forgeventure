@@ -4499,129 +4499,7 @@ export default function UserRutinas({ profile, onNavigate }) {
             </motion.section>
           )}
 
-          <div className="urt-grid-2">
-            <motion.section className="urt-panel urt-summary" {...panelMotion}>
-              <div className="urt-panel-head">
-                <div>
-                  <div className="urt-panel-tag">Resumen semanal</div>
-                  <h3>Bitacora del heroe</h3>
-                  <p>Tu semana en tres partes: cuanto entrenaste, que tan seguido y cuanto territorio ganaste.</p>
-                </div>
-                <div className="urt-panel-head-side">
-                  <img src="/exercises/summary/sum-logbook.png" alt="" className="urt-panel-head-art" />
-                  <span className="urt-chip is-focus">{Math.round(weekProgressPct)}% ritmo</span>
-                </div>
-              </div>
-
-              <div className="urt-summary-shell">
-                <div className="urt-summary-grid">
-                  {summaryGroups.map((group) => (
-                    <article key={group.key} className="urt-bitacora-card" style={{ "--group-color": group.color }}>
-                      <div className="urt-bitacora-head">
-                        <div>
-                          <strong>{group.title}</strong>
-                          <span>{group.hint}</span>
-                        </div>
-                        <div className="urt-bitacora-icon">
-                          <img src={group.asset} alt="" />
-                        </div>
-                      </div>
-
-                      <div className="urt-bitacora-metrics">
-                        {group.metrics.map((metric) => (
-                          <div key={metric.label} className="urt-bitacora-metric" style={{ "--metric-color": metric.color }}>
-                            <div className="urt-bitacora-metric-badge">
-                              <img src={metric.asset} alt="" />
-                            </div>
-                            <div className="urt-bitacora-metric-copy">
-                              <strong>{metric.label}</strong>
-                              <span>{metric.hint}</span>
-                            </div>
-                            <div className="urt-bitacora-value">{metric.value}</div>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="urt-bitacora-foot">{group.foot}</div>
-                    </article>
-                  ))}
-                </div>
-
-                <div className="urt-progress-block">
-                  <div className="urt-progress-head">
-                    <div className="urt-progress-head-title">
-                      <img src="/ui/icons/map-pin.png" alt="" />
-                      <div>
-                        <strong>Lectura del campo</strong>
-                        <span>{expectedThisWeek ? `${completadasEstaSemana} rutas ya cerradas frente a ${expectedThisWeek} entradas esperadas hasta hoy.` : "Todavia no hay presion semanal configurada."}</span>
-                      </div>
-                    </div>
-                    <span className="urt-chip">{weekProgressPct >= 100 ? "Semana limpia" : "Ritmo en marcha"}</span>
-                  </div>
-
-                  <div className="urt-chart-panel">
-                    <div className="urt-chart-head">
-                      <div className="urt-chart-title">
-                        <img src="/exercises/summary/sum-chart.png" alt="" />
-                        <div>
-                          <strong>Presion diaria del mapa</strong>
-                          <p>Grafico real por dias de la semana con la carga asignada para cada jornada.</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="urt-chart-stage">
-                      <svg className="urt-chart-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-                        <polygon
-                          points={weekChartArea}
-                          fill="color-mix(in srgb, var(--class-accent) 14%, transparent)"
-                          stroke="none"
-                        />
-                        <polyline
-                          points={weekChartPoints}
-                          fill="none"
-                          stroke="var(--class-accent)"
-                          strokeWidth="2.4"
-                          strokeLinejoin="round"
-                          strokeLinecap="round"
-                        />
-                      </svg>
-
-                      <div className="urt-chart-cols">
-                        {weekStrip.map((item) => (
-                          <div
-                            key={item.day}
-                            className={`urt-chart-col ${item.isToday ? "is-today" : ""} ${item.completed ? "is-complete" : ""}`}
-                            title={`${item.day}: ${item.assigned} rutas asignadas - carga ${item.pressure.toLowerCase()}`}
-                          >
-                            <small>{item.assigned}</small>
-                            <span>{item.day.slice(0, 2)}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="urt-chart-legend">
-                      <strong>Clave:</strong>
-                      <span>Numero = rutas previstas</span>
-                      <span>Luz de clase = hoy</span>
-                      <span>Brillo verde = jornada ya despejada</span>
-                    </div>
-                  </div>
-
-                  <div className="urt-week-strip">
-                    {weekStrip.map((item) => (
-                      <div key={item.day} className={`urt-week-day ${item.isToday ? "is-today" : ""} ${item.assigned > 0 ? "is-active" : ""}`}>
-                        <span>{item.day.slice(0, 2)}</span>
-                        <strong>{item.pressure}</strong>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </motion.section>
-
-            <motion.aside className="urt-panel urt-command" {...panelMotion}>
+          <motion.section className="urt-panel urt-command urt-command-wide" {...panelMotion}>
               <div className="urt-panel-head">
                 <div>
                   <div className="urt-panel-tag">Mesa del gremio</div>
@@ -4727,8 +4605,7 @@ export default function UserRutinas({ profile, onNavigate }) {
                   </div>
                 </div>
               </div>
-            </motion.aside>
-          </div>
+          </motion.section>
 
           <motion.section className="urt-panel urt-map" {...panelMotion}>
             <div className="urt-panel-head">

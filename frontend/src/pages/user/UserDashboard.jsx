@@ -2690,6 +2690,47 @@ export default function UserDashboard({ profile: propProfile, onLogout }) {
     lastCoinsRef.current = currentCoins;
   }, [profile?.coins]);
 
+  const syncProfileFromPatch = useCallback((patch = {}, { accumulateXp = false, accumulateCoins = false } = {}) => {
+    if (!patch || typeof patch !== "object") return;
+    setProfile(prev => {
+      if (!prev) return prev;
+      const next = { ...prev };
+      if (patch.level !== undefined) next.level = Number(patch.level || 1);
+      if (patch.newLevel !== undefined) next.level = Number(patch.newLevel || next.level || 1);
+      if (patch.xp !== undefined) {
+        next.xp = accumulateXp ? Number(prev.xp || 0) + Number(patch.xp || 0) : Number(patch.xp || 0);
+      }
+      if (patch.xpNext !== undefined) next.xpNext = Number(patch.xpNext || next.xpNext || 0);
+      if (patch.coins !== undefined) {
+        next.coins = accumulateCoins ? Number(prev.coins || 0) + Number(patch.coins || 0) : Number(patch.coins || 0);
+      } else if (accumulateCoins && patch.coinsGanados !== undefined) {
+        next.coins = Number(prev.coins || 0) + Number(patch.coinsGanados || 0);
+      }
+      if (patch.streak !== undefined) next.streak = Number(patch.streak || 0);
+      if (patch.skillPoints !== undefined) next.skillPoints = Number(patch.skillPoints || 0);
+      if (patch.levelsBoughtTotal !== undefined) next.levelsBoughtTotal = Number(patch.levelsBoughtTotal || 0);
+      if (patch.levelsBought !== undefined) next.levelsBoughtTotal = Number(patch.levelsBought || 0);
+      if (patch.heroClass !== undefined) next.heroClass = patch.heroClass || next.heroClass;
+      return next;
+    });
+  }, []);
+
+  const syncUserStatsFromPatch = useCallback((patch = {}) => {
+    if (!patch || typeof patch !== "object") return;
+    setUserStats(prev => ({
+      ...(prev || {}),
+      ...(patch.level !== undefined ? { nivel: Number(patch.level || 1) } : {}),
+      ...(patch.newLevel !== undefined ? { nivel: Number(patch.newLevel || 1) } : {}),
+      ...(patch.xp !== undefined ? { xp: Number(patch.xp || 0) } : {}),
+      ...(patch.xpTotal !== undefined ? { xpTotal: Number(patch.xpTotal || 0) } : {}),
+      ...(patch.xpNext !== undefined ? { xpNext: Number(patch.xpNext || 0) } : {}),
+      ...(patch.coins !== undefined ? { coins: Number(patch.coins || 0) } : {}),
+      ...(patch.streak !== undefined ? { streak: Number(patch.streak || 0) } : {}),
+      ...(patch.skillPoints !== undefined ? { skillPoints: Number(patch.skillPoints || 0) } : {}),
+      ...(patch.heroClass !== undefined ? { heroClass: patch.heroClass || "GUERRERO" } : {}),
+    }));
+  }, []);
+
   // Carga inicial de datos
   useEffect(() => {
     const loadData = async () => {
@@ -2870,10 +2911,11 @@ export default function UserDashboard({ profile: propProfile, onLogout }) {
     return () => document.removeEventListener("mousedown", h);
   }, []);
 
-  // Ejercicio completado
+  // Progreso / tienda / recompensas
   useEffect(() => {
     const handle = (e) => {
-      const { xp, leveledUp, newLevel, coins, coinsGanados, prBroken: pr } = e.detail||{};
+      const detail = e.detail || {};
+      const { xp, leveledUp, newLevel, coins, coinsGanados, prBroken: pr } = detail;
       if (pr) { setPrBroken(pr); }
       const refreshProfile = async () => {
         try {
@@ -2881,25 +2923,56 @@ export default function UserDashboard({ profile: propProfile, onLogout }) {
           const token = await u.getIdToken();
           const res = await getProfile(token);
           const data = res?.user||res?.profile||{};
-          if (Object.keys(data).length>0) setProfile(prev=>({...prev,...data}));
+          if (Object.keys(data).length>0) {
+            setProfile(prev=>({...prev,...data}));
+            syncUserStatsFromPatch({
+              level: data.level,
+              xp: data.xp,
+              xpTotal: data.xpTotal,
+              xpNext: data.xpNext,
+              coins: data.coins,
+              streak: data.streak,
+              skillPoints: data.skillPoints,
+              heroClass: data.heroClass,
+            });
+          }
         } catch(_) {}
       };
       refreshProfile();
-      const coinsBonus = Number(coins??coinsGanados??0);
-      if (xp!==undefined||newLevel!==undefined||coinsBonus>0) {
-        setProfile(prev=>({
-          ...prev,
-          xp:    leveledUp ? 0 : (prev.xp||0)+(Number(xp)||0),
-          level: newLevel||prev.level,
-          xpNext:newLevel ? Math.pow(newLevel, 2) * 100 : prev.xpNext,
-          ...(coinsBonus>0?{coins:(prev.coins||0)+coinsBonus}:{}),
-        }));
+      const isStoreLevelEvent = detail.source === "tienda";
+      const coinsDelta = Number(coinsGanados ?? 0);
+      const hasAbsoluteCoins = isStoreLevelEvent && coins !== undefined;
+      if (xp!==undefined||newLevel!==undefined||coins!==undefined||coinsDelta>0) {
+        syncProfileFromPatch({
+          newLevel,
+          xp: leveledUp ? 0 : xp,
+          xpNext: detail.xpNext,
+          coins: hasAbsoluteCoins ? coins : undefined,
+          coinsGanados: !hasAbsoluteCoins ? coinsDelta : undefined,
+          skillPoints: detail.skillPoints,
+          levelsBought: detail.levelsBought,
+        }, {
+          accumulateXp: !leveledUp && xp !== undefined,
+          accumulateCoins: !hasAbsoluteCoins && coinsDelta > 0,
+        });
+        syncUserStatsFromPatch({
+          newLevel,
+          xp: leveledUp ? 0 : xp,
+          xpNext: detail.xpNext,
+          coins: hasAbsoluteCoins ? coins : undefined,
+          skillPoints: detail.skillPoints,
+        });
       }
       if (leveledUp && canShowXpPopups()) {
         const gained = e.detail?.levelsGained ?? 1;
         setLevelUpCelebration({ newLevel, xpGained:xp, levelsGained: gained, xpNext: e.detail?.xpNext, heroClass: profile?.heroClass || profile?.clase || "DEFAULT" });
         setSkillPointsBadge(prev => (prev || 0) + gained);
       }
+    };
+    const handleProfileUpdated = (e) => {
+      const detail = e.detail || {};
+      syncProfileFromPatch(detail);
+      syncUserStatsFromPatch(detail);
     };
     const handleSkillUnlocked = () => {
       setSkillPointsBadge(prev => Math.max(0, (prev || 0) - 1) || null);
@@ -2925,17 +2998,19 @@ export default function UserDashboard({ profile: propProfile, onLogout }) {
 
     window.addEventListener("exerciseCompleted", handle);
     window.addEventListener("levelUp", handle);
+    window.addEventListener("profileUpdated", handleProfileUpdated);
     window.addEventListener("skillUnlocked", handleSkillUnlocked);
     window.addEventListener("avatarPurchased", handleAvatarPurchased);
     window.addEventListener("avatarEquipped",  handleAvatarEquipped);
     return () => {
       window.removeEventListener("exerciseCompleted", handle);
       window.removeEventListener("levelUp", handle);
+      window.removeEventListener("profileUpdated", handleProfileUpdated);
       window.removeEventListener("skillUnlocked", handleSkillUnlocked);
       window.removeEventListener("avatarPurchased", handleAvatarPurchased);
       window.removeEventListener("avatarEquipped",  handleAvatarEquipped);
     };
-  }, []);
+  }, [profile?.heroClass, syncProfileFromPatch, syncUserStatsFromPatch]);
 
   const handleLogout = async () => {
     try { await signOut(auth); if (onLogout) onLogout(); }

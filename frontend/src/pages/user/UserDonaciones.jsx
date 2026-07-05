@@ -3,6 +3,8 @@ import { useState, useEffect, useCallback, memo } from "react";
 import { useLang } from "../../hooks/useLang.js";
 import { P, mono, sans, disp, glass, Brackets, Reveal } from "../../design/system.jsx";
 import { motion, AnimatePresence } from "framer-motion";
+import { auth } from "../../firebase.js";
+import { getActiveBoosts } from "../../services/api.js";
 import {
   Copy, Check, Heart, Sparkles, ChevronRight,
   Zap, Star, Smartphone, QrCode, Landmark, AlertCircle,
@@ -246,11 +248,11 @@ const COOLDOWN_MS  = 20 * 60 * 1000;
 const LS_LAST_KEY  = "fv_apoyar_last";
 const LS_COUNT_KEY = "fv_apoyar_count";
 
-function CooldownDisplay({ remainMs }) {
+function CooldownDisplay({ remainMs, maxMs = COOLDOWN_MS }) {
   const { t } = useLang();
   const mins = Math.floor(remainMs / 60000);
   const secs = Math.floor((remainMs % 60000) / 1000);
-  const pct  = 1 - remainMs / COOLDOWN_MS;
+  const pct  = 1 - remainMs / Math.max(1, maxMs);
   const r = 20, circ = 2 * Math.PI * r;
   return (
     <div style={{ display:"flex", alignItems:"center", gap:14, padding:"12px 16px",
@@ -768,6 +770,7 @@ const DON_CSS = `
 // ══════════════════════════════════════════════════════════════
 export default function UserDonaciones() {
   const { t } = useLang();
+  const [effectiveCooldownMs, setEffectiveCooldownMs] = useState(COOLDOWN_MS);
 
   // ── Cooldown ──
   const [totalCount, setTotalCount] = useState(() => {
@@ -780,14 +783,30 @@ export default function UserDonaciones() {
   const recheckCooldown = useCallback(() => {
     const last  = parseInt(localStorage.getItem(LS_LAST_KEY) || "0", 10);
     const since = Date.now() - last;
-    if (since < COOLDOWN_MS) {
-      setOnCooldown(true); setRemainMs(COOLDOWN_MS - since);
+    if (since < effectiveCooldownMs) {
+      setOnCooldown(true); setRemainMs(effectiveCooldownMs - since);
     } else {
       setOnCooldown(false); setRemainMs(0);
     }
-  }, []);
+  }, [effectiveCooldownMs]);
 
   useEffect(() => { recheckCooldown(); }, [recheckCooldown]);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const user = auth.currentUser;
+        if (!user) return;
+        const token = await user.getIdToken();
+        const res = await getActiveBoosts(token);
+        const pct = Number(res?.boosts?.find((boost) => boost.type === "cooldown_red")?.valor || 0);
+        const next = Math.max(60_000, Math.round(COOLDOWN_MS * Math.max(0.2, 1 - (pct / 100))));
+        if (alive) setEffectiveCooldownMs(next);
+      } catch {}
+    })();
+    return () => { alive = false; };
+  }, []);
 
   useEffect(() => {
     if (!onCooldown) return;
@@ -823,7 +842,7 @@ export default function UserDonaciones() {
     setFloatingHearts(h => [...h, { id: Date.now() }]);
     setRipple(true); setTimeout(() => setRipple(false), 700);
     setShowThanks(true); setTimeout(() => setShowThanks(false), 3200);
-    setOnCooldown(true); setRemainMs(COOLDOWN_MS);
+    setOnCooldown(true); setRemainMs(effectiveCooldownMs);
   };
 
   const GOAL    = 50;
@@ -1209,7 +1228,7 @@ export default function UserDonaciones() {
 
               {/* Donate button */}
               {onCooldown ? (
-                <CooldownDisplay remainMs={remainMs}/>
+                <CooldownDisplay remainMs={remainMs} maxMs={effectiveCooldownMs}/>
               ) : (
                 <button className="fvd-donate-btn" disabled={currAmt<=0}
                   onClick={() => currAmt>0 && setShowModal(true)}>

@@ -1,4 +1,4 @@
-// src/pages/user/UserMente.jsx
+﻿// src/pages/user/UserMente.jsx
 // ─────────────────────────────────────────────────────────────
 //  ZONA MENTE — Psicología Positiva integrada con la plataforma
 //  Wine Aurora palette · framer-motion · todayDone progress ring
@@ -1632,7 +1632,7 @@ function MoodChart({ history }) {
 // ══════════════════════════════════════════════════════════════
 //  INSIGHTS PANEL — SC premium redesign
 // ══════════════════════════════════════════════════════════════
-function InsightsPanel({ insights, loading }) {
+function PulsoPanel({ insights, loading }) {
   const { t } = useLang();
   const typeStyles = {
     mood_trend:    { color:SC.blue   },
@@ -2008,7 +2008,7 @@ function MoodCheckin({ heroClass, onXP, todayDone, storageScope, moodStreak }) {
       <div className="fvm-panel" style={{padding:"18px 20px",marginBottom:0}}>
         <span className="fvm-corners"/>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-          <div className="fvm-ci-title" style={{margin:0}}>CHECK-IN EMOCIONAL DIARIO</div>
+          <div className="fvm-ci-title" style={{margin:0}}>ENTRADA EMOCIONAL</div>
           {moodStreak > 0 && (
             <div className="fvm-streak-badge">
               <span className="fvm-sb-fire"/>
@@ -2017,7 +2017,7 @@ function MoodCheckin({ heroClass, onXP, todayDone, storageScope, moodStreak }) {
             </div>
           )}
         </div>
-        <div className="fvm-ci-q">¿Cómo te sientes hoy? Elige tu estado de ánimo.</div>
+        <div className="fvm-ci-q">¿Como llegas hoy? Elige la opcion que mejor te describe.</div>
 
         <div className="fvm-mood-grid">
           {MOODS.map(m => {
@@ -2048,7 +2048,7 @@ function MoodCheckin({ heroClass, onXP, todayDone, storageScope, moodStreak }) {
 
         <div className="fvm-ci-hint">
           <span className="fvm-i">i</span>
-          <span>Elige solo una opción. No podrás cambiarla después.</span>
+          <span>Elige una sola opcion para abrir tu lectura de hoy.</span>
         </div>
       </div>
 
@@ -2081,10 +2081,10 @@ function MoodCheckin({ heroClass, onXP, todayDone, storageScope, moodStreak }) {
               <div className="fvm-fb-foot">
                 <div>
                   <div className="fvm-fb-xp-v">+{ref.xpRef || selected.xp} XP</div>
-                  <div className="fvm-fb-xp-l">XP TOTAL GANADA HOY</div>
+                  <div className="fvm-fb-xp-l">XP GANADA HOY</div>
                 </div>
                 <div className="fvm-stamp">
-                  <span>COMPLETADO</span>
+                  <span>GUARDADO HOY</span>
                   <span className="fvm-ck"/>
                 </div>
               </div>
@@ -2097,7 +2097,7 @@ function MoodCheckin({ heroClass, onXP, todayDone, storageScope, moodStreak }) {
       <div className="fvm-panel" style={{padding:"16px 18px"}}>
         <span className="fvm-corners"/>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
-          <div className="fvm-chart-title" style={{margin:0}}>HISTORIAL DE ÁNIMO — ÚLTIMOS 7 DÍAS</div>
+          <div className="fvm-chart-title" style={{margin:0}}>RITMO DEL ANIMO · ULTIMOS 7 DIAS</div>
           {history.length > 0 && (() => {
             const filled = chartHistory.filter(h => h.id);
             const avg = filled.length ? Math.round(filled.reduce((s,h)=>s+(h.val||0),0)/filled.length) : 0;
@@ -2106,11 +2106,11 @@ function MoodCheckin({ heroClass, onXP, todayDone, storageScope, moodStreak }) {
             return (
               <div style={{display:"flex",gap:10}}>
                 <div className="fvm-chart-mini-stat">
-                  <span style={{color:"var(--fvm-dim)"}}>DÍAS REG.</span>
+                  <span style={{color:"var(--fvm-dim)"}}>DIAS REG.</span>
                   <span style={{color:"var(--fvm-gold-b)"}}>{filled.length}/7</span>
                 </div>
                 <div className="fvm-chart-mini-stat">
-                  <span style={{color:"var(--fvm-dim)"}}>TONO PROM.</span>
+                  <span style={{color:"var(--fvm-dim)"}}>TONO GENERAL</span>
                   <span style={{color:avgColor,textShadow:`0 0 8px ${avgColor}`}}>{avgLabel}</span>
                 </div>
               </div>
@@ -3281,7 +3281,7 @@ function PermaWheel({ onXP, todayDone, storageScope, initialHistory, permaSessio
               <div style={{ display:"flex", alignItems:"center",
                 justifyContent:"space-between", marginBottom:12, paddingTop:16 }}>
                 <span style={{ ...orb(8,700), color:SC.muted, letterSpacing:"0.08em" }}>
-                  HISTORIAL PERMA — ÚLTIMAS {recent.length} SESIONES
+                  RITMO PERMA · ULTIMAS {recent.length} SESIONES
                 </span>
                 <div style={{ display:"flex", gap:10 }}>
                   {PERMA.map(seg => (
@@ -3563,10 +3563,10 @@ function HeroAffirmations({ heroClass, onXP, todayDone, classTheme, storageScope
                   <div style={{ fontSize:40 }}>✨</div>
                   <div style={{ ...orb(13,900), color:classColor,
                     textShadow:`0 0 14px ${classColor}` }}>
-                    ¡TODAS INTERIORIZADAS!
+                    JORNADA CERRADA
                   </div>
                   <p style={{ ...raj(12,500), color:SC.mutedL, margin:0, padding:"0 24px", lineHeight:1.65 }}>
-                    Has completado las {cards.length} afirmaciones de hoy. Tu mente ya tiene las herramientas.
+                    Ya cerraste las {cards.length} afirmaciones de hoy. Tu mente ya sale mejor orientada.
                   </p>
                   <motion.button
                     whileHover={{ scale:1.04, y:-2 }} whileTap={{ scale:0.96 }}
@@ -3576,7 +3576,7 @@ function HeroAffirmations({ heroClass, onXP, todayDone, classTheme, storageScope
                       ...raj(11,700), cursor:"pointer", position:"relative", overflow:"hidden",
                       boxShadow:`0 4px 18px ${classColor}44` }}>
                     <span className="fvm-btn-shimmer"/>
-                    Repasar cartas
+                    Volver a leer
                   </motion.button>
                 </motion.div>
               )}
@@ -4026,7 +4026,7 @@ function StrengthsTest({ onXP, todayDone, storageScope, classTheme, initialStren
                 </span>
                 {completedDate && (
                   <span style={{ ...raj(10,500), color:SC.muted }}>
-                    Realizado: <span style={{ color:SC.mutedL }}>{completedDate}</span>
+                    Guardado: <span style={{ color:SC.mutedL }}>{completedDate}</span>
                   </span>
                 )}
               </div>
@@ -4037,7 +4037,7 @@ function StrengthsTest({ onXP, todayDone, storageScope, classTheme, initialStren
                   textShadow:`0 0 10px ${wColor}66` }}>
                   {strengthsSessions}
                 </span>
-                <span style={{ ...raj(9,500), color:SC.muted }}>tests</span>
+                <span style={{ ...raj(9,500), color:SC.muted }}>cierres</span>
               </div>
             )}
           </div>
@@ -4436,7 +4436,7 @@ function StrengthsTest({ onXP, todayDone, storageScope, classTheme, initialStren
 // ══════════════════════════════════════════════════════════════
 //  INSIGHTS TAB — SC admin-config premium redesign
 // ══════════════════════════════════════════════════════════════
-function InsightsTab({ summary, insights, community, insightsLoading, communityLoading, classTheme, heroClass }) {
+function PulsoTab({ summary, insights, community, insightsLoading, communityLoading, classTheme, heroClass }) {
   const { t } = useLang();
   const menteXp      = summary?.menteXpTotal  || 0;
   const streak       = summary?.moodStreak    || summary?.moodStreakStored || 0;
@@ -4707,7 +4707,7 @@ function InsightsTab({ summary, insights, community, insightsLoading, communityL
           {/* ── Main grid: insights left · community right ── */}
           <div className="sc-insights-grid">
 
-            {/* LEFT — Insights */}
+            {/* LEFT — Pulso */}
             <div>
               <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:14 }}>
                 <div style={{ width:2, height:14,
@@ -4723,7 +4723,7 @@ function InsightsTab({ summary, insights, community, insightsLoading, communityL
                   </span>
                 </div>
               </div>
-              <InsightsPanel insights={insights} loading={insightsLoading}/>
+              <PulsoPanel insights={insights} loading={insightsLoading}/>
             </div>
 
             {/* RIGHT — Community */}
@@ -4753,7 +4753,7 @@ const TABS = [
   { id:"perma",     label:"PERMA",       labelKey:"me.tab.perma",     color:SC.purple  },
   { id:"aff",       label:"Afirmaciones",labelKey:"me.tab.aff",       color:SC.gold    },
   { id:"strengths", label:"Fortalezas",  labelKey:"me.tab.strengths", color:SC.teal    },
-  { id:"insights",  label:"Insights",    labelKey:"me.tab.insights",  color:SC.blue, badge:"LIVE" },
+  { id:"insights",  label:"Pulso",    labelKey:"me.tab.insights",  color:SC.blue, badge:"LIVE" },
 ];
 
 // Activity key → tab id map for TodayProgress clicks
@@ -4954,6 +4954,93 @@ const MENTE_LANDING_CSS = `
     box-shadow: inset 0 1px 0 rgba(255,255,255,.03), 0 18px 50px rgba(0,0,0,.36);
   }
 
+  .umind-practice-stack {
+    display: grid;
+    gap: 12px;
+  }
+
+  .umind-practice-card {
+    border-radius: 20px;
+    border: 1px solid color-mix(in srgb, var(--mind-accent, #c08aff), transparent 82%);
+    background:
+      linear-gradient(180deg, rgba(18, 15, 30, .92), rgba(10, 8, 18, .96)),
+      rgba(10, 8, 18, .92);
+    overflow: hidden;
+    transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+  }
+
+  .umind-practice-card.is-active {
+    border-color: color-mix(in srgb, var(--practice-color, var(--mind-accent, #c08aff)), transparent 48%);
+    box-shadow: 0 18px 42px color-mix(in srgb, var(--practice-color, var(--mind-accent, #c08aff)), transparent 90%);
+  }
+
+  .umind-practice-card:not(.is-active):hover {
+    transform: translateY(-1px);
+    border-color: color-mix(in srgb, var(--practice-color, var(--mind-accent, #c08aff)), transparent 62%);
+  }
+
+  .umind-practice-head {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 14px;
+    align-items: center;
+    width: 100%;
+    padding: 14px 16px;
+    background:
+      radial-gradient(circle at top right, color-mix(in srgb, var(--practice-color, var(--mind-accent, #c08aff)), transparent 92%), transparent 40%),
+      linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
+    border: 0;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .umind-practice-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--practice-color, var(--mind-accent, #c08aff)), transparent 68%);
+    background: color-mix(in srgb, var(--practice-color, var(--mind-accent, #c08aff)), transparent 90%);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+
+  .umind-practice-icon img {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    image-rendering: pixelated;
+  }
+
+  .umind-practice-copy {
+    min-width: 0;
+    display: grid;
+    gap: 6px;
+  }
+
+  .umind-practice-kicker {
+    font: 800 10px/1 "JetBrains Mono", monospace;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--practice-color, var(--mind-accent, #c08aff));
+  }
+
+  .umind-practice-title {
+    font: 800 20px/1.05 "Manrope", sans-serif;
+    color: #fff;
+  }
+
+  .umind-practice-lead {
+    font: 500 13px/1.55 "Manrope", sans-serif;
+    color: #cfc5de;
+    max-width: 62ch;
+  }
+
+  .umind-practice-body {
+    padding: 0 16px 16px;
+  }
+
   .umind-pill {
     display: inline-flex;
     align-items: center;
@@ -5030,6 +5117,12 @@ const MENTE_LANDING_CSS = `
     .umind-route {
       grid-template-columns: 1fr 1fr;
     }
+
+    .umind-practice-head {
+      grid-template-columns: 1fr;
+      justify-items: start;
+    }
+
   }
 
   @media (max-width: 560px) {
@@ -5306,7 +5399,7 @@ function BreathingRPG({ onXP, todayDone, profile, streak, tab, setTab }) {
                 <div className="fvr-craters"/>
                 {!running && (
                   <div className="fvr-phase-idle">
-                    {cycles>=3?"¡COMPLETADO!":"Elige una técnica\ny pulsa iniciar"}
+                    {cycles>=3?"¡GUARDADO HOY!":"Elige una técnica\ny pulsa iniciar"}
                   </div>
                 )}
                 {running && <>
@@ -5327,7 +5420,7 @@ function BreathingRPG({ onXP, todayDone, profile, streak, tab, setTab }) {
               disabled={cycles>=3&&!running}>
               {running
                 ? <><span className="fvr-pause-bar"/><span className="fvr-pause-bar"/>&nbsp;PAUSAR</>
-                : <><span className="fvr-play-tri"/>&nbsp;{cycles>=3?"COMPLETADO":"INICIAR"}</>}
+                : <><span className="fvr-play-tri"/>&nbsp;{cycles>=3?"GUARDADO HOY":"INICIAR"}</>}
             </button>
             {running && (
               <button className="fvr-pause-btn" onClick={stop} title="Reiniciar">
@@ -5360,7 +5453,7 @@ function BreathingRPG({ onXP, todayDone, profile, streak, tab, setTab }) {
             ))}
           </div>
           <div className="fvr-cp-label">
-            <div className="fvr-cp-title">CICLOS COMPLETADOS</div>
+            <div className="fvr-cp-title">CICLOS GUARDADOS</div>
             <div className="fvr-cp-count">
               {Math.min(cycles,3)}<span className="fvr-cp-total"> / 3</span>
             </div>
@@ -6378,7 +6471,7 @@ function PermaRPG({ onXP, todayDone, profile, streak, tab, setTab, permaHistory,
             <div>
               <div style={{ fontFamily:"'Manrope',sans-serif", fontSize:"11px",
                 color:"var(--fvm-gold-b)", letterSpacing:".5px", marginBottom:10 }}>
-                AJUSTA TU EVALUACIÓN
+                AJUSTA TU LECTURA
               </div>
               <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
                 {ORDER.map(k => (
@@ -6464,7 +6557,7 @@ function PermaRPG({ onXP, todayDone, profile, streak, tab, setTab, permaHistory,
                 <div style={{ paddingTop:10, borderTop:"1px dashed rgba(244,204,120,.15)" }}>
                   <div style={{ fontFamily:"'Manrope',sans-serif", fontSize:"11px",
                     color:P_COLORS[openPillar], letterSpacing:"1.2px", marginBottom:6 }}>
-                    FUNDAMENTO CIENTÍFICO
+                    POR QUE IMPORTA
                   </div>
                   <div style={{ fontFamily:"'Manrope',sans-serif", fontSize:"14px",
                     color:"var(--fvm-dim)", lineHeight:1.3 }}>
@@ -6491,7 +6584,7 @@ function PermaRPG({ onXP, todayDone, profile, streak, tab, setTab, permaHistory,
               display:"flex", alignItems:"center", justifyContent:"center", gap:12,
               transition:"all .1s",
             }}>
-              {saved ? "✓ GUARDADO HOY" : saving ? "GUARDANDO..." : "⊕ GUARDAR EVALUACIÓN"}
+              {saved ? "✓ LECTURA GUARDADA" : saving ? "GUARDANDO LECTURA..." : "⊕ GUARDAR LECTURA"}
             </button>
             <div style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 14px",
               background:"var(--fvm-inner)", border:"2px solid var(--fvm-border)" }}>
@@ -6523,7 +6616,7 @@ function PermaRPG({ onXP, todayDone, profile, streak, tab, setTab, permaHistory,
         <div className="fvm-panel" style={{ padding:"14px 16px" }}>
           <span className="fvm-corners"/>
           <div className="fvm-panel-head" style={{ color:"var(--fvm-mente)", borderBottomColor:"var(--fvm-mente-a)" }}>
-            <span className="fvm-deco">◆</span>SOBRE ESTE PILAR<span className="fvm-deco">◆</span>
+            <span className="fvm-deco">◆</span>SOBRE ESTE PUNTO<span className="fvm-deco">◆</span>
           </div>
 
           {/* Pillar icon */}
@@ -6559,7 +6652,7 @@ function PermaRPG({ onXP, todayDone, profile, streak, tab, setTab, permaHistory,
             borderTop:"1px dashed rgba(244,204,120,.15)" }}>
             <div style={{ fontFamily:"'Manrope',sans-serif", fontSize:"11px",
               color:"var(--fvm-gold-s)", letterSpacing:"1px", marginBottom:6 }}>
-              FUNDAMENTO CIENTÍFICO
+              POR QUE IMPORTA
             </div>
             <div style={{ fontFamily:"'Manrope',sans-serif", fontSize:"13px",
               color:"var(--fvm-dim)", lineHeight:1.3 }}>
@@ -6586,7 +6679,7 @@ function PermaRPG({ onXP, todayDone, profile, streak, tab, setTab, permaHistory,
         <div className="fvm-panel" style={{ padding:"14px 16px" }}>
           <span className="fvm-corners"/>
           <div className="fvm-panel-head" style={{ color:"var(--fvm-mente)", borderBottomColor:"var(--fvm-mente-a)" }}>
-            <span className="fvm-deco">◆</span>HISTORIAL (7 DÍAS)<span className="fvm-deco">◆</span>
+            <span className="fvm-deco">◆</span>RITMO DE LA SEMANA<span className="fvm-deco">◆</span>
           </div>
           <div style={{ height:90, display:"flex", alignItems:"flex-end", justifyContent:"space-between",
             gap:4, padding:"18px 2px 0", borderBottom:"1px solid rgba(244,204,120,.15)",
@@ -6635,12 +6728,12 @@ function PermaRPG({ onXP, todayDone, profile, streak, tab, setTab, permaHistory,
         <div className="fvm-panel" style={{ padding:"14px 16px" }}>
           <span className="fvm-corners"/>
           <div className="fvm-panel-head" style={{ color:"var(--fvm-mente)", borderBottomColor:"var(--fvm-mente-a)" }}>
-            <span className="fvm-deco">◆</span>MICRO-MISIÓN<span className="fvm-deco">◆</span>
+            <span className="fvm-deco">◆</span>PASO SUGERIDO<span className="fvm-deco">◆</span>
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:8,
             fontFamily:"'Manrope',sans-serif", fontSize:"11px",
             color:"var(--fvm-gold-b)", letterSpacing:"1.2px" }}>
-            <span>★</span>PILAR MÁS BAJO: {lowK}
+            <span>★</span>PUNTO MAS BAJO: {lowK}
           </div>
           <div style={{ fontFamily:"'Manrope',sans-serif", fontSize:"14px",
             color:"var(--fvm-parch)", lineHeight:1.3, marginBottom:10 }}>
@@ -6682,9 +6775,9 @@ function UserMenteLegacy({ profile }) {
   // Remote data
   const [todayDone,        setTodayDone]        = useState(null);
   const [summary,          setSummary]          = useState(null);
-  const [insights,         setInsights]         = useState([]);
+  const [insights,         setPulso]         = useState([]);
   const [community,        setCommunity]        = useState(null);
-  const [insightsLoading,  setInsightsLoading]  = useState(true);
+  const [insightsLoading,  setPulsoLoading]  = useState(true);
   const [communityLoading, setCommunityLoading] = useState(true);
 
   const heroClass = profile?.heroClass || profile?.clase || "DEFAULT";
@@ -6728,10 +6821,10 @@ function UserMenteLegacy({ profile }) {
           setSummary(sumRes.value);
           setTodayDone(sumRes.value.todayDone || null);
         }
-        if (insRes.status === "fulfilled") setInsights(insRes.value.insights || []);
+        if (insRes.status === "fulfilled") setPulso(insRes.value.insights || []);
         if (comRes.status === "fulfilled") setCommunity(comRes.value);
       } catch {}
-      if (!cancelled) { setInsightsLoading(false); setCommunityLoading(false); }
+      if (!cancelled) { setPulsoLoading(false); setCommunityLoading(false); }
     })();
     return () => { cancelled = true; };
   }, []);
@@ -7079,7 +7172,7 @@ function UserMenteLegacy({ profile }) {
                     INSIGHTS DE LA COMUNIDAD
                     <span className="fvm-tab-badge" style={{marginLeft:4}}>LIVE</span>
                   </div>
-                  <InsightsTab
+                  <PulsoTab
                     summary={summary}
                     insights={insights}
                     community={community}
@@ -7200,10 +7293,10 @@ function UserMenteLegacy({ profile }) {
 }
 
 const MENTE_CLASS_COPY = {
-  GUERRERO: { title: "Despeja tensión,", span: "prepara el golpe." },
-  ARQUERO:  { title: "Ajusta ritmo y pulso,", span: "apunta sin ruido." },
-  MAGO:     { title: "Ordena el campo,", span: "que el mapa rinda." },
-  DEFAULT:  { title: "Mente clara,", span: "mapa despejado." },
+  GUERRERO: { title: "Despeja tensión,", span: "entra con control." },
+  ARQUERO:  { title: "Ordena tu pulso,", span: "entra mas fino." },
+  MAGO:     { title: "Aclara la mente,", span: "y deja que el dia rinda." },
+  DEFAULT:  { title: "Mente en orden,", span: "dia mas limpio." },
 };
 
 export default function UserMente({ profile }) {
@@ -7214,9 +7307,9 @@ export default function UserMente({ profile }) {
   const xpIdRef        = useRef(0);
   const [todayDone, setTodayDone] = useState(null);
   const [summary, setSummary] = useState(null);
-  const [insights, setInsights] = useState([]);
+  const [insights, setPulso] = useState([]);
   const [community, setCommunity] = useState(null);
-  const [insightsLoading, setInsightsLoading] = useState(true);
+  const [insightsLoading, setPulsoLoading] = useState(true);
   const [communityLoading, setCommunityLoading] = useState(true);
   const [connectionSaving, setConnectionSaving] = useState(false);
 
@@ -7323,34 +7416,34 @@ export default function UserMente({ profile }) {
   useEffect(() => {
     if (tab !== "insights") return;
 
-    const cachedInsights = readMenteClientCache(storageScope, "insights", MENTE_CLIENT_INSIGHTS_TTL);
+    const cachedPulso = readMenteClientCache(storageScope, "insights", MENTE_CLIENT_INSIGHTS_TTL);
     const cachedCommunity = readMenteClientCache(storageScope, "community", MENTE_CLIENT_INSIGHTS_TTL);
 
-    if (cachedInsights) setInsights(cachedInsights);
+    if (cachedPulso) setPulso(cachedPulso);
     if (cachedCommunity) setCommunity(cachedCommunity);
 
-    if (cachedInsights && cachedCommunity) {
-      setInsightsLoading(false);
+    if (cachedPulso && cachedCommunity) {
+      setPulsoLoading(false);
       setCommunityLoading(false);
       return;
     }
 
     let cancelled = false;
-    setInsightsLoading(true);
+    setPulsoLoading(true);
     setCommunityLoading(true);
 
     (async () => {
       try {
         const token = await getToken();
         const [insRes, comRes] = await Promise.allSettled([
-          cachedInsights ? Promise.resolve({ insights: cachedInsights }) : getMenteInsights(token),
+          cachedPulso ? Promise.resolve({ insights: cachedPulso }) : getMenteInsights(token),
           cachedCommunity ? Promise.resolve(cachedCommunity) : getCommunityMente(token),
         ]);
         if (cancelled) return;
         if (insRes.status === "fulfilled") {
-          const nextInsights = insRes.value.insights || [];
-          writeMenteClientCache(storageScope, "insights", nextInsights);
-          setInsights(nextInsights);
+          const nextPulso = insRes.value.insights || [];
+          writeMenteClientCache(storageScope, "insights", nextPulso);
+          setPulso(nextPulso);
         }
         if (comRes.status === "fulfilled") {
           writeMenteClientCache(storageScope, "community", comRes.value);
@@ -7358,7 +7451,7 @@ export default function UserMente({ profile }) {
         }
       } catch {}
       if (!cancelled) {
-        setInsightsLoading(false);
+        setPulsoLoading(false);
         setCommunityLoading(false);
       }
     })();
@@ -7408,40 +7501,40 @@ export default function UserMente({ profile }) {
 
   const TAB_COPY = {
     mood: {
-      title: "Check-in emocional",
-      lead: "Lee como llegas hoy, deja una nota breve y abre la zona con intencion clara.",
-      kicker: "Entrada del santuario",
+      title: "Entrada emocional",
+      lead: "Mira como llegas hoy, deja una nota corta y arranca con una lectura clara.",
+      kicker: "Entrada de hoy",
       reward: "+55 XP entre animo y gratitud",
     },
     breath: {
-      title: "Respiración guiada",
-      lead: "Baja ruido mental, ordena pulso y recupera foco sin salir del mapa.",
-      kicker: "Control del ritmo",
+      title: "Respiracion guiada",
+      lead: "Baja el ruido, ordena el pulso y recupera foco sin salir de tu ruta.",
+      kicker: "Pulso y foco",
       reward: "+20 XP por sesión guiada",
     },
     perma: {
-      title: "Rueda PERMA",
-      lead: "Mide bienestar real, detecta el pilar más bajo y deja una micro misión útil para hoy.",
-      kicker: "Lectura profunda",
+      title: "Balance PERMA",
+      lead: "Revisa tu bienestar, detecta lo mas flojo y sal con una accion util para hoy.",
+      kicker: "Lectura del dia",
       reward: "+40 XP por balance diario",
     },
     aff: {
-      title: "Afirmaciones del héroe",
-      lead: "Activa lenguaje interno mas limpio y deja que la mente respalde el cuerpo que estas construyendo.",
-      kicker: "Voz interna",
+      title: "Afirmaciones del heroe",
+      lead: "Refuerza tu voz interna para que el cuerpo y la mente empujen en la misma direccion.",
+      kicker: "Habla interna",
       reward: "+15 XP por reforzar enfoque",
     },
     strengths: {
-      title: "Fortalezas activas",
-      lead: "Descubre que rasgo sostiene tu disciplina y usalo para que la constancia se sienta más natural.",
-      kicker: "Afinidad del personaje",
+      title: "Fortalezas reales",
+      lead: "Descubre que rasgo te sostiene mejor y usalo para que la constancia se sienta mas natural.",
+      kicker: "Tu mejor apoyo",
       reward: "+60 XP por prueba completa",
     },
     insights: {
-      title: "Pulso de la comunidad",
-      lead: "Compara el estado del gremio, cruza tendencias y saca ideas para ajustar tu propia ruta mental.",
-      kicker: "Bitácora compartida",
-      reward: "Lectura viva del gremio",
+      title: "Pulso del gremio",
+      lead: "Mira como va el gremio, compara tendencias y saca ideas para cuidar mejor tu propio ritmo.",
+      kicker: "Lectura compartida",
+      reward: "Vista del gremio",
     },
   };
 
@@ -7451,12 +7544,75 @@ export default function UserMente({ profile }) {
   const sealAsset = "/missions/seals/seal-mind.png";
   const rewardAsset = "/logros/medals/medal-mind-keeper.png";
   const heroStageImage = "/missions/spotlight/spotlight-mind-banner.png";
+  const PRACTICE_META = {
+    mood: {
+      kicker: "Entrada corta",
+      title: "Entrada emocional",
+      lead: "Mira como llegas hoy y deja una sola lectura clara para arrancar el santuario.",
+      reward: "+25 XP",
+      state: todayDone?.mood ? "cerrado hoy" : "entrada libre",
+      done: Boolean(todayDone?.mood),
+      color: classTheme.accent,
+      icon: sectionAsset,
+    },
+    gratitude: {
+      kicker: "Anclaje breve",
+      title: "Gratitud breve",
+      lead: "Deja una nota corta y convierte el cierre del dia en algo mas ligero y util.",
+      reward: "+30 XP",
+      state: todayDone?.gratitude ? "guardado hoy" : "sin registro",
+      done: Boolean(todayDone?.gratitude),
+      color: "#4A9D8F",
+      icon: rewardAsset,
+    },
+    breath: {
+      kicker: "Pulso y foco",
+      title: "Respiracion guiada",
+      lead: "Baja ruido, ordena el pulso y entra mejor a cualquier entrenamiento del mapa.",
+      reward: "+20 XP",
+      state: todayDone?.breathing ? "cerrado hoy" : "lista para abrir",
+      done: Boolean(todayDone?.breathing),
+      color: classTheme.secondary,
+      icon: sectionAsset,
+    },
+    perma: {
+      kicker: "Lectura del dia",
+      title: "Balance PERMA",
+      lead: "Mira tu bienestar en una sola rueda y detecta rapido que punto pide mas cuidado.",
+      reward: "+40 XP",
+      state: todayDone?.perma ? "lectura guardada" : "sin lectura",
+      done: Boolean(todayDone?.perma),
+      color: "#8b7bb8",
+      icon: sealAsset,
+    },
+    aff: {
+      kicker: "Habla interna",
+      title: "Afirmaciones utiles",
+      lead: "Un bloque corto para alinear mente y cuerpo antes o despues de entrenar.",
+      reward: "+15 XP",
+      state: todayDone?.affirmation ? "cerrado hoy" : "pendiente",
+      done: Boolean(todayDone?.affirmation),
+      color: "#c9b037",
+      icon: rewardAsset,
+    },
+    strengths: {
+      kicker: "Apoyo real",
+      title: "Fortalezas reales",
+      lead: "Encuentra la fortaleza que hoy te sostiene mejor y conviertela en ventaja real.",
+      reward: "+60 XP",
+      state: todayDone?.strengths ? "cerrado hoy" : "sin test",
+      done: Boolean(todayDone?.strengths),
+      color: "#6BC87A",
+      icon: "/ui/header/section-personaje.png",
+    },
+  };
+  const suggestedPracticeMeta = PRACTICE_META[recommendedTab] || PRACTICE_META.mood;
 
   const heroPills = [
     { label:`Clase ${classTheme.label}`, color: classTheme.accent },
     { label:`Racha mental: ${streak || 0} días`, color: classTheme.secondary },
     { label: mindStageState, color: doneCount === 0 ? "#b6abc8" : "#7bdc3b" },
-    { label: connectionDone ? "Vinculo del dia sellado" : "Vinculo social pendiente", color: connectionDone ? "#7bdc3b" : "#f3c969" },
+    { label: connectionDone ? "Conexion del dia cerrada" : "Conexion del dia pendiente", color: connectionDone ? "#7bdc3b" : "#f3c969" },
   ];
 
   const heroKpis = [
@@ -7474,14 +7630,14 @@ export default function UserMente({ profile }) {
       action: () => setTab(recommendedTab),
     },
     {
-      title: "Estado del dia",
-      text: doneCount === 0 ? "Empieza con una lectura corta del animo." : `${doneCount} practicas ya despejadas hoy.`,
+      title: "Estado de hoy",
+      text: doneCount === 0 ? "Empieza con una lectura breve de tu animo." : `${doneCount} practicas ya despejadas hoy.`,
       asset: sealAsset,
       action: () => setTab("mood"),
     },
     {
       title: "Botin mental",
-      text: progressPct >= 100 ? "La bitácora quedó sellada y el gremio ya la contó." : "Suma foco, calma y lectura útil antes del cierre.",
+      text: progressPct >= 100 ? "La jornada ya quedo registrada y el gremio ya la conto." : "Suma foco, calma y lectura útil antes del cierre.",
       asset: rewardAsset,
       action: () => setTab(doneCount < TODAY_ACTIVITIES.length ? recommendedTab : "insights"),
     },
@@ -7513,19 +7669,19 @@ export default function UserMente({ profile }) {
                 </span>
                 <span className="umind-chip" style={{ "--chip-color": "#f3c969" }}>
                   <img src={sealAsset} alt="" style={{ width:18, height:18, objectFit:"contain" }} />
-                  Santuario activo
+                  Santuario abierto
                 </span>
               </div>
 
               <div style={{ maxWidth:700 }}>
                 <div style={{ font:"800 11px/1 'JetBrains Mono',monospace", letterSpacing:".14em", textTransform:"uppercase", color:classTheme.accent, marginBottom:12, textShadow:`0 0 12px ${classTheme.accent}99` }}>
-                  Campo mental del héroe
+                  Santuario mental
                 </div>
                 <h1 style={{ font:"900 clamp(36px,5.2vw,80px)/.92 'Manrope',sans-serif", color:"#fff9ef", margin:0, maxWidth:"14ch" }}>
                   {menteCopy.title} <span style={{ color:classTheme.accent, textShadow:`0 0 34px ${classTheme.accent}77` }}>{menteCopy.span}</span>
                 </h1>
                 <p style={{ marginTop:16, font:"500 clamp(14px,1.2vw,18px)/1.7 'Manrope',sans-serif", color:"#cdbfe0", maxWidth:720 }}>
-                  Esta zona junta ánimo, respiración, afirmaciones y lectura de fortalezas en una portada más limpia. Entras, registras como vienes, ajustas foco y sales con progreso que sí se siente útil.
+                  Aqui ordenas animo, respiracion, enfoque y fortalezas sin perder tiempo. Entras, registras como vienes y sales con una mejora corta que si se siente util.
                 </p>
               </div>
 
@@ -7552,7 +7708,7 @@ export default function UserMente({ profile }) {
                   className="umind-soft-btn"
                   onClick={() => setTab("insights")}
                 >
-                  Ver pulso del gremio
+                  Ver ritmo del gremio
                 </button>
                 <button
                   type="button"
@@ -7561,7 +7717,7 @@ export default function UserMente({ profile }) {
                   onClick={handleConnection}
                   disabled={connectionSaving || connectionDone}
                 >
-                  {connectionDone ? "Vinculo sellado" : connectionSaving ? "Sellando vinculo..." : "Registrar conexion del dia"}
+                  {connectionDone ? "Conexion guardada" : connectionSaving ? "Guardando conexion..." : "Guardar conexion de hoy"}
                 </button>
               </div>
 
@@ -7585,17 +7741,17 @@ export default function UserMente({ profile }) {
                 <div style={{ display:"flex", justifyContent:"space-between", gap:12, alignItems:"flex-start" }}>
                   <div style={{ padding:"12px 14px", borderRadius:18, background:"rgba(9, 8, 18, .55)", border:`1px solid ${classTheme.accent}33`, backdropFilter:"blur(10px)", maxWidth:260 }}>
                     <div style={{ fontFamily:"'JetBrains Mono', monospace", fontSize:11, textTransform:"uppercase", letterSpacing:".12em", color:classTheme.accent, marginBottom:8, textShadow:`0 0 12px ${classTheme.accent}cc, 0 0 24px ${classTheme.accent}44` }}>
-                      Estado del dia
+                      Estado de hoy
                     </div>
                     <div style={{ fontFamily:"'Manrope', sans-serif", fontSize:30, fontWeight:800, lineHeight:1.02, color:"#fff", marginBottom:8, textShadow:`0 0 20px ${classTheme.accent}cc, 0 0 40px ${classTheme.accent}55, 0 0 66px ${classTheme.accent}22` }}>
                       {mindStageState}
                     </div>
                     <p style={{ margin:0, color:"#d4cada", fontSize:14, lineHeight:1.55 }}>
                       {doneCount === 0
-                        ? "La entrada sigue libre. Un check-in corto basta para encender la lectura del dia."
+                        ? "La entrada sigue libre. Un check-in corto basta para encender el santuario."
                         : doneCount < TODAY_ACTIVITIES.length
-                          ? "Tu bitácora ya se movió. Ahora conviene cerrar foco con una práctica guiada."
-                          : "La jornada quedó cubierta. Te conviene leer insights y proteger ritmo para mañana."}
+                          ? "Ya dejaste una marca. Ahora conviene cerrar foco con una practica guiada."
+                          : "La jornada ya quedo cubierta. Ahora conviene revisar el pulso del gremio y cuidar el ritmo de manana."}
                     </p>
                   </div>
 
@@ -7612,7 +7768,7 @@ export default function UserMente({ profile }) {
                 <div style={{ display:"grid", gridTemplateColumns:"1fr auto", gap:14, alignItems:"end" }}>
                   <div style={{ padding:"14px 16px", borderRadius:20, background:"rgba(9, 8, 18, .58)", border:"1px solid rgba(255,255,255,.08)", backdropFilter:"blur(10px)" }}>
                     <div style={{ fontFamily:"'JetBrains Mono', monospace", fontSize:11, textTransform:"uppercase", letterSpacing:".12em", color:"#8e84a2", marginBottom:8, textShadow:"0 0 10px rgba(142,132,162,.8), 0 0 20px rgba(142,132,162,.3)" }}>
-                      Campana actual
+                      Ruta sugerida
                     </div>
                     <div style={{ fontFamily:"'Manrope', sans-serif", fontSize:24, fontWeight:800, lineHeight:1.05, color:"#fff", marginBottom:6, textShadow:`0 0 16px ${classTheme.accent}cc, 0 0 32px ${classTheme.accent}44` }}>
                       {recommendedMeta.title}
@@ -7625,10 +7781,10 @@ export default function UserMente({ profile }) {
                   <div style={{ width:120, padding:"12px 12px 10px", borderRadius:20, background:"rgba(9, 8, 18, .62)", border:`1px solid ${classTheme.accent}33`, textAlign:"center", backdropFilter:"blur(10px)" }}>
                     <img src={rewardAsset} alt="" style={{ width:64, height:64, objectFit:"contain", margin:"0 auto 8px", display:"block" }} />
                     <div style={{ fontFamily:"'JetBrains Mono', monospace", fontSize:10, textTransform:"uppercase", letterSpacing:".12em", color:"#8e84a2", marginBottom:4, textShadow:"0 0 10px rgba(142,132,162,.7), 0 0 20px rgba(142,132,162,.28)" }}>
-                      sello mental
+                      sello listo
                     </div>
                     <div style={{ fontSize:13, lineHeight:1.45, color:"#fff" }}>
-                      Keeper listo para sumar calma y foco.
+                      Listo para sumar calma y foco.
                     </div>
                   </div>
                 </div>
@@ -7639,13 +7795,13 @@ export default function UserMente({ profile }) {
           <section className="umind-card umind-reco">
             <div style={{ minWidth:0, maxWidth:860 }}>
               <div style={{ fontFamily:"'JetBrains Mono', monospace", fontSize:12, textTransform:"uppercase", letterSpacing:".14em", color:classTheme.accent, marginBottom:8, textShadow:`0 0 12px ${classTheme.accent}cc, 0 0 24px ${classTheme.accent}44` }}>
-                Hoy el mapa recomienda
+                Hoy te conviene
               </div>
               <h2 style={{ margin:0, fontFamily:"'Manrope', sans-serif", fontWeight:800, fontSize:"clamp(1.4rem, 2.6vw, 2.1rem)", lineHeight:1.05, textShadow:`0 0 22px ${classTheme.accent}55, 0 0 44px ${classTheme.accent}22` }}>
-                Una ruta corta para que la mente acompane el entrenamiento.
+                Una ruta corta para que la mente acompane mejor tu entrenamiento.
               </h2>
               <p style={{ margin:"10px 0 0", color:"#cfc5de", fontSize:15, lineHeight:1.6, maxWidth:700 }}>
-                Primero abres lectura emocional, luego bajas ruido con respiración o foco de clase, y terminas con un sello que deja memoria real en tu jornada.
+                Primero haces una lectura simple, luego ordenas el pulso y cierras con una marca que deja memoria real en tu jornada.
               </p>
             </div>
 
@@ -7688,7 +7844,7 @@ export default function UserMente({ profile }) {
                     perma: "PERMA",
                     aff: "Afirmaciones",
                     strengths: "Fortalezas",
-                    insights: "Insights",
+                    insights: "Pulso",
                   }[tb.id] || tb.id;
 
                   return (
@@ -7799,7 +7955,7 @@ export default function UserMente({ profile }) {
                     )}
 
                     {tab === "insights" && (
-                      <InsightsTab
+                      <PulsoTab
                         summary={summary}
                         insights={insights}
                         community={community}
@@ -7826,13 +7982,17 @@ export default function UserMente({ profile }) {
                 <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:12, marginBottom:14 }}>
                   <div>
                     <div style={{ fontFamily:"'JetBrains Mono', monospace", fontSize:11, textTransform:"uppercase", letterSpacing:".13em", color:classTheme.accent, marginBottom:8, textShadow:`0 0 12px ${classTheme.accent}cc, 0 0 24px ${classTheme.accent}44` }}>
-                      Botin del santuario
+                      Cierre de hoy
                     </div>
                     <div style={{ fontFamily:"'Manrope', sans-serif", fontSize:26, fontWeight:800, lineHeight:1.05, color:"#fff", marginBottom:8, textShadow:`0 0 20px ${classTheme.accent}cc, 0 0 40px ${classTheme.accent}55, 0 0 66px ${classTheme.accent}22` }}>
-                      Recompensa mental viva
+                      {doneCount >= TODAY_ACTIVITIES.length ? "Jornada cerrada" : doneCount > 0 ? "Ya llevas una marca" : "Entrada por abrir"}
                     </div>
                     <p style={{ margin:0, color:"#cfc5de", fontSize:14, lineHeight:1.6 }}>
-                      Tu bitácora de hoy deja foco acumulado, lectura útil y una memoria clara para volver mañana sin arrancar desde cero.
+                      {doneCount >= TODAY_ACTIVITIES.length
+                        ? "Tu lectura ya quedó guardada. Mañana retomas con más claridad y sin arrancar desde cero."
+                        : doneCount > 0
+                          ? "Ya dejaste registro. Un cierre corto más y la jornada queda mucho mejor amarrada."
+                          : "Todavía no dejas huella aquí. Una práctica breve basta para abrir el día con mejor foco."}
                     </p>
                   </div>
                   <img src={rewardAsset} alt="" style={{ width:72, height:72, objectFit:"contain", flexShrink:0 }} />
@@ -7841,56 +8001,61 @@ export default function UserMente({ profile }) {
                 <div style={{ display:"grid", gap:10 }}>
                   <div className="umind-kpi" style={{ padding:"12px 14px" }}>
                     <div style={{ fontFamily:"'JetBrains Mono', monospace", fontSize:10, textTransform:"uppercase", letterSpacing:".12em", color:"#8e84a2", marginBottom:8, textShadow:"0 0 10px rgba(142,132,162,.7), 0 0 20px rgba(142,132,162,.28)" }}>
-                      Reserva mental
+                      Señales rápidas
                     </div>
-                    <div style={{ display:"flex", justifyContent:"space-between", gap:12, color:"#fff", fontSize:14 }}>
-                      <span>XP mental</span>
-                      <strong style={{ color:"#f3c969", textShadow:"0 0 14px rgba(243,201,105,.65), 0 0 28px rgba(243,201,105,.3)" }}>+{xpToday || 20}</strong>
+                    <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
+                      <span className="umind-pill" style={{ borderColor:`${classTheme.accent}33`, color:classTheme.accent }}>
+                        {doneCount}/{TODAY_ACTIVITIES.length} cerradas
+                      </span>
+                      <span className="umind-pill" style={{ borderColor:"rgba(243,201,105,.32)", color:"#f3c969" }}>
+                        +{xpToday || 20} XP mental
+                      </span>
+                      <span className="umind-pill" style={{ borderColor:"rgba(255,255,255,.14)", color:"#d7cfe5" }}>
+                        {reflectionCount} registros
+                      </span>
                     </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="umind-card" style={{ padding:18 }}>
+                <div style={{ fontFamily:"'JetBrains Mono', monospace", fontSize:11, textTransform:"uppercase", letterSpacing:".13em", color:classTheme.accent, marginBottom:10, textShadow:`0 0 12px ${classTheme.accent}cc, 0 0 24px ${classTheme.accent}44` }}>
+                  Consejo del día
+                </div>
+                <div style={{ display:"grid", gap:10 }}>
+                  <div className="umind-kpi" style={{ padding:"12px 14px" }}>
+                    <div style={{ fontFamily:"'JetBrains Mono', monospace", fontSize:10, textTransform:"uppercase", letterSpacing:".12em", color:"#8e84a2", marginBottom:8, textShadow:"0 0 10px rgba(142,132,162,.7), 0 0 20px rgba(142,132,162,.28)" }}>
+                      Práctica sugerida
+                    </div>
+                    <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+                      <img src={suggestedPracticeMeta.icon} alt="" style={{ width:34, height:34, objectFit:"contain", flexShrink:0 }} />
+                      <strong style={{ color:"#fff", fontSize:15, lineHeight:1.35 }}>{recommendedMeta.title}</strong>
+                    </div>
+                    <p style={{ margin:0, fontSize:13, lineHeight:1.58, color:"#d7cfe5" }}>
+                      {heroClass === "MAGO"
+                        ? "Si ya moviste el cuerpo hoy, lo mejor es cerrar con una lectura lenta para sostener claridad."
+                        : heroClass === "ARQUERO"
+                          ? "Tu mejor entrada suele ser breve y limpia: foco primero, intensidad después."
+                          : heroClass === "GUERRERO"
+                            ? "Antes de meter más fuerza, te rinde más ordenar el pulso con una práctica corta."
+                            : "Empieza por una entrada simple y deja que el resto del santuario se abra desde ahí."}
+                    </p>
                   </div>
                   <div className="umind-kpi" style={{ padding:"12px 14px" }}>
                     <div style={{ fontFamily:"'JetBrains Mono', monospace", fontSize:10, textTransform:"uppercase", letterSpacing:".12em", color:"#8e84a2", marginBottom:8, textShadow:"0 0 10px rgba(142,132,162,.7), 0 0 20px rgba(142,132,162,.28)" }}>
-                      Entrada guardada
+                      Pulso compartido
                     </div>
-                    <div style={{ display:"flex", justifyContent:"space-between", gap:12, color:"#fff", fontSize:14 }}>
-                      <span>Notas y reflejos</span>
-                      <strong style={{ color:classTheme.accent, textShadow:`0 0 14px ${classTheme.accent}cc, 0 0 28px ${classTheme.accent}44` }}>{reflectionCount}</strong>
+                    <div style={{ display:"flex", justifyContent:"space-between", gap:12, alignItems:"center" }}>
+                      <span style={{ fontSize:14, color:"#d7cfe5" }}>Activos hoy</span>
+                      <strong style={{ fontFamily:"'Manrope', sans-serif", fontSize:24, fontWeight:800, lineHeight:1, color:"#fff", textShadow:`0 0 20px ${classTheme.accent}cc, 0 0 40px ${classTheme.accent}55, 0 0 66px ${classTheme.accent}22` }}>
+                        {communityActive}
+                      </strong>
                     </div>
                   </div>
                 </div>
               </div>
 
               <CommunityPanel community={community} loading={communityLoading} />
-
-              <div className="umind-card" style={{ padding:18 }}>
-                <div style={{ fontFamily:"'JetBrains Mono', monospace", fontSize:11, textTransform:"uppercase", letterSpacing:".13em", color:classTheme.accent, marginBottom:10, textShadow:`0 0 12px ${classTheme.accent}cc, 0 0 24px ${classTheme.accent}44` }}>
-                  Ritmo del gremio
-                </div>
-                <div style={{ display:"grid", gap:10 }}>
-                  <div className="umind-kpi" style={{ padding:"12px 14px" }}>
-                    <div style={{ fontFamily:"'JetBrains Mono', monospace", fontSize:10, textTransform:"uppercase", letterSpacing:".12em", color:"#8e84a2", marginBottom:8, textShadow:"0 0 10px rgba(142,132,162,.7), 0 0 20px rgba(142,132,162,.28)" }}>
-                      Heroes activos hoy
-                    </div>
-                    <div style={{ fontFamily:"'Manrope', sans-serif", fontSize:28, fontWeight:800, lineHeight:1, color:"#fff", textShadow:`0 0 20px ${classTheme.accent}cc, 0 0 40px ${classTheme.accent}55, 0 0 66px ${classTheme.accent}22` }}>
-                      {communityActive}
-                    </div>
-                  </div>
-                  <div className="umind-kpi" style={{ padding:"12px 14px" }}>
-                    <div style={{ fontFamily:"'JetBrains Mono', monospace", fontSize:10, textTransform:"uppercase", letterSpacing:".12em", color:"#8e84a2", marginBottom:8, textShadow:"0 0 10px rgba(142,132,162,.7), 0 0 20px rgba(142,132,162,.28)" }}>
-                      Consejo rápido
-                    </div>
-                    <p style={{ margin:0, fontSize:14, lineHeight:1.6, color:"#d7cfe5" }}>
-                      {heroClass === "MAGO"
-                        ? "Si ya entrenaste fuerte hoy, cierra con PERMA y respiración lenta para no perder claridad."
-                        : heroClass === "ARQUERO"
-                          ? "Te conviene abrir respiración o enfoque antes de una sesión intensa para que el pulso no mande solo."
-                          : heroClass === "GUERRERO"
-                            ? "Tu mejor retorno aqui suele venir de fortalezas y afirmaciones cortas antes de entrar a fuerza."
-                            : "Usa una entrada de animo y una lectura breve para que la jornada no quede a ciegas."}
-                    </p>
-                  </div>
-                </div>
-              </div>
             </aside>
           </section>
         </div>
@@ -7987,7 +8152,7 @@ export default function UserMente({ profile }) {
  * ║           width="400" height="400" opacity=".18"/>               ║
  * ║           inside the <defs> section of the radar SVG             ║
  * ║                                                                  ║
- * ║  PILLAR FRAME (right column "SOBRE ESTE PILAR" display)          ║
+ * ║  PILLAR FRAME (right column "SOBRE ESTE PUNTO" display)          ║
  * ║  /ui/perma-pillar-frame.png — 260×90px ornate pixel frame       ║
  * ║    Wire: absolute overlay on the pillar detail header div        ║
  * ║                                                                  ║
@@ -7997,7 +8162,7 @@ export default function UserMente({ profile }) {
  * ║                                                                  ║
  * ║  MICRO-MISSION ICON                                              ║
  * ║  /ui/perma-quest-ico.png — 24×24px quest scroll pixel art       ║
- * ║    Wire: beside "MICRO-MISIÓN SUGERIDA" label in right col       ║
+ * ║    Wire: beside "PASO SUGERIDO SUGERIDA" label in right col       ║
  * ║                                                                  ║
  * ║  SLIDER THUMB (CSS custom)                                       ║
  * ║  /ui/perma-slider-thumb.png — 16×18px gem pixel art per pillar  ║

@@ -378,15 +378,16 @@ function MessageScopeSeal({ msg }) {
   );
 }
 
-function MetricCard({ label, value, hint, color, icon: Icon }) {
+function MetricCard({ label, value, hint, color, icon: Icon, accent = null }) {
+  const shell = accent || color;
   return (
     <div style={{
       minWidth: 0,
       padding: "14px 15px",
       borderRadius: 18,
-      border: `1px solid ${color}28`,
-      background: `linear-gradient(180deg, ${color}10, rgba(255,255,255,.02))`,
-      boxShadow: `inset 0 1px 0 rgba(255,255,255,.05), 0 10px 24px ${color}14`,
+      border: `1px solid ${shell}28`,
+      background: `linear-gradient(180deg, ${shell}12, rgba(255,255,255,.02))`,
+      boxShadow: `inset 0 1px 0 rgba(255,255,255,.05), 0 10px 24px ${shell}14`,
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
         <div style={{
@@ -667,13 +668,14 @@ function MessageRow({ msg, selected, isRead, isSaved, isPending, onSelect, onSav
   );
 }
 
-function EmptyState({ activeFilter, onReset }) {
+function EmptyState({ activeFilter, onReset, theme }) {
   return (
     <div style={{
       minHeight: 320,
       borderRadius: 26,
-      border: "1px solid rgba(255,255,255,.08)",
-      background: "linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.015))",
+      border: `1px solid ${theme?.color || SC.gold}22`,
+      background: `linear-gradient(180deg, color-mix(in srgb, ${theme?.color || SC.gold} 8%, rgba(255,255,255,.02)), rgba(255,255,255,.015))`,
+      boxShadow: `inset 0 1px 0 rgba(255,255,255,.04), 0 18px 46px ${theme?.glow || "rgba(242,198,109,.12)"}`,
       display: "grid",
       placeItems: "center",
       padding: 28,
@@ -684,7 +686,7 @@ function EmptyState({ activeFilter, onReset }) {
       <div style={{
         position: "absolute",
         inset: 0,
-        background: "radial-gradient(circle at 50% 12%, rgba(255,255,255,.08), transparent 45%)",
+        background: `radial-gradient(circle at 50% 12%, ${theme?.glow || "rgba(242,198,109,.16)"}, transparent 45%)`,
         pointerEvents: "none",
       }} />
       <div style={{ position: "relative", zIndex: 1, maxWidth: 460 }}>
@@ -693,8 +695,9 @@ function EmptyState({ activeFilter, onReset }) {
           height: 90,
           margin: "0 auto 18px",
           borderRadius: 24,
-          border: "1px solid rgba(255,255,255,.08)",
-          background: "rgba(255,255,255,.03)",
+          border: `1px solid ${theme?.color || SC.gold}28`,
+          background: `linear-gradient(180deg, ${theme?.soft || "rgba(242,198,109,.08)"}, rgba(255,255,255,.03))`,
+          boxShadow: `0 10px 24px ${theme?.glow || "rgba(242,198,109,.12)"}`,
           display: "grid",
           placeItems: "center",
         }}>
@@ -705,7 +708,7 @@ function EmptyState({ activeFilter, onReset }) {
             onError={(e) => { e.currentTarget.style.display = "none"; }}
           />
         </div>
-        <div style={{ color: SC.text, font: '800 28px/1.05 "Manrope", sans-serif', marginBottom: 10, textShadow: `0 0 22px ${SC.gold}77, 0 0 44px ${SC.gold}2a` }}>
+        <div style={{ color: SC.text, font: '800 28px/1.05 "Manrope", sans-serif', marginBottom: 10, textShadow: `0 0 22px ${theme?.color || SC.gold}77, 0 0 44px ${theme?.color || SC.gold}2a` }}>
           El buzón quedó limpio por ahora
         </div>
         <div style={{ color: SC.muted, font: '500 14px/1.65 "Manrope", sans-serif', marginBottom: 18 }}>
@@ -720,9 +723,9 @@ function EmptyState({ activeFilter, onReset }) {
             style={{
               padding: "12px 16px",
               borderRadius: 14,
-              border: `1px solid ${SC.gold}44`,
-              background: "rgba(242,198,109,.12)",
-              color: SC.gold,
+              border: `1px solid ${theme?.color || SC.gold}44`,
+              background: `${theme?.soft || "rgba(242,198,109,.12)"}`,
+              color: theme?.color || SC.gold,
               font: '700 12px/1 "JetBrains Mono", monospace',
               textTransform: "uppercase",
               letterSpacing: ".08em",
@@ -1984,14 +1987,15 @@ export default function UserMensajes({ user, profile, onUnreadChange }) {
                       </div>
                     )}
 
-                    <div style={{
-                      borderRadius: 18,
-                      border: "1px solid rgba(255,255,255,.08)",
-                      background: "rgba(255,255,255,.03)",
-                      padding: 12,
-                      display: "grid",
-                      gap: 10,
-                    }}>
+                      <div style={{
+                        borderRadius: 18,
+                        border: `1px solid ${theme.color}26`,
+                        background: `linear-gradient(180deg, ${theme.soft}, rgba(255,255,255,.03))`,
+                        boxShadow: `0 12px 28px ${theme.glow}`,
+                        padding: 12,
+                        display: "grid",
+                        gap: 10,
+                      }}>
                       <div style={{
                         color: theme.color,
                         font: '700 10px/1 "JetBrains Mono", monospace',
@@ -2014,15 +2018,16 @@ export default function UserMensajes({ user, profile, onUnreadChange }) {
                     </div>
 
                     <div style={{ display: "grid", gap: 10 }}>
-                      <MetricCard label="Buzón total" value={counts.all} hint="Todas las notas recibidas." color={SC.gold} icon={Inbox} />
-                      <MetricCard label="Guardados" value={counts.saved} hint="Mensajes para volver luego." color={SC.green} icon={BookmarkCheck} />
-                      <MetricCard label="Alta prioridad" value={counts.important} hint="Avisos con marca importante." color={SC.red} icon={ShieldAlert} />
+                      <MetricCard label="Buzón total" value={counts.all} hint="Todas las notas recibidas." color={SC.gold} accent={theme.color} icon={Inbox} />
+                      <MetricCard label="Guardados" value={counts.saved} hint="Mensajes para volver luego." color={SC.green} accent={theme.color} icon={BookmarkCheck} />
+                      <MetricCard label="Alta prioridad" value={counts.important} hint="Avisos con marca importante." color={SC.red} accent={theme.color} icon={ShieldAlert} />
                     </div>
 
                     <div style={{
                       borderRadius: 18,
-                      border: "1px solid rgba(255,255,255,.08)",
-                      background: "rgba(255,255,255,.03)",
+                      border: `1px solid ${theme.color}22`,
+                      background: `linear-gradient(180deg, color-mix(in srgb, ${theme.color} 8%, rgba(255,255,255,.02)), rgba(255,255,255,.03))`,
+                      boxShadow: `inset 0 1px 0 rgba(255,255,255,.04), 0 12px 28px ${theme.glow}`,
                       padding: 12,
                     }}>
                       <div style={{ color: SC.text, font: '800 16px/1.06 "Manrope", sans-serif', marginBottom: 10, textShadow: `0 0 14px ${theme.color}66, 0 0 28px ${theme.color}28` }}>
@@ -2088,7 +2093,7 @@ export default function UserMensajes({ user, profile, onUnreadChange }) {
                 {loading ? (
                   <LoadingRows />
                 ) : sortedMessages.length === 0 ? (
-                  <EmptyState activeFilter={filter} onReset={() => setFilter("all")} />
+                  <EmptyState activeFilter={filter} onReset={() => setFilter("all")} theme={theme} />
                 ) : (
                   <>
                     {filter === "all" && !search.trim() && oldestCursorRef.current && (
@@ -2182,8 +2187,9 @@ export default function UserMensajes({ user, profile, onUnreadChange }) {
 
               <div style={{
                 borderRadius: 22,
-                border: "1px solid rgba(255,255,255,.08)",
-                background: "linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.018))",
+                border: `1px solid ${theme.color}24`,
+                background: `linear-gradient(180deg, color-mix(in srgb, ${theme.color} 8%, rgba(255,255,255,.025)), rgba(255,255,255,.018))`,
+                boxShadow: `0 14px 30px ${theme.glow}`,
                 padding: 16,
                 display: "grid",
                 gap: 12,

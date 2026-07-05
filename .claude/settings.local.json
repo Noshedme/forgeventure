@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc -l /c/Users/User/Desktop/forgeventure/forgeventure/backend/src/routes/*.js)",
+      "Bash(node --input-type=module)",
+      "Bash(node -e ':*)",
+      "Bash(npx vite:*)",
+      "Bash(npm run:*)",
+      "Bash(curl -s http://localhost:5176)",
+      "Bash(node -e \"try{const {Brain}=require\\('lucide-react'\\);console.log\\(Brain?'OK':'missing'\\)}catch\\(e\\){console.log\\('error:',e.message\\)}\")",
+      "Bash(grep -E \"\\\\.\\(js|jsx\\)$\")",
+      "Bash(grep -E \"\\\\.js$\")",
+      "Bash(python3 -c \" import sys, json lines = sys.stdin.read\\(\\).strip\\(\\).split\\('\\\\n'\\) for line in lines[-30:]: try: obj = json.loads\\(line\\) role = obj.get\\('role',''\\) if role == 'user': content = obj.get\\('content',''\\) if isinstance\\(content, list\\): for c in content: if isinstance\\(c, dict\\) and c.get\\('type'\\) == 'text': print\\(f'USER: {c[\\\\\"text\\\\\"][:500]}'\\) elif isinstance\\(content, str\\): print\\(f'USER: {content[:500]}'\\) elif role == 'assistant': content = obj.get\\('content',''\\) if isinstance\\(content, list\\): for c in content: if isinstance\\(c, dict\\) and c.get\\('type'\\) == 'text': print\\(f'ASSISTANT: {c[\\\\\"text\\\\\"][:500]}'\\) except: pass \")",
+      "Read(//c/Users/User/.claude/projects/c--Users-User-Desktop-forgeventure-forgeventure/**)",
+      "Bash(python3 -c \" import sys, json for line in sys.stdin: line = line.strip\\(\\) if not line: continue try: obj = json.loads\\(line\\) role = obj.get\\('role',''\\) content = obj.get\\('content',''\\) if isinstance\\(content, list\\): for c in content: if isinstance\\(c,dict\\) and c.get\\('type'\\)=='text': print\\(role.upper\\(\\)+':', c['text'][:800]\\) elif isinstance\\(content, str\\): print\\(role.upper\\(\\)+':', content[:800]\\) except: pass \")",
+      "Bash(python3 -c ' *)",
+      "Bash(node --input-type=module --eval ' *)",
+      "Bash(node -e ' *)",
+      "WebFetch(domain:api.anthropic.com)",
+      "Bash(node --check src/routes/auth.routes.js)",
+      "Bash(xargs grep *)",
+      "Bash(npx --yes acorn --ecma2020 --module src/pages/user/UserEjercicios.jsx)",
+      "Bash(npm install *)"
+    ]
+  }
+}

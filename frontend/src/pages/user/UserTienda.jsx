@@ -293,10 +293,40 @@ const RAREZA_LABEL_KEYS = {
 // ── Cat → i18n key map ───────────────────────────────────────────
 const CAT_LABEL_KEYS = {
   Todos:"ti.cat.todos", Poción:"ti.cat.pocion", Equipo:"ti.cat.equipo",
-  Cosmético:"ti.cat.cosmetico", Consumible:"ti.cat.consumible", Especial:"ti.cat.especial",
+  Cosmético:"ti.cat.cosmetico", Consumible:"ti.cat.consumible", Especial:"ti.cat.especial", Coleccionable:"ti.cat.especial",
 };
 
+const MARKET_KIND_META = {
+  functional:  { label:"FUNCIONAL",   color:"#8ac926", bg:"rgba(138,201,38,.12)", border:"rgba(138,201,38,.35)" },
+  cosmetic:    { label:"COSMETICO",   color:"#c08aff", bg:"rgba(192,138,255,.12)", border:"rgba(192,138,255,.35)" },
+  collectible: { label:"COLECCION",   color:"#f4cc78", bg:"rgba(244,204,120,.12)", border:"rgba(244,204,120,.35)" },
+  service:     { label:"SERVICIO",    color:"#4cc9f0", bg:"rgba(76,201,240,.12)", border:"rgba(76,201,240,.35)" },
+  legacy:      { label:"LEGACY",      color:"#e05c8a", bg:"rgba(224,92,138,.12)", border:"rgba(224,92,138,.35)" },
+};
+
+function deriveMarketKind(item = {}) {
+  if (item?.marketKind) return item.marketKind;
+  const effectTypes = Array.isArray(item?.efectos) ? item.efectos.map((ef) => ef?.tipo).filter(Boolean) : [];
+  const rawCat = normalizeLoose(item?.categoria || item?.cat || "");
+  if (effectTypes.includes("cosmetic_skin") || rawCat.includes("cosmet")) return "cosmetic";
+  if (!effectTypes.length) return "collectible";
+  if (effectTypes.includes("level_boost")) return "service";
+  if (effectTypes.includes("unlock_class") || effectTypes.includes("title_grant")) return "legacy";
+  return "functional";
+}
+
+function isSupportedUseItem(item = {}) {
+  if (item?.supportedUse !== undefined) return Boolean(item.supportedUse);
+  const effectTypes = Array.isArray(item?.efectos) ? item.efectos.map((ef) => ef?.tipo).filter(Boolean) : [];
+  if (!effectTypes.length) return false;
+  const marketKind = deriveMarketKind(item);
+  if (!["functional", "service"].includes(marketKind)) return false;
+  return !effectTypes.includes("cosmetic_skin");
+}
+
 function normalizeObjeto(o) {
+  const marketKind = deriveMarketKind(o);
+  const supportedUse = isSupportedUseItem(o);
   return {
     stackeable: false, gratis: false, limitado: false,
     esNuevo: false,
@@ -308,6 +338,10 @@ function normalizeObjeto(o) {
     precio: Number(o.precio || 0),
     desc:   o.desc     || o.descripcion || "",
     efectos:(o.efectos || []).map(ef => ({ ...ef, txt: efTxt(ef) })),
+    marketKind,
+    catalogStatus: o.catalogStatus || (marketKind === "legacy" ? "legacy" : "canonical"),
+    retiredReason: o.retiredReason || "",
+    supportedUse,
   };
 }
 
@@ -318,6 +352,7 @@ const CATS = {
   Equipo:     { color:C.orange,  icon:"⚔️", img:"/equipo/pechera.png"                  },
   Cosmético:  { color:C.purple,  icon:"👑", img:"/ui/shop/icons/shop-cosmetic.png"      },
   Consumible: { color:C.teal,    icon:"⚡", img:"/ui/shop/icons/shop-crate.png"         },
+  Coleccionable:{ color:C.gold,  icon:"💠", img:"/ui/shop/icons/shop-coin-stack.png"    },
   Especial:   { color:C.red,     icon:"💎", img:"/items/rewards/orbe_magico.png"        },
 };
 
@@ -1089,9 +1124,14 @@ function ActiveBoostsPanel({ boosts, streakShield, onExpire }) {
                   height:2, background:isClose?C.red:col, transition:"width 1s linear" }}/>
               )}
               <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                <span style={{ fontSize:20,
-                  animation:isClose?"ut-timerPulse .8s ease-in-out infinite":"none",
-                  filter:isExp?"grayscale(1)":`drop-shadow(0 0 6px ${col})` }}>{b.icon}</span>
+                <AssetIcon
+                  src={b.img || EFFECT_ICON_ASSET[b.type] || "/ui/shop/icons/shop-service.png"}
+                  size={20}
+                  style={{
+                    animation:isClose ? "ut-timerPulse .8s ease-in-out infinite" : "none",
+                    filter:isExp ? "grayscale(1)" : `drop-shadow(0 0 6px ${col})`,
+                  }}
+                />
                 <div>
                   <div style={{ ...raj(12,700), color:isExp?C.muted:col }}>{b.label}</div>
                   {isExp
@@ -1440,7 +1480,7 @@ function TiendaFrameThumb({ frameId, gradient, animated, color, outerSize=96, av
 
 function FVSPanel({ children, className="", style, p=16 }) {
   return (
-    <div className={`ti-panel ${className}`} style={{ padding:p, ...style }}>
+    <div className={`ti-panel ${className}`} style={{ padding:p, width:"100%", minWidth:0, boxSizing:"border-box", ...style }}>
       {children}
     </div>
   );
@@ -1459,11 +1499,13 @@ const _shopCache = { objetos: null, ts: 0 };
 const _invCache  = { items: null, ts: 0, uid: null };
 const _histCache = { purchases: null, ts: 0, uid: null };
 const _ctxCache  = { data: null, ts: 0, uid: null };
+const _statsCache = { data: null, ts: 0, uid: null };
 const _svcCache  = { titles: null, routines: null, ts: 0 };
 const SHOP_TTL   = 5 * 60_000;  // 5 min
 const INV_TTL    = 2 * 60_000;  // 2 min — inventario cambia solo al comprar/usar
 const HIST_TTL   = 3 * 60_000;  // 3 min — historial es append-only
 const CTX_TTL    = 2 * 60_000;  // 2 min — contexto del mercader
+const STATS_TTL  = 2 * 60_000;  // 2 min — snapshot de progreso para sidebar
 const SVC_TTL    = 5 * 60_000;  // 5 min — servicios/títulos/rutinas públicas
 const invalidateUserCaches = () => { _invCache.ts = 0; _histCache.ts = 0; };
 
@@ -1555,6 +1597,90 @@ function summarizeMerchantContext(profile, statsPayload, missions = []) {
   };
 }
 
+const SHOP_CLASS_BASELINES = {
+  GUERRERO: { str: 86, sta: 72, spd: 48, dis: 58, men: 44 },
+  ARQUERO:  { str: 56, sta: 76, spd: 88, dis: 64, men: 54 },
+  MAGO:     { str: 42, sta: 62, spd: 58, dis: 68, men: 88 },
+  DEFAULT:  { str: 60, sta: 60, spd: 60, dis: 60, men: 60 },
+};
+
+function clampShopStat(value) {
+  return Math.max(8, Math.min(100, Math.round(Number(value) || 0)));
+}
+
+function buildShopSidebarStats({
+  heroClass,
+  stats = {},
+  user = {},
+  merchantContext = {},
+  activeBoostsCount = 0,
+  streakShield = null,
+}) {
+  const base = SHOP_CLASS_BASELINES[heroClass] || SHOP_CLASS_BASELINES.DEFAULT;
+  const level = Number(stats.nivel ?? user.level ?? 1);
+  const streak = Number(stats.streak ?? user.streak ?? 0);
+  const weeklyXP = Number(stats.weeklyXP ?? user.weeklyXP ?? 0);
+  const sessions = Number(stats.sesionesTotales ?? user.totalRutinas ?? 0);
+  const missionsDone = Number(stats.misionesCompletadas ?? user.completedMissions ?? 0);
+  const achievements = Number(stats.logrosObtenidos ?? (Array.isArray(user.badges) ? user.badges.length : 0) ?? 0);
+  const daysActive = Number(stats.diasActivo ?? user.diasActivo ?? 0);
+  const totalMinutes = Math.round(Number(stats.tiempoTotal ?? user.tiempoTotal ?? 0) / 60);
+  const claimable = Number(merchantContext.claimableMissionCount || 0);
+  const active = Number(merchantContext.activeMissionCount || 0);
+  const focus = (merchantContext.missionFocus || []).map(normalizeLoose);
+  const hasFocus = (pattern) => focus.some((entry) => pattern.test(entry));
+  const levelPulse = Math.min(18, level * 2.4);
+  const streakPulse = Math.min(20, streak * 2.7);
+  const weeklyPulse = Math.min(18, weeklyXP / 90);
+  const sessionPulse = Math.min(18, sessions * 1.35);
+  const volumePulse = Math.min(16, totalMinutes / 10);
+  const missionPulse = Math.min(14, missionsDone * 0.65 + claimable * 3 + active * 1.8);
+  const activeDaysPulse = Math.min(12, daysActive / 3);
+  const boostPulse = Math.min(10, activeBoostsCount * 3 + (streakShield ? 4 : 0));
+  const achievementPulse = Math.min(12, achievements * 1.15);
+
+  return {
+    str: clampShopStat(
+      base.str +
+      levelPulse * 0.46 +
+      sessionPulse * 0.34 +
+      volumePulse * 0.26 +
+      missionPulse * 0.18 +
+      (hasFocus(/fuerza|funcional|calistenia|resisten/) ? 8 : 0)
+    ),
+    sta: clampShopStat(
+      base.sta +
+      levelPulse * 0.22 +
+      streakPulse * 0.28 +
+      volumePulse * 0.34 +
+      sessionPulse * 0.22 +
+      (merchantContext.trainedToday ? 5 : 0)
+    ),
+    spd: clampShopStat(
+      base.spd +
+      weeklyPulse * 0.52 +
+      sessionPulse * 0.2 +
+      missionPulse * 0.18 +
+      (hasFocus(/cardio|hiit|movilidad|velocidad|ritmo/) ? 10 : 0)
+    ),
+    dis: clampShopStat(
+      base.dis +
+      streakPulse * 0.52 +
+      activeDaysPulse * 0.32 +
+      missionPulse * 0.24 +
+      claimable * 2
+    ),
+    men: clampShopStat(
+      base.men +
+      boostPulse * 0.46 +
+      achievementPulse * 0.28 +
+      weeklyPulse * 0.16 +
+      streakPulse * 0.14 +
+      (hasFocus(/mente|respiracion|salud|recuper|flexi/) ? 10 : 0)
+    ),
+  };
+}
+
 const CLASS_ROUTINE_HINTS = {
   GUERRERO: ["fuerza", "funcional", "calistenia", "resistencia"],
   ARQUERO: ["cardio", "hiit", "movilidad", "velocidad"],
@@ -1609,7 +1735,10 @@ function scoreTitleForContext(title, heroClass, merchantContext, coins, ownedTit
 function scoreMarketItemForContext(item, merchantContext, heroClass, streakShield, coins) {
   const effectTypes = Array.isArray(item?.efectos) ? item.efectos.map((ef) => ef.tipo) : [];
   const text = normalizedEntryText(item);
+  const marketKind = deriveMarketKind(item);
   let score = 0;
+  if (marketKind === "collectible") score -= 18;
+  if (marketKind === "legacy" || marketKind === "cosmetic") score -= 40;
   if (Number(item?.precio || 0) > coins) score -= 20;
   if (!streakShield && effectTypes.includes("streak_shield")) score += 30;
   if (merchantContext.claimableMissionCount > 0 && (effectTypes.includes("xp_bonus") || effectTypes.includes("xp_mult") || effectTypes.includes("xp_instant"))) score += 16;
@@ -1657,6 +1786,7 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
   const [activeBoosts, setActiveBoosts]= useState([]);
   const [streakShield, setStreakShield]= useState(null);
   const [localProfile, setLocalProfile]= useState(profile);
+  const [statsSnapshot, setStatsSnapshot] = useState(null);
   const [selectedItem, setSelectedItem]= useState(null);
   const [detailFocus, setDetailFocus] = useState(null);
   const [wishlist,     setWishlist]    = useState(new Set());
@@ -1681,6 +1811,7 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
   const myColor   = clsColor[heroClass] || "#FF4757";
   const clsCrest  = heroClass==="GUERRERO"?"warrior":heroClass==="ARQUERO"?"archer":heroClass==="MAGO"?"mage":"default";
   const clsDir    = heroClass==="GUERRERO"?"guerrero":heroClass==="ARQUERO"?"arquero":heroClass==="MAGO"?"mago":"guerrero";
+  const showRightRail = !isMobile && (tab === "tienda" || tab === "servicios");
   const SHOP_CLASS_COPY = {
     GUERRERO: { lead:"Equipa al guerrero.", sub:"Fuerza, resistencia y botin para la proxima batalla." },
     ARQUERO:  { lead:"Afina tu arsenal.", sub:"Velocidad, precision y consumibles para sostener el ritmo." },
@@ -1690,11 +1821,30 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
   const shopCopy = SHOP_CLASS_COPY[heroClass] || SHOP_CLASS_COPY.DEFAULT;
   const liveAvatars = avatarCatalog.length ? avatarCatalog : AVATARS_CATALOG;
   const liveFrames = frameCatalog.length ? frameCatalog : FRAMES_CATALOG;
+  const effectiveStats = statsSnapshot || {};
+  const storeSidebarStats = useMemo(
+    () => buildShopSidebarStats({
+      heroClass,
+      stats: effectiveStats,
+      user: localProfile || profile || {},
+      merchantContext,
+      activeBoostsCount: activeBoosts.length,
+      streakShield,
+    }),
+    [heroClass, effectiveStats, localProfile, profile, merchantContext, activeBoosts.length, streakShield]
+  );
+  const storeSidebarMeta = useMemo(() => ([
+    { key: "level", label: "LV", value: `Lv ${Number(effectiveStats.nivel ?? localProfile?.level ?? profile?.level ?? 1)}` },
+    { key: "streak", label: "RACHA", value: `${Number(effectiveStats.streak ?? localProfile?.streak ?? profile?.streak ?? 0)}d` },
+    { key: "weekly", label: "XP SEM", value: `+${Number(effectiveStats.weeklyXP ?? localProfile?.weeklyXP ?? profile?.weeklyXP ?? 0).toLocaleString()}` },
+    { key: "missions", label: "BOTIN", value: `${Number(merchantContext.claimableMissionCount || 0)} listo${Number(merchantContext.claimableMissionCount || 0) === 1 ? "" : "s"}` },
+  ]), [effectiveStats, localProfile, profile, merchantContext.claimableMissionCount]);
 
   // C1: contextual subtitle for wallet banner
   const ctxMsg = (() => {
     if (merchantContext.claimableMissionCount > 0) return `${merchantContext.claimableMissionCount} ${merchantContext.claimableMissionCount>1?"misiones listas":"mision lista"} para cerrar con botin`;
     if (merchantContext.activeMissionCount > 0 && merchantContext.missionFocus.length > 0) return `El mercader ve foco en ${merchantContext.missionFocus[0]} para hoy`;
+    if (activeBoosts.some((boost) => boost.type === "cooldown_red")) return "Tu apoyo del gremio y lecturas de ritmo vienen con recarga reducida";
     if (activeBoosts.length > 0)   return `${activeBoosts.length} ${activeBoosts.length>1?t("ti.ctx.boosts_n"):t("ti.ctx.boosts_1")} ${t("ti.ctx.boosts_suf")}`;
     if (streakShield)              return t("ti.ctx.shield");
     const usables = inventario.filter(i => i.consumible).reduce((s,i) => s + i.cantidad, 0);
@@ -1706,14 +1856,81 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
     return t("ti.ctx.default");
   })();
 
+  const normalizePurchaseEntry = (entry = {}) => ({
+    id: entry.id || `shop-${Date.now()}`,
+    item: entry.item || entry.nombre || "Item",
+    imagen: entry.imagen || "",
+    cantidad: Number(entry.cantidad || 1),
+    precio: Number(entry.precio ?? entry.total ?? 0),
+    fecha: entry.fecha || String(entry.purchasedAt || entry.createdAt || "").slice(0, 10),
+    categoria: entry.categoria || entry.cat || entry.kind || entry.source || "Mercado",
+    rareza: entry.rareza || "Comun",
+    source: entry.source || "",
+    kind: entry.kind || "",
+    type: entry.type || "",
+  });
+
   const pushMarketHistory = (entry) => {
     setHistorial((prev) => {
-      const next = [entry, ...prev];
+      const next = [normalizePurchaseEntry(entry), ...prev];
       _histCache.purchases = next;
       _histCache.ts = Date.now();
       _histCache.uid = auth.currentUser?.uid ?? _histCache.uid;
       return next;
     });
+  };
+
+  const getResponseProfilePatch = (res, fallback = {}) => (
+    res?.profilePatch && typeof res.profilePatch === "object"
+      ? res.profilePatch
+      : fallback
+  );
+
+  const syncShopStatsFromPatch = (patch = {}) => {
+    if (!patch || typeof patch !== "object") return;
+    setStatsSnapshot((prev) => {
+      const next = { ...(prev || {}) };
+      if (patch.level !== undefined) next.nivel = Number(patch.level || 1);
+      if (patch.xp !== undefined) next.xp = Number(patch.xp || 0);
+      if (patch.xpTotal !== undefined) next.xpTotal = Number(patch.xpTotal || 0);
+      if (patch.streak !== undefined) next.streak = Number(patch.streak || 0);
+      if (patch.coins !== undefined) next.coins = Number(patch.coins || 0);
+      if (patch.heroClass !== undefined) next.heroClass = patch.heroClass || "GUERRERO";
+      if (patch.hp !== undefined) next.hp = Number(patch.hp || 100);
+      if (patch.weeklyXP !== undefined) next.weeklyXP = Number(patch.weeklyXP || 0);
+      if (patch.sesionesTotales !== undefined) next.sesionesTotales = Number(patch.sesionesTotales || 0);
+      if (patch.misionesCompletadas !== undefined) next.misionesCompletadas = Number(patch.misionesCompletadas || 0);
+      if (patch.logrosObtenidos !== undefined) next.logrosObtenidos = Number(patch.logrosObtenidos || 0);
+      if (patch.diasActivo !== undefined) next.diasActivo = Number(patch.diasActivo || 0);
+      if (patch.tiempoTotal !== undefined) next.tiempoTotal = Number(patch.tiempoTotal || 0);
+      return Object.keys(next).length ? next : prev;
+    });
+  };
+
+  const applyCanonicalStatsPayload = (payload = {}) => {
+    const stats = payload?.stats || null;
+    const userData = payload?.user || {};
+    if (stats) setStatsSnapshot(stats);
+    const patch = {
+      ...userData,
+      ...(stats?.coins !== undefined ? { coins: Number(stats.coins || 0) } : {}),
+      ...(stats?.nivel !== undefined ? { level: Number(stats.nivel || 1) } : {}),
+      ...(stats?.xp !== undefined ? { xp: Number(stats.xp || 0) } : {}),
+      ...(stats?.xpTotal !== undefined ? { xpTotal: Number(stats.xpTotal || 0) } : {}),
+      ...(stats?.streak !== undefined ? { streak: Number(stats.streak || 0) } : {}),
+      ...(stats?.heroClass ? { heroClass: stats.heroClass } : {}),
+      ...(stats?.hp !== undefined ? { hp: Number(stats.hp || 100) } : {}),
+      ...(stats?.weeklyXP !== undefined ? { weeklyXP: Number(stats.weeklyXP || 0) } : {}),
+      ...(stats?.sesionesTotales !== undefined ? { totalRutinas: Number(stats.sesionesTotales || 0) } : {}),
+      ...(stats?.misionesCompletadas !== undefined ? { completedMissions: Number(stats.misionesCompletadas || 0) } : {}),
+      ...(stats?.logrosObtenidos !== undefined ? { logrosObtenidos: Number(stats.logrosObtenidos || 0) } : {}),
+      ...(stats?.diasActivo !== undefined ? { diasActivo: Number(stats.diasActivo || 0) } : {}),
+      ...(stats?.tiempoTotal !== undefined ? { tiempoTotal: Number(stats.tiempoTotal || 0) } : {}),
+    };
+    if (Object.keys(patch).length) {
+      syncVisualStateFromPatch(patch);
+      applyLocalProfilePatch(patch);
+    }
   };
 
   const applyLocalProfilePatch = (patch = {}) => {
@@ -1736,6 +1953,7 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
     if (patch.activeFrame !== undefined) setEquippedFrame(patch.activeFrame ?? null);
     if (patch.ownedTitles !== undefined) setOwnedTitles(Array.isArray(patch.ownedTitles) ? patch.ownedTitles : []);
     if (patch.titulo !== undefined) setActiveTitle(patch.titulo || "");
+    if (patch.streakShield !== undefined) setStreakShield(patch.streakShield || null);
     if (patch.level !== undefined) {
       setMerchantContext((prev) => ({ ...(prev || {}), level: Number(patch.level || prev?.level || 1) }));
     }
@@ -1744,6 +1962,7 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
   const applyStoreProfilePatch = (patch = {}) => {
     if (!patch || typeof patch !== "object") return;
     syncVisualStateFromPatch(patch);
+    syncShopStatsFromPatch(patch);
     applyLocalProfilePatch(patch);
   };
 
@@ -1766,6 +1985,12 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
     ]);
 
     const statsPayload = statsRes.status === "fulfilled" && statsRes.value?.ok ? statsRes.value : null;
+    if (statsPayload) {
+      _statsCache.data = statsPayload;
+      _statsCache.ts = now;
+      _statsCache.uid = uid;
+      applyCanonicalStatsPayload(statsPayload);
+    }
     const missionsPayload = missionsRes.status === "fulfilled" && missionsRes.value?.ok
       ? (missionsRes.value.missions || missionsRes.value.misiones || [])
       : [];
@@ -1775,6 +2000,38 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
     _ctxCache.uid = uid;
     setMerchantContext(next);
     return next;
+  };
+
+  const refreshSidebarProgress = async ({ force = false, includeContext = false } = {}) => {
+    const user = auth.currentUser;
+    if (!user) return null;
+    const now = Date.now();
+
+    if (!force && _statsCache.data && _statsCache.uid === user.uid && (now - _statsCache.ts) < STATS_TTL) {
+      applyCanonicalStatsPayload(_statsCache.data);
+      if (includeContext) {
+        await syncMerchantContext(await user.getIdToken(), user.uid, { force: false });
+      }
+      return _statsCache.data;
+    }
+
+    try {
+      const token = await user.getIdToken();
+      if (includeContext) {
+        await syncMerchantContext(token, user.uid, { force });
+        return _statsCache.data;
+      }
+      const statsRes = await getUserStats(token);
+      if (statsRes?.ok) {
+        _statsCache.data = statsRes;
+        _statsCache.ts = Date.now();
+        _statsCache.uid = user.uid;
+        applyCanonicalStatsPayload(statsRes);
+      }
+      return statsRes;
+    } catch {
+      return null;
+    }
   };
 
   const focusItemDetail = (item, { manual = true } = {}) => {
@@ -1830,6 +2087,7 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
       if (detail.coins !== undefined) {
         setCoins(detail.coins);
       }
+      syncShopStatsFromPatch(detail);
       // Re-fetch active boosts whenever XP or level changes (a boost may have activated)
       if (detail.xp > 0 || detail.leveledUp || detail.source === "tienda") {
         const user = auth.currentUser;
@@ -1841,12 +2099,57 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
             setActiveBoosts(bRes.boosts || []);
             setStreakShield(bRes.streakShield || null);
           }
+          _statsCache.ts = 0;
+          await refreshSidebarProgress({ force: true, includeContext: true });
         } catch {}
       }
     };
     window.addEventListener("exerciseCompleted", onXP);
     return () => window.removeEventListener("exerciseCompleted", onXP);
   }, []);
+
+  useEffect(() => {
+    const onProfileUpdated = async (e) => {
+      const detail = e.detail || {};
+      const uid = auth.currentUser?.uid;
+      if (!uid) return;
+      if (detail.uid && detail.uid !== uid) return;
+      applyStoreProfilePatch(detail);
+
+      const meaningful =
+        detail.forceStats ||
+        detail.level !== undefined ||
+        detail.xp !== undefined ||
+        detail.xpTotal !== undefined ||
+        detail.streak !== undefined ||
+        detail.heroClass !== undefined ||
+        detail.source === "misiones" ||
+        detail.source === "rutinas" ||
+        detail.source === "perfil" ||
+        detail.source === "logros" ||
+        detail.source === "tienda";
+
+      if (meaningful) {
+        _statsCache.ts = 0;
+        await refreshSidebarProgress({ force: true, includeContext: detail.source !== "tienda" });
+      }
+    };
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        refreshSidebarProgress({ includeContext: true });
+      }
+    };
+
+    window.addEventListener("profileUpdated", onProfileUpdated);
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("focus", onVisibility);
+    return () => {
+      window.removeEventListener("profileUpdated", onProfileUpdated);
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("focus", onVisibility);
+    };
+  }, [profile?.uid]);
 
   // L1: sync filter state → localStorage
   useEffect(() => { localStorage.setItem("ut-filter-cat",  cat);    }, [cat]);
@@ -1888,6 +2191,8 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
         if (catalogFresh) setObjetos(_shopCache.objetos);
         if (invFresh)     setInventario(_invCache.items);
         if (histFresh)    setHistorial(_histCache.purchases);
+        const statsFresh = _statsCache.data && _statsCache.uid === uid && (now - _statsCache.ts) < STATS_TTL;
+        if (statsFresh) applyCanonicalStatsPayload(_statsCache.data);
 
         const ctxFresh = _ctxCache.data && _ctxCache.uid === uid && (now - _ctxCache.ts) < CTX_TTL;
         const servicesFresh = _svcCache.ts && (now - _svcCache.ts) < SVC_TTL;
@@ -1925,23 +2230,13 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
         }
 
         if (invRes.status === "fulfilled" && invRes.value?.ok && !invRes.value._cached) {
-          const items = (invRes.value.items || []).map(i => ({
-            ...i,
-            cat:       i.categoria || i.cat || "Especial",
-            efectos:   (i.efectos || []).map(ef => ({ ...ef, txt: efTxt(ef) })),
-            consumible: i.consumible !== undefined ? i.consumible
-              : ["Poción","Consumible"].includes(i.categoria || i.cat),
-          }));
+          const items = (invRes.value.items || []).map(normalizeObjeto);
           setInventario(items);
           _invCache.items = items; _invCache.ts = now; _invCache.uid = uid;
         }
 
         if (histRes.status === "fulfilled" && histRes.value?.ok && !histRes.value._cached) {
-          const p = (histRes.value.purchases || []).map(p => ({
-            id:p.id, item:p.nombre, imagen:p.imagen||"",
-            cantidad:p.cantidad, precio:p.total,
-            fecha:(p.purchasedAt||"").slice(0,10),
-          }));
+          const p = (histRes.value.purchases || []).map((entry) => normalizePurchaseEntry(entry));
           setHistorial(p);
           _histCache.purchases = p; _histCache.ts = now; _histCache.uid = uid;
         }
@@ -2001,7 +2296,8 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
       if (!res?.ok) { setError(res?.message || t("ti.err.buy_fail")); return false; }
 
       const newCoins = res.coins !== undefined ? res.coins : coins - total;
-      applyStoreProfilePatch({ coins: newCoins });
+      const profilePatch = getResponseProfilePatch(res, { coins: newCoins });
+      applyStoreProfilePatch(profilePatch);
       // Invalidar caches — inventario y historial cambiaron en Firestore
       invalidateUserCaches();
       if (item.limitado) _shopCache.ts = 0;
@@ -2018,13 +2314,13 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
         cantidad:qty, precio:total, fecha:new Date().toISOString().slice(0,10),
         categoria:"Mercado", rareza:item.rareza || "Comun",
       });
-      emitProfileUpdated({ coins: newCoins }, {
+      emitProfileUpdated(profilePatch, {
         source: "tienda",
         itemId: item.id,
         category: item.cat || item.categoria || "mercado",
       });
       window.dispatchEvent(new CustomEvent("shopStateChanged", {
-        detail: { coins: newCoins, itemId: item.id, qty, category: item.cat || item.categoria || "mercado" },
+        detail: { ...profilePatch, itemId: item.id, qty, category: item.cat || item.categoria || "mercado" },
       }));
       return true;
     } catch { setError(t("ti.err.buy_err")); return false; }
@@ -2037,11 +2333,12 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
       const token = await user.getIdToken();
       const res   = await purchaseSkin(token, skin.id);
       if (!res?.ok) { setSkinMsg({ ok:false, text:res?.message||t("ti.err.buy_err") }); return; }
-      applyStoreProfilePatch({
+      const profilePatch = getResponseProfilePatch(res, {
         coins: res.coins,
         ownedSkins: res.ownedSkins,
         activeSkin: localProfile?.activeSkin ?? equippedSkin,
       });
+      applyStoreProfilePatch(profilePatch);
       invalidateUserCaches();
       pushMarketHistory({
         id:`skin-${skin.id}-${Date.now()}`,
@@ -2053,17 +2350,13 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
         categoria:"Cosmetico",
         rareza:skin.rareza || "Epico",
       });
-      emitProfileUpdated({
-        coins: res.coins,
-        ownedSkins: res.ownedSkins,
-        activeSkin: localProfile?.activeSkin ?? equippedSkin,
-      }, {
+      emitProfileUpdated(profilePatch, {
         source: "tienda",
         skinId: skin.id,
         category: "skin",
       });
       window.dispatchEvent(new CustomEvent("shopStateChanged", {
-        detail: { coins: res.coins, skinId: skin.id, ownedSkins: res.ownedSkins, category: "skin" },
+        detail: { ...profilePatch, skinId: skin.id, category: "skin" },
       }));
       setSkinMsg({ ok:true, text:`¡"${skin.nombre}" ${t("ti.sk.buy_ok_suf")}` });
       setTimeout(() => setSkinMsg(null), 4000);
@@ -2085,11 +2378,12 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
       }
       const newOwnedAvatars = res.ownedAvatars ?? ownedAvatars;
       const newOwnedFrames  = res.ownedFrames  ?? ownedFrames;
-      applyStoreProfilePatch({
+      const profilePatch = getResponseProfilePatch(res, {
         coins: res.coins,
         ownedAvatars: newOwnedAvatars,
         ownedFrames: newOwnedFrames,
       });
+      applyStoreProfilePatch(profilePatch);
       invalidateUserCaches();
       pushMarketHistory({
         id:`cosmetic-${item.id}-${Date.now()}`,
@@ -2101,11 +2395,7 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
         categoria:"Cosmetico",
         rareza:item.rareza || "Raro",
       });
-      emitProfileUpdated({
-        coins: res.coins,
-        ownedAvatars: newOwnedAvatars,
-        ownedFrames: newOwnedFrames,
-      }, {
+      emitProfileUpdated(profilePatch, {
         source: "tienda",
         itemId: item.id,
         category: item.type || "cosmetic",
@@ -2113,10 +2403,10 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
       // Propagate to parent dashboard so UserPerfil gets fresh data on mount
       // Also broadcast for already-mounted UserPerfil
       window.dispatchEvent(new CustomEvent("avatarPurchased", {
-        detail: { ownedAvatars: newOwnedAvatars, ownedFrames: newOwnedFrames, coins: res.coins },
+        detail: { ...profilePatch },
       }));
       window.dispatchEvent(new CustomEvent("shopStateChanged", {
-        detail: { coins: res.coins, ownedAvatars: newOwnedAvatars, ownedFrames: newOwnedFrames, itemId: item.id, category: item.type || "cosmetic" },
+        detail: { ...profilePatch, itemId: item.id, category: item.type || "cosmetic" },
       }));
       const isFrame = item.id.startsWith("marco_");
       setAvatarMsg({ ok:true, text:`¡"${item.nombre}" ${t(isFrame ? "ti.fr.buy_ok_suf" : "ti.av.buy_ok_suf")}` });
@@ -2142,7 +2432,8 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
         setTimeout(() => setTitleMsg(null), 4000);
         return;
       }
-      applyStoreProfilePatch({ coins: res.coins, ownedTitles: res.ownedTitles || [] });
+      const profilePatch = getResponseProfilePatch(res, { coins: res.coins, ownedTitles: res.ownedTitles || [] });
+      applyStoreProfilePatch(profilePatch);
       invalidateUserCaches();
       pushMarketHistory({
         id:`title-${titleEntry.id}-${Date.now()}`,
@@ -2154,16 +2445,16 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
         categoria:"Coleccion",
         rareza:titleEntry.rareza || "Raro",
       });
-      emitProfileUpdated({ coins: res.coins, ownedTitles: res.ownedTitles || [] }, {
+      emitProfileUpdated(profilePatch, {
         source: "tienda",
         title: titleEntry.nombre,
         category: "title",
       });
       window.dispatchEvent(new CustomEvent("titlePurchased", {
-        detail: { coins: res.coins, ownedTitles: res.ownedTitles || [], title: titleEntry.nombre },
+        detail: { ...profilePatch, title: titleEntry.nombre },
       }));
       window.dispatchEvent(new CustomEvent("shopStateChanged", {
-        detail: { coins: res.coins, ownedTitles: res.ownedTitles || [], title: titleEntry.nombre, category: "title" },
+        detail: { ...profilePatch, title: titleEntry.nombre, category: "title" },
       }));
       setTitleMsg({ ok: true, text: `Titulo "${titleEntry.nombre}" agregado a tu ficha.` });
       setTimeout(() => setTitleMsg(null), 4000);
@@ -2188,9 +2479,10 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
         setTimeout(() => setTitleMsg(null), 4000);
         return;
       }
-      applyStoreProfilePatch({ titulo: res.titulo || "" });
-      emitProfileUpdated({ titulo: res.titulo || "" }, { source: "tienda", category: "title_equip" });
-      window.dispatchEvent(new CustomEvent("titleEquipped", { detail: { titulo: res.titulo || "" } }));
+      const profilePatch = getResponseProfilePatch(res, { titulo: res.titulo || "" });
+      applyStoreProfilePatch(profilePatch);
+      emitProfileUpdated(profilePatch, { source: "tienda", category: "title_equip" });
+      window.dispatchEvent(new CustomEvent("titleEquipped", { detail: { ...profilePatch } }));
       setTitleMsg({ ok: true, text: res.titulo ? `Titulo activo: ${res.titulo}` : "Titulo retirado de la ficha." });
       setTimeout(() => setTitleMsg(null), 3200);
     } catch (err) {
@@ -2210,7 +2502,7 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
       const token = await user.getIdToken();
       const res   = await apiSetActiveAvatar(token, av.id);
       if (!res?.ok) return;
-      const patch = { activeAvatar: av.id };
+      const patch = getResponseProfilePatch(res, { activeAvatar: av.id });
       applyStoreProfilePatch(patch);
       emitProfileUpdated(patch, { source: "tienda", category: "avatar_equip" });
       window.dispatchEvent(new CustomEvent("avatarEquipped", { detail: patch }));
@@ -2227,7 +2519,7 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
       const token = await user.getIdToken();
       const res   = await apiSetActiveFrame(token, targetId);
       if (!res?.ok) return;
-      const patch = { activeFrame: targetId };
+      const patch = getResponseProfilePatch(res, { activeFrame: targetId });
       applyStoreProfilePatch(patch);
       emitProfileUpdated(patch, { source: "tienda", category: "frame_equip" });
       window.dispatchEvent(new CustomEvent("avatarEquipped", { detail: patch }));
@@ -2243,7 +2535,7 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
       const token = await user.getIdToken();
       const res   = await apiSetActiveSkin(token, skin.id);
       if (!res?.ok) return;
-      const patch = { activeSkin: skin.id };
+      const patch = getResponseProfilePatch(res, { activeSkin: skin.id });
       applyStoreProfilePatch(patch);
       emitProfileUpdated(patch, { source: "tienda", category: "skin_equip" });
       window.dispatchEvent(new CustomEvent("skinChanged", { detail: patch }));
@@ -2254,6 +2546,10 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
     if (usingId === item.id) return;
     const user = auth.currentUser;
     if (!user) return;
+    if (!isSupportedUseItem(item)) {
+      setError(item.retiredReason || "Este objeto ya no se usa desde el mercado actual.");
+      return;
+    }
     const isSingleUse = item.usoUnico === true || (item.consumible && item.cantidad <= 1);
     setInventario(prev => isSingleUse ? prev.filter(i => i.id!==item.id)
       : prev.map(i => i.id===item.id ? { ...i, cantidad:i.cantidad-1 } : i));
@@ -2365,7 +2661,7 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
     const previousLevel = Number(localProfile?.level ?? profile?.level ?? 1);
     const nextLevel = Number(res.newLevel || previousLevel);
     const levelsGained = Math.max(1, nextLevel - previousLevel);
-    const patch = {
+    const fallbackPatch = {
       level: nextLevel,
       xp: 0,
       xpNext: res.xpNext,
@@ -2374,7 +2670,8 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
       skillPoints: res.skillPoints ?? localProfile?.skillPoints,
       lastLevelUp: new Date().toISOString(),
     };
-    applyStoreProfilePatch(patch);
+    const profilePatch = getResponseProfilePatch(res, fallbackPatch);
+    applyStoreProfilePatch(profilePatch);
     invalidateUserCaches();
     pushMarketHistory({
       id:`service-level-${Date.now()}`,
@@ -2386,13 +2683,13 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
       categoria:"Servicio",
       rareza:"Legendario",
     });
-    emitProfileUpdated(patch, { source: "tienda", category: "service_level" });
+    emitProfileUpdated(profilePatch, { source: "tienda", category: "service_level" });
     window.dispatchEvent(new CustomEvent("levelUp", {
       detail: {
         newLevel: nextLevel,
         xpNext: res.xpNext,
         skillPoints: res.skillPoints,
-        coins: patch.coins,
+        coins: profilePatch.coins,
         leveledUp: true,
         levelsGained,
         source: "tienda",
@@ -2400,7 +2697,7 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
     }));
     window.dispatchEvent(new CustomEvent("shopStateChanged", {
       detail: {
-        coins: patch.coins,
+        ...profilePatch,
         newLevel: nextLevel,
         skillPoints: res.skillPoints,
         levelsBought: res.levelsBought,
@@ -2503,7 +2800,7 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
   ])];
   const invGrouped = allInvCats.map(catKey => ({
     cat:      catKey,
-    icon:     CATS[catKey]?.icon  || "📦",
+    icon:     null,
     img:      CATS[catKey]?.img   || "/ui/shop/icons/shop-crate.png",
     color:    CATS[catKey]?.color || C.muted,
     items:    invSorted.filter(i => i.cat === catKey),
@@ -2635,12 +2932,33 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
             {/* Stats */}
             <FVSPanel>
               <FVSHead>ESTADÍSTICAS</FVSHead>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:8,marginBottom:12}}>
+                {storeSidebarMeta.map((item) => (
+                  <div
+                    key={item.key}
+                    style={{
+                      padding:"8px 9px",
+                      borderRadius:8,
+                      background:"rgba(255,255,255,.035)",
+                      border:`1px solid ${myColor}18`,
+                      boxShadow:`inset 0 1px 0 ${myColor}10`,
+                    }}
+                  >
+                    <div style={{font:"700 8px/1 'JetBrains Mono',monospace",color:"#7f7295",letterSpacing:"0.08em",marginBottom:5}}>
+                      {item.label}
+                    </div>
+                    <div style={{font:"800 12px/1.1 'Manrope',sans-serif",color:"#f4f0ff"}}>
+                      {item.value}
+                    </div>
+                  </div>
+                ))}
+              </div>
               {[
-                {k:"str",l:"FUERZA",     c:"#e0455e",pct:localProfile?.stats?.str??profile?.stats?.str??0},
-                {k:"sta",l:"RESISTENCIA",c:"#ffb13a",pct:localProfile?.stats?.sta??profile?.stats?.sta??0},
-                {k:"spd",l:"VELOCIDAD",  c:"#8ac926",pct:localProfile?.stats?.spd??profile?.stats?.spd??0},
-                {k:"dis",l:"DISCIPLINA", c:"#c08aff",pct:localProfile?.stats?.dis??profile?.stats?.dis??0},
-                {k:"men",l:"MENTALIDAD", c:"#4cc9f0",pct:localProfile?.stats?.men??profile?.stats?.men??0},
+                {k:"str",l:"FUERZA",     c:"#e0455e",pct:storeSidebarStats.str},
+                {k:"sta",l:"RESISTENCIA",c:"#ffb13a",pct:storeSidebarStats.sta},
+                {k:"spd",l:"VELOCIDAD",  c:"#8ac926",pct:storeSidebarStats.spd},
+                {k:"dis",l:"DISCIPLINA", c:"#c08aff",pct:storeSidebarStats.dis},
+                {k:"men",l:"MENTALIDAD", c:"#4cc9f0",pct:storeSidebarStats.men},
               ].map(s=>(
                 <div key={s.k} style={{display:"grid",gridTemplateColumns:"16px 1fr",alignItems:"center",gap:8,marginBottom:8}}>
                   <img src={`/ui/stat-${s.k}.png`} alt={s.l} style={{width:14,height:14,objectFit:"contain",filter:`drop-shadow(0 0 4px ${s.c}88)`}}/>
@@ -2654,6 +2972,9 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
                   </div>
                 </div>
               ))}
+              <div style={{marginTop:10,paddingTop:10,borderTop:"1px solid rgba(255,255,255,.06)",font:"500 10px/1.45 'Manrope',sans-serif",color:"#9b90ae"}}>
+                La lectura mezcla clase, nivel, racha, XP semanal, misiones y ritmo reciente del heroe.
+              </div>
             </FVSPanel>
 
 
@@ -2666,7 +2987,7 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
         )}
 
         {/* ══ CENTER COLUMN ══ */}
-        <main className="ti-main">
+        <main className="ti-main" style={!isMobile && !showRightRail ? { gridColumn:"2 / 4" } : undefined}>
 
           {error && (
             <div style={{padding:"10px 14px",background:"rgba(160,30,46,.14)",border:"1px solid rgba(160,30,46,.5)",borderRadius:6,color:"#ffb4b4",font:"500 11px/1 'Manrope',sans-serif"}}>
@@ -2886,6 +3207,7 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
                         const rc = TIER_ACCENT_TI[item.rareza]||{c:"#a8a8b8",a:"rgba(168,168,184,.4)"};
                         const rCls = RARITY_CLASS[item.rareza]||"ti-r-common";
                         const owned = inventario.some(i=>i.id===item.id||i.objectId===item.id);
+                        const kindMeta = MARKET_KIND_META[item.marketKind] || MARKET_KIND_META.functional;
                         return (
                           <div key={item.id||idx}
                             className={`ti-card ${rCls}${selectedItem?.id===item.id?" selected":""}`}
@@ -2917,6 +3239,9 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
                                 />
                                 <div style={{font:"700 7px/1 'JetBrains Mono',monospace",color:rc.c,letterSpacing:"0.08em",opacity:.8}}>{item.rareza?.toUpperCase()}</div>
                               </div>
+                              <div style={{display:"inline-flex",alignItems:"center",gap:4,padding:"2px 6px",borderRadius:999,border:`1px solid ${kindMeta.border}`,background:kindMeta.bg,font:"700 7px/1 'JetBrains Mono',monospace",color:kindMeta.color,letterSpacing:"0.08em",width:"fit-content"}}>
+                                {kindMeta.label}
+                              </div>
                               <div style={{marginTop:"auto",display:"flex",alignItems:"center",gap:4}}>
                                 <img src="/ui/icon-gold.png" alt="gold" style={{width:10,height:10,objectFit:"contain",filter:`drop-shadow(0 0 4px ${rc.c}55)`}}/>
                                 <span style={{font:"800 11px/1 'Manrope',sans-serif",color:rc.c,textShadow:`0 0 6px ${rc.a}`}}>{item.precio?.toLocaleString()||"FREE"}</span>
@@ -2940,7 +3265,7 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
 
             {/* INVENTARIO */}
             {tab==="inventario" && (
-              <motion.div key="inventario" initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0}} transition={{duration:.2}} style={{display:"flex",flexDirection:"column",gap:14,flex:1,minHeight:0}}>
+              <motion.div key="inventario" initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0}} transition={{duration:.2}} style={{display:"flex",flexDirection:"column",gap:14,flex:1,minHeight:0,width:"100%",alignSelf:"stretch"}}>
                 {/* Inventory hero banner */}
                 <FVSPanel p={0} style={{overflow:"hidden"}}>
                   <div style={{height:80,position:"relative",background:`radial-gradient(ellipse 60% 100% at 15% 50%,${myColor}20,transparent 60%),linear-gradient(180deg,rgba(6,4,14,.9),rgba(14,8,26,.95))`,display:"flex",alignItems:"center",gap:16,padding:"0 20px"}}>
@@ -2985,6 +3310,8 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
                         </div>
                         {group.items.map((item,i)=>{
                           const rc=TIER_ACCENT_TI[item.rareza]||{c:"#a8a8b8",a:"rgba(168,168,184,.4)"};
+                          const kindMeta = MARKET_KIND_META[item.marketKind] || MARKET_KIND_META.functional;
+                          const canUseItem = item.consumible && isSupportedUseItem(item);
                           return (
                           <div key={item.id||i} className="ti-row" onClick={()=>focusItemDetail(item)}>
                               <div style={{width:36,height:36,background:`${rc.c}0D`,border:`1px solid ${rc.c}33`,borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
@@ -2994,15 +3321,26 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
                               </div>
                               <div>
                                 <div style={{font:"600 11px/1 'Manrope',sans-serif",color:"#e0d4ff",marginBottom:3}}>{item.nombre}</div>
-                                <div style={{font:"600 8px/1 'JetBrains Mono',monospace",color:rc.c,letterSpacing:"0.08em"}}>{item.rareza?.toUpperCase()}</div>
+                                <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+                                  <div style={{font:"600 8px/1 'JetBrains Mono',monospace",color:rc.c,letterSpacing:"0.08em"}}>{item.rareza?.toUpperCase()}</div>
+                                  <div style={{display:"inline-flex",alignItems:"center",gap:4,padding:"2px 6px",borderRadius:999,border:`1px solid ${kindMeta.border}`,background:kindMeta.bg,font:"700 7px/1 'JetBrains Mono',monospace",color:kindMeta.color,letterSpacing:"0.08em"}}>
+                                    {kindMeta.label}
+                                  </div>
+                                </div>
                               </div>
                               <div style={{textAlign:"right"}}>
                                 <div style={{font:"800 14px/1 'JetBrains Mono',monospace",color:"var(--ti-ac,#c08aff)"}}>×{item.cantidad||1}</div>
                                 {item.consumible && (
-                                  <button onClick={e=>{e.stopPropagation();handleUse(item);}} disabled={usingId===item.id}
-                                    style={{marginTop:4,background:"rgba(76,201,240,.1)",border:"1px solid rgba(76,201,240,.35)",color:"#4cc9f0",font:"700 9px/1 'Manrope',sans-serif",padding:"3px 8px",cursor:"pointer",borderRadius:4,letterSpacing:"0.04em",transition:"background .15s"}}>
-                                    {usingId===item.id?"...":"USAR"}
-                                  </button>
+                                  canUseItem ? (
+                                    <button onClick={e=>{e.stopPropagation();handleUse(item);}} disabled={usingId===item.id}
+                                      style={{marginTop:4,background:"rgba(76,201,240,.1)",border:"1px solid rgba(76,201,240,.35)",color:"#4cc9f0",font:"700 9px/1 'Manrope',sans-serif",padding:"3px 8px",cursor:"pointer",borderRadius:4,letterSpacing:"0.04em",transition:"background .15s"}}>
+                                      {usingId===item.id?"...":"USAR"}
+                                    </button>
+                                  ) : (
+                                    <div style={{marginTop:4,font:"700 8px/1 'JetBrains Mono',monospace",color:"#e05c8a",letterSpacing:"0.08em"}}>
+                                      LEGACY
+                                    </div>
+                                  )
                                 )}
                               </div>
                             </div>
@@ -3017,7 +3355,7 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
 
             {/* HISTORIAL */}
             {tab==="historial" && (
-              <motion.div key="historial" initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0}} transition={{duration:.2}} style={{display:"flex",flexDirection:"column",gap:14,flex:1,minHeight:0}}>
+              <motion.div key="historial" initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0}} transition={{duration:.2}} style={{display:"flex",flexDirection:"column",gap:14,flex:1,minHeight:0,width:"100%",alignSelf:"stretch"}}>
                 <FVSPanel p={0} style={{overflow:"hidden"}}>
                   <div style={{height:80,position:"relative",background:`radial-gradient(ellipse 60% 100% at 85% 50%,${myColor}18,transparent 60%),linear-gradient(180deg,rgba(6,4,14,.9),rgba(14,8,26,.95))`,display:"flex",alignItems:"center",gap:16,padding:"0 20px"}}>
                     <div>
@@ -3068,7 +3406,7 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
 
             {/* SKINS */}
             {tab==="skins" && (
-              <motion.div key="skins" initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0}} transition={{duration:.2}} style={{display:"flex",flexDirection:"column",gap:14,flex:1,minHeight:0}}>
+              <motion.div key="skins" initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0}} transition={{duration:.2}} style={{display:"flex",flexDirection:"column",gap:14,flex:1,minHeight:0,width:"100%",alignSelf:"stretch"}}>
                 <FVSPanel p={0} style={{overflow:"hidden"}}>
                   <div style={{height:80,position:"relative",background:`radial-gradient(ellipse 70% 100% at 20% 50%,${myColor}22,transparent 60%),linear-gradient(180deg,rgba(6,4,14,.9),rgba(14,8,26,.95))`,display:"flex",alignItems:"center",gap:16,padding:"0 20px"}}>
                     <img
@@ -3102,7 +3440,7 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
                       <div style={{font:"700 9px/1 'JetBrains Mono',monospace",letterSpacing:"0.1em"}}>SIN APARIENCIAS DISPONIBLES</div>
                     </div>
                   ) : (
-                    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(170px,1fr))",gap:14}}>
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))",gap:14}}>
                       {skinCatalog.map((skin,i)=>{
                         const skinKey = skin.id || skin.nombre;
                         const owned   = ownedSkins.includes(skinKey);
@@ -3157,7 +3495,7 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
 
             {/* AVATARES */}
             {tab==="avatares" && (
-              <motion.div key="avatares" initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0}} transition={{duration:.2}} style={{display:"flex",flexDirection:"column",gap:14,flex:1,minHeight:0}}>
+              <motion.div key="avatares" initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0}} transition={{duration:.2}} style={{display:"flex",flexDirection:"column",gap:14,flex:1,minHeight:0,width:"100%",alignSelf:"stretch"}}>
                 <FVSPanel p={0} style={{overflow:"hidden"}}>
                   <div style={{height:80,position:"relative",background:`radial-gradient(ellipse 70% 100% at 80% 50%,${myColor}22,transparent 60%),linear-gradient(180deg,rgba(6,4,14,.9),rgba(14,8,26,.95))`,display:"flex",alignItems:"center",gap:16,padding:"0 20px"}}>
                     <div>
@@ -3189,7 +3527,7 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
                       {avatarMsg.text}
                     </div>
                   )}
-                  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:14}}>
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14}}>
                     {liveAvatars.map((av,i)=>{
                       const owned  = ownedAvatars.includes(av.id);
                       const active = equippedAvatar === av.id;
@@ -3232,7 +3570,7 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
                 {liveFrames.length > 0 && (
                   <FVSPanel style={{marginTop:12,flex:1}}>
                     <FVSHead>MARCOS</FVSHead>
-                    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:14}}>
+                    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14}}>
                       {liveFrames.map((fr,i)=>{
                         const owned  = ownedFrames.includes(fr.id);
                         const active = equippedFrame === fr.id;
@@ -3274,7 +3612,7 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
             )}
 
             {tab==="servicios" && (
-              <motion.div key="servicios" initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0}} transition={{duration:.2}} style={{display:"flex",flexDirection:"column",gap:14}}>
+              <motion.div key="servicios" initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0}} transition={{duration:.2}} style={{display:"flex",flexDirection:"column",gap:14,width:"100%",alignSelf:"stretch"}}>
                 <FVSPanel p={0} style={{overflow:"hidden"}}>
                   <div style={{height:92,position:"relative",background:`radial-gradient(ellipse 70% 100% at 20% 50%,${myColor}22,transparent 60%),linear-gradient(180deg,rgba(6,4,14,.9),rgba(14,8,26,.95))`,display:"flex",alignItems:"center",gap:16,padding:"0 20px"}}>
                     <AssetIcon src="/ui/shop/icons/shop-service.png" size={42} style={{filter:`drop-shadow(0 0 14px ${myColor}88)`}} />
@@ -3328,7 +3666,7 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
 
                 <FVSPanel>
                   <FVSHead>COLECCIÓN DE TÍTULOS</FVSHead>
-                  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(190px,1fr))",gap:14}}>
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(190px,1fr))",gap:14}}>
                     {titleCatalog.map((titleEntry) => {
                       const owned = ownedTitles.includes(titleEntry.nombre);
                       const active = activeTitle === titleEntry.nombre;
@@ -3375,7 +3713,7 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
         </main>
 
         {/* ══ RIGHT COLUMN ══ */}
-        {!isMobile && (
+        {showRightRail && (
           <aside className="ti-right">
 
             {/* Detail panel */}
@@ -3388,6 +3726,8 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
                 const owned = inventario.some(i=>i.id===selectedItem.id||i.objectId===selectedItem.id);
                 const canAfford = coins >= (selectedItem.precio||0);
                 const hint = missionHint(selectedItem.efectos);
+                const kindMeta = MARKET_KIND_META[selectedItem.marketKind] || MARKET_KIND_META.functional;
+                const canUseItem = isSupportedUseItem(selectedItem);
                 return (
                   <>
                     <div className="ti-d-art" style={{"--ti-rc":rc.c,"--ti-ra":rc.a}}>
@@ -3395,9 +3735,19 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
                     </div>
                     <div style={{font:"700 12px/1 'Manrope',sans-serif",color:rc.c,textShadow:`0 0 10px ${rc.a}`,textAlign:"center",marginBottom:4}}>{selectedItem.nombre}</div>
                     <div style={{textAlign:"center",font:"700 8px/1 'JetBrains Mono',monospace",color:rc.c,letterSpacing:"0.1em",marginBottom:10,opacity:.8}}>{selectedItem.rareza?.toUpperCase()}</div>
+                    <div style={{display:"flex",justifyContent:"center",marginBottom:10}}>
+                      <div style={{display:"inline-flex",alignItems:"center",gap:4,padding:"4px 10px",borderRadius:999,border:`1px solid ${kindMeta.border}`,background:kindMeta.bg,font:"700 8px/1 'JetBrains Mono',monospace",color:kindMeta.color,letterSpacing:"0.08em"}}>
+                        {kindMeta.label}
+                      </div>
+                    </div>
                     <div style={{font:"400 11px/1.5 'Manrope',sans-serif",color:"#9080b0",textAlign:"center",padding:"8px 6px",borderTop:"1px solid rgba(255,255,255,.07)",borderBottom:"1px solid rgba(255,255,255,.07)",marginBottom:12}}>
                       {selectedItem.descripcion||"—"}
                     </div>
+                    {selectedItem.retiredReason && (
+                      <div style={{padding:"7px 10px",background:"rgba(224,92,138,.1)",border:"1px solid rgba(224,92,138,.28)",borderRadius:6,marginBottom:12,font:"500 10px/1.45 'Manrope',sans-serif",color:"#f4b2c4"}}>
+                        {selectedItem.retiredReason}
+                      </div>
+                    )}
                     {selectedItem.efectos?.length > 0 && (
                       <div style={{marginBottom:12}}>
                         <div style={{font:"700 8px/1 'JetBrains Mono',monospace",color:rc.c,letterSpacing:"0.1em",paddingBottom:6,marginBottom:8,borderBottom:"1px solid rgba(255,255,255,.07)",display:"flex",alignItems:"center",gap:6}}>
@@ -3420,17 +3770,27 @@ export default function UserTienda({ profile, onCoinsChange, onProfilePatch }) {
                         </span>
                       </div>
                     )}
+                    {selectedItem.effectTypes?.includes("cooldown_red") && (
+                      <div style={{padding:"7px 10px",background:"rgba(76,201,240,.08)",border:"1px solid rgba(76,201,240,.28)",borderRadius:6,marginBottom:12,font:"500 10px/1.45 'Manrope',sans-serif",color:"#8fdcff"}}>
+                        Mientras este activo, el apoyo del gremio reduce su recarga y el mercado te deja volver antes a ese gesto.
+                      </div>
+                    )}
                     <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,padding:"10px 14px",background:"rgba(255,255,255,.04)",border:`1px solid ${rc.c}44`,borderRadius:6,marginBottom:12}}>
                       <img src="/ui/icon-gold.png" alt="gold" style={{width:14,height:14,objectFit:"contain"}}/>
                       <span style={{font:"800 20px/1 'Manrope',sans-serif",color:rc.c,textShadow:`0 0 12px ${rc.a}`}}>{selectedItem.precio?.toLocaleString()||"FREE"}</span>
                     </div>
-                    <button className={`ti-btn-buy${owned?" owned":""}`} disabled={!canAfford&&!owned} onClick={()=>{if(!owned)setItemModal(selectedItem);}}>
-                      {owned?"OBTENIDO":canAfford?"COMPRAR":"MONEDAS INSUFICIENTES"}
+                    <button className={`ti-btn-buy${owned?" owned":""}`} disabled={(!canAfford && !owned) || selectedItem.catalogStatus==="legacy"} onClick={()=>{if(!owned)setItemModal(selectedItem);}}>
+                      {owned ? "OBTENIDO" : selectedItem.catalogStatus==="legacy" ? "OBJETO RETIRADO" : canAfford ? "COMPRAR" : "MONEDAS INSUFICIENTES"}
                     </button>
                     <button className={`ti-btn-wish${wishlist.has(selectedItem.id)?" active":""}`} onClick={()=>setWishlist(prev=>{const s=new Set(prev);s.has(selectedItem.id)?s.delete(selectedItem.id):s.add(selectedItem.id);return s;})}>
                       <AssetIcon src="/ui/icon-gem.png" size={13} />
                       {wishlist.has(selectedItem.id)?"EN FAVORITOS":"AGREGAR A FAVORITOS"}
                     </button>
+                    {owned && selectedItem.consumible && !canUseItem && (
+                      <div style={{marginTop:10,font:"500 10px/1.45 'Manrope',sans-serif",color:"#e8a1b7",textAlign:"center"}}>
+                        Este ejemplar quedó como legado y ya no se consume desde el mercado actual.
+                      </div>
+                    )}
                   </>
                 );
               })() : activeDetail?.type === "routine" ? (() => {

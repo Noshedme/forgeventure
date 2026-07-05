@@ -40,13 +40,13 @@ const UI = {
 };
 
 const TYPE_META = {
-  Ejercicio: { icon: Dumbbell, color: "#ff8f5f", label: "Campo fisico" },
-  Racha: { icon: Flame, color: "#ffb13a", label: "Cadencia diaria" },
-  Nivel: { icon: TrendingUp, color: "#f4cc78", label: "Ascenso del heroe" },
-  Social: { icon: Users, color: "#67d5ff", label: "Circulo del gremio" },
-  Especial: { icon: Star, color: "#c08aff", label: "Sala especial" },
-  Mente: { icon: Brain, color: "#59d5c6", label: "Dominio mental" },
-  Secreto: { icon: HelpCircle, color: "#9aa0b6", label: "Archivo sellado" },
+  Ejercicio: { icon: Dumbbell, color: "#ff8f5f", label: "Fisico" },
+  Racha: { icon: Flame, color: "#ffb13a", label: "Racha" },
+  Nivel: { icon: TrendingUp, color: "#f4cc78", label: "Nivel" },
+  Social: { icon: Users, color: "#67d5ff", label: "Social" },
+  Especial: { icon: Star, color: "#c08aff", label: "Especial" },
+  Mente: { icon: Brain, color: "#59d5c6", label: "Mente" },
+  Secreto: { icon: HelpCircle, color: "#9aa0b6", label: "Oculto" },
 };
 
 const STAGE_THEME = {
@@ -54,25 +54,25 @@ const STAGE_THEME = {
     image: "/missions/missions-hero-warrior.png",
     floor: "/exercises/hero/hero-floor-glow-warrior.png",
     label: "Salon de hierro",
-    copy: "Insignias de fuerza, constancia y cierre firme del esfuerzo real.",
+    copy: "Logros de fuerza y constancia ganados con trabajo real.",
   },
   ARQUERO: {
     image: "/missions/missions-hero-archer.png",
     floor: "/exercises/hero/hero-floor-glow-archer.png",
     label: "Galeria del pulso",
-    copy: "Medallas que se ganan con ritmo, cardio y precision sostenida.",
+    copy: "Logros de ritmo, cardio y precision sostenida.",
   },
   MAGO: {
     image: "/missions/missions-hero-mage.png",
     floor: "/exercises/hero/hero-floor-glow-mage.png",
     label: "Archivo del foco",
-    copy: "Sellos ligados a disciplina mental, calma y dominio del avance.",
+    copy: "Logros de foco, calma y avance sostenido.",
   },
   DEFAULT: {
     image: "/missions/missions-hero-default.png",
     floor: "/exercises/hero/hero-floor-glow-default.png",
     label: "Salon del gremio",
-    copy: "La vitrina del progreso mezcla botin, habito y presencia real.",
+    copy: "Tu avance queda guardado aqui de forma clara y ordenada.",
   },
 };
 
@@ -439,6 +439,16 @@ const CSS = `
     color: ${UI.text};
     font-family: "Manrope", sans-serif;
     font-size: 15px;
+    color-scheme: dark;
+  }
+  .ulg-select select option {
+    background: #120f1d;
+    color: ${UI.text};
+  }
+  .ulg-select select option:checked,
+  .ulg-select select option:hover {
+    background: color-mix(in srgb, var(--class-accent) 28%, #120f1d);
+    color: ${UI.text};
   }
   .ulg-select {
     min-height: 48px;
@@ -665,6 +675,7 @@ const CSS = `
     gap: 14px;
     position: sticky;
     top: 14px;
+    overflow: visible;
   }
   .ulg-spot-banner {
     position: relative;
@@ -704,6 +715,60 @@ const CSS = `
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
+  }
+  .ulg-spot-popover {
+    position: absolute;
+    inset: 18px;
+    z-index: 8;
+    display: flex;
+    align-items: flex-start;
+    justify-content: stretch;
+    pointer-events: none;
+  }
+  .ulg-spot-popover > * {
+    pointer-events: auto;
+  }
+  .ulg-inline-detail {
+    position: relative;
+    display: grid;
+    gap: 12px;
+    width: 100%;
+    padding: 14px;
+    max-height: min(560px, calc(100vh - 140px));
+    overflow: auto;
+    border-radius: 18px;
+    border: 1px solid color-mix(in srgb, var(--detail-accent, var(--class-accent)) 24%, rgba(255,255,255,.08));
+    background:
+      linear-gradient(180deg, rgba(16,13,28,.96), rgba(9,8,18,.96)),
+      url("/ui/panel-texture.png");
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,.03),
+      0 18px 40px rgba(0,0,0,.34);
+  }
+  .ulg-inline-detail-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .ulg-inline-detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .ulg-inline-detail-art {
+    min-height: 132px;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,.08);
+    background:
+      linear-gradient(180deg, rgba(9,8,18,.18), rgba(9,8,18,.9)),
+      radial-gradient(circle at top right, color-mix(in srgb, var(--detail-accent, var(--class-accent)) 14%, transparent), transparent 34%),
+      var(--detail-image) center/cover no-repeat;
+  }
+  .ulg-inline-detail-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
   }
   .ulg-btn,
   .ulg-btn-ghost {
@@ -747,15 +812,21 @@ const CSS = `
     inset: 0;
     z-index: 900;
     display: grid;
-    place-items: center;
-    padding: 18px;
+    align-items: center;
+    justify-items: end;
+    padding: 18px 22px;
     background: rgba(4,3,10,.7);
     backdrop-filter: blur(12px);
+    overflow: hidden;
+  }
+  .ulg-modal-overlay.is-mobile {
+    place-items: center;
+    padding: 14px;
   }
   .ulg-modal {
-    width: min(720px, 100%);
-    max-height: 88vh;
-    overflow: auto;
+    width: min(680px, calc(100vw - 44px));
+    max-height: calc(100vh - 36px);
+    overflow: hidden;
     border-radius: 24px;
     border: 1px solid rgba(255,255,255,.08);
     background:
@@ -763,12 +834,33 @@ const CSS = `
       url("/ui/panel-texture.png");
     box-shadow: 0 24px 48px rgba(0,0,0,.36), 0 0 0 1px color-mix(in srgb, var(--modal-accent) 18%, transparent);
   }
-  .ulg-modal-inner { padding: 18px; display: grid; gap: 14px; }
+  .ulg-modal.is-sheet {
+    height: min(820px, calc(100vh - 36px));
+  }
+  .ulg-modal-inner {
+    padding: 18px;
+    display: grid;
+    gap: 14px;
+    max-height: inherit;
+    height: 100%;
+    overflow: auto;
+  }
   .ulg-modal-head {
     display: flex;
     justify-content: space-between;
     gap: 12px;
     align-items: flex-start;
+  }
+  .ulg-modal-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(280px, .8fr);
+    gap: 14px;
+    align-items: start;
+  }
+  .ulg-modal-main,
+  .ulg-modal-side {
+    display: grid;
+    gap: 14px;
   }
   .ulg-modal-close {
     width: 34px;
@@ -782,12 +874,33 @@ const CSS = `
     cursor: pointer;
   }
   .ulg-modal-art {
-    min-height: 260px;
+    min-height: 220px;
     border-radius: 20px;
     border: 1px solid rgba(255,255,255,.08);
     background:
-      linear-gradient(180deg, rgba(9,8,18,.12), rgba(9,8,18,.86)),
+      linear-gradient(180deg, rgba(9,8,18,.16), rgba(9,8,18,.9)),
+      radial-gradient(circle at top right, color-mix(in srgb, var(--modal-accent) 16%, transparent), transparent 32%),
       var(--modal-image) center/cover no-repeat;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.03);
+  }
+  .ulg-modal-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .ulg-modal-summary .ulg-progress-card {
+    min-height: 112px;
+  }
+  .ulg-modal-desc {
+    display: grid;
+    gap: 10px;
+  }
+  .ulg-modal-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    margin-top: 4px;
   }
   @media (max-width: 1220px) {
     .ulg-hero,
@@ -804,6 +917,22 @@ const CSS = `
     .ulg-toolbar,
     .ulg-spot-grid { grid-template-columns: 1fr; }
     .ulg-group-grid { grid-template-columns: 1fr; }
+    .ulg-inline-detail-grid { grid-template-columns: 1fr; }
+    .ulg-spot-popover {
+      position: static;
+      inset: auto;
+      pointer-events: auto;
+    }
+    .ulg-inline-detail {
+      max-height: none;
+      margin-top: 6px;
+    }
+    .ulg-modal-layout,
+    .ulg-modal-summary { grid-template-columns: 1fr; }
+    .ulg-modal-overlay { place-items: center; padding: 14px; }
+    .ulg-modal { width: min(760px, 100%); max-height: 90vh; }
+    .ulg-modal.is-sheet { height: auto; }
+    .ulg-modal-art { min-height: 180px; }
     .ulg-row {
       grid-template-columns: 68px minmax(0, 1fr);
       align-items: start;
@@ -830,13 +959,13 @@ const CSS = `
   .ulg-sfc {
     perspective: 900px;
     cursor: pointer;
-    min-height: 104px;
+    min-height: 108px;
   }
   .ulg-sfc-inner {
     position: relative;
     width: 100%;
     height: 100%;
-    min-height: 104px;
+    min-height: 108px;
     transform-style: preserve-3d;
     transition: transform .4s cubic-bezier(.4,0,.2,1);
   }
@@ -851,9 +980,10 @@ const CSS = `
     background: rgba(255,255,255,.04);
     padding: 14px 16px;
     overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 8px;
+    align-items: start;
   }
   .ulg-sfc-back {
     transform: rotateY(180deg);
@@ -869,13 +999,22 @@ const CSS = `
   }
   .ulg-sfc-value {
     font: 900 clamp(26px, 2.6vw, 36px)/1 "Manrope", sans-serif;
-    margin-top: 4px;
+    margin-top: 2px;
+    align-self: center;
+    max-width: 100%;
+    word-break: break-word;
+  }
+  .ulg-sfc-value.is-text {
+    font-size: clamp(18px, 1.7vw, 24px);
+    line-height: .95;
+    letter-spacing: 0;
   }
   .ulg-sfc-hint {
     font: 600 9px/1 "JetBrains Mono", monospace;
     color: rgba(180,170,200,.4);
     text-transform: uppercase;
     letter-spacing: .08em;
+    align-self: end;
   }
   .ulg-sfc-back p {
     margin: 0;
@@ -1056,7 +1195,7 @@ function getStatusMeta(logro, classAccent) {
       label: "Archivado",
       color: UI.green,
       asset: "/logros/states/state-claimed.png",
-      detail: "La insignia ya quedo guardada en tu vitrina.",
+      detail: "Este logro ya quedo guardado.",
     };
   }
   if (logro?.obtenido) {
@@ -1065,7 +1204,7 @@ function getStatusMeta(logro, classAccent) {
       label: "Lista para reclamar",
       color: UI.gold,
       asset: "/logros/states/state-claimable.png",
-      detail: "Ya cumpliste el objetivo y solo falta cobrar el botin.",
+      detail: "Ya cumpliste la meta. Solo falta cobrar.",
     };
   }
   if (logro?.secreto) {
@@ -1074,7 +1213,7 @@ function getStatusMeta(logro, classAccent) {
       label: "Sello oculto",
       color: UI.mutedDeep,
       asset: "/logros/states/state-secret.png",
-      detail: "Sigue entrenando para revelar esta pieza del tablero.",
+      detail: "Sigue avanzando para descubrirlo.",
     };
   }
   return {
@@ -1082,7 +1221,7 @@ function getStatusMeta(logro, classAccent) {
     label: "En progreso",
     color: classAccent,
     asset: "/logros/states/state-active.png",
-    detail: "Aun falta otro empuje para cerrar esta meta.",
+    detail: "Te falta un poco mas para cerrarlo.",
   };
 }
 
@@ -1166,7 +1305,7 @@ function AchievementRow({ logro, selected, onSelect, onClaim, claiming }) {
   const rewardGem = logro.recompensas?.find((reward) => normalizeLoose(reward?.tipo || reward?.nombre || reward?.icon || "") !== "xp");
 
   const label = logro.obtenido || !logro.secreto ? logro.nombre : "Sello oculto";
-  const desc  = logro.obtenido || !logro.secreto ? logro.descripcion : "Sigue avanzando. Esta pieza sigue protegida por el mapa.";
+  const desc  = logro.obtenido || !logro.secreto ? logro.descripcion : "Sigue avanzando. Este logro sigue oculto.";
 
   return (
     <div
@@ -1260,6 +1399,8 @@ function BadgeMedallionVisual({ logro, size = 54, onClick, isNew = false }) {
 
 function StatFlipCard({ label, value, desc, color, hint = "ver detalle" }) {
   const [flipped, setFlipped] = useState(false);
+  const valueText = String(value ?? "");
+  const isTextValue = /[a-zA-Z]/.test(valueText) || valueText.length > 10;
   return (
     <div
       className={`ulg-sfc${flipped ? " is-flipped" : ""}`}
@@ -1269,7 +1410,7 @@ function StatFlipCard({ label, value, desc, color, hint = "ver detalle" }) {
       <div className="ulg-sfc-inner">
         <div className="ulg-sfc-face">
           <span className="ulg-sfc-label">{label}</span>
-          <span className="ulg-sfc-value" style={{ color }}>{value}</span>
+          <span className={`ulg-sfc-value${isTextValue ? " is-text" : ""}`} style={{ color }}>{value}</span>
           <span className="ulg-sfc-hint">{hint}</span>
         </div>
         <div className="ulg-sfc-back">
@@ -1290,7 +1431,7 @@ function AchievementRowCompact({ logro, selected, onSelect, onClaim, claiming })
   const label = logro.obtenido || !logro.secreto ? logro.nombre : "Sello oculto";
   const desc = logro.obtenido || !logro.secreto
     ? logro.descripcion
-    : "Sigue avanzando. Esta pieza sigue protegida por el mapa.";
+    : "Sigue avanzando. Este logro sigue oculto.";
 
   function handleFlip() {
     setFlipped((prev) => !prev);
@@ -1317,7 +1458,7 @@ function AchievementRowCompact({ logro, selected, onSelect, onClaim, claiming })
         </div>
 
         {/* DORSO — descripcion, progreso, recompensa */}
-        <div className="ulg-card-back" onClick={(event) => event.stopPropagation()}>
+        <div className="ulg-card-back" onClick={handleFlip}>
           <div className="ulg-cb-desc">{desc}</div>
           <div className="ulg-cb-bar">
             <span style={{
@@ -1345,95 +1486,92 @@ function AchievementRowCompact({ logro, selected, onSelect, onClaim, claiming })
   );
 }
 
-function DetailModal({ logro, classTheme, onClose, onClaim, claiming }) {
+function DetailDock({ logro, classTheme, onClose, onClaim, claiming }) {
   if (!logro) return null;
   const rarity = getRarezaMeta(logro.rareza);
   const status = getStatusMeta(logro, classTheme.accent);
   const progress = achievementProgress(logro);
   const rewardGem = logro.recompensas?.find((reward) => normalizeLoose(reward?.tipo || reward?.nombre || reward?.icon || "") !== "xp");
   const TypeIcon = TYPE_META[logro.tipo]?.icon || Award;
+  const title = logro.obtenido || !logro.secreto ? logro.nombre : "Sello oculto";
+  const desc = logro.secreto && !logro.obtenido
+    ? "Sigue avanzando. Este logro se abre cuando toque."
+    : logro.descripcion;
+  const objectiveLabel = logro.secreto && !logro.obtenido ? "Pista oculta" : "Meta visible";
+  const rewardCopy = rewardGem
+    ? `Incluye ${rewardGem.valor || rewardGem.nombre || "recompensa extra"} ademas del XP.`
+    : `Tambien deja ${Math.max(1, Math.floor(logro.xpBonus / 10))} gemas.`;
 
   return (
     <motion.div
-      className="ulg-modal-overlay"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      onClick={(event) => { if (event.target === event.currentTarget) onClose(); }}
+      className="ulg-inline-detail"
+      style={{ "--detail-accent": rarity.color, "--detail-image": `url(/logros/${logro.id}-detail.png)` }}
+      initial={{ opacity: 0, y: 10, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 8, scale: 0.98 }}
     >
-      <motion.div
-        className="ulg-modal"
-        style={{ "--modal-accent": rarity.color, "--modal-image": `url(/logros/${logro.id}-detail.png)` }}
-        initial={{ opacity: 0, y: 16, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: 16, scale: 0.98 }}
-      >
-        <div className="ulg-modal-inner">
-          <div className="ulg-modal-head">
-            <div>
-              <div className="ulg-kicker">
-                <TypeIcon size={14} />
-                <span>{logro.tipo}</span>
-              </div>
-              <h2 style={{ margin: "10px 0 6px", fontFamily: "'Manrope',sans-serif" }}>
-                {logro.obtenido || !logro.secreto ? logro.nombre : "Sello oculto"}
-              </h2>
-              <p style={{ margin: 0, color: UI.muted, fontFamily: "'Manrope',sans-serif" }}>{status.detail}</p>
-            </div>
-            <button type="button" className="ulg-modal-close" onClick={onClose} aria-label="Cerrar detalle">
-              <X size={16} />
-            </button>
+      <div className="ulg-inline-detail-head">
+        <div>
+          <div className="ulg-kicker">
+            <TypeIcon size={14} />
+            <span>{logro.tipo}</span>
           </div>
+          <h3 style={{ margin: "10px 0 4px", fontFamily: "'Manrope',sans-serif", fontSize: 22 }}>{title}</h3>
+          <p style={{ margin: 0, color: UI.muted, fontFamily: "'Manrope',sans-serif" }}>{status.detail}</p>
+        </div>
+        <button type="button" className="ulg-modal-close" onClick={onClose} aria-label="Cerrar detalle">
+          <X size={16} />
+        </button>
+      </div>
 
-          <div className="ulg-modal-art" />
+      <div className="ulg-spot-chip-row">
+        <span className="ulg-spot-chip" style={{ color: status.color, borderColor: `${status.color}55` }}>
+          <img src={status.asset} alt="" />
+          {status.label}
+        </span>
+        <span className="ulg-spot-chip" style={{ color: rarity.color, borderColor: `${rarity.color}55` }}>
+          <img src={rarity.asset} alt="" />
+          {rarity.label}
+        </span>
+      </div>
 
-          <div className="ulg-spot-chip-row">
-            <span className="ulg-spot-chip" style={{ color: status.color, borderColor: `${status.color}55` }}>
-              <img src={status.asset} alt="" />
-              {status.label}
-            </span>
-            <span className="ulg-spot-chip" style={{ color: rarity.color, borderColor: `${rarity.color}55` }}>
-              <img src={rarity.asset} alt="" />
-              {rarity.label}
-            </span>
-          </div>
+      <div className="ulg-inline-detail-grid">
+        <div className="ulg-info-card ulg-modal-desc">
+          <small>Objetivo</small>
+          <strong>{objectiveLabel}</strong>
+          <p>{desc}</p>
+        </div>
+        <div className="ulg-inline-detail-art" />
+      </div>
 
-          <div className="ulg-progress-card">
-            <small>Progreso</small>
-            <strong style={{ color: status.color }}>{logro.reclamado ? "Completado" : `${logro.progreso}/${logro.total}`}</strong>
-            <div className="ulg-progress" style={{ marginTop: 10 }}>
-              <span style={{ width: `${logro.reclamado ? 100 : progress}%`, background: `linear-gradient(90deg, ${status.color}, ${rarity.color})` }} />
-            </div>
-          </div>
-
-          <div className="ulg-spot-grid">
-            <div className="ulg-info-card">
-              <small>Objetivo</small>
-              <strong>{logro.secreto && !logro.obtenido ? "Condicion oculta" : "Meta visible"}</strong>
-              <p>{logro.secreto && !logro.obtenido ? "Sigue jugando. Este logro se abre cuando el mapa lo decida." : logro.descripcion}</p>
-            </div>
-            <div className="ulg-info-card">
-              <small>Botin</small>
-              <strong style={{ color: UI.gold }}>+{logro.xpBonus} XP</strong>
-              <p>{rewardGem ? `Incluye ${rewardGem.valor || rewardGem.nombre || "recompensa extra"} ademas del XP principal.` : `Tambien deja ${Math.max(1, Math.floor(logro.xpBonus / 10))} gemas como premio secundario.`}</p>
-            </div>
-          </div>
-
-          <div className="ulg-actions">
-            {logro.obtenido && !logro.reclamado ? (
-              <button type="button" className="ulg-btn" disabled={claiming === logro.id} onClick={() => onClaim(logro)}>
-                <Gift size={16} />
-                {claiming === logro.id ? "Reclamando..." : "Reclamar recompensa"}
-              </button>
-            ) : (
-              <button type="button" className="ulg-btn-ghost" onClick={onClose}>
-                <Trophy size={16} />
-                Cerrar ficha
-              </button>
-            )}
+      <div className="ulg-inline-detail-grid">
+        <div className="ulg-progress-card">
+          <small>Progreso</small>
+          <strong style={{ color: status.color }}>{logro.reclamado ? "Completo" : `${logro.progreso}/${logro.total}`}</strong>
+          <div className="ulg-progress" style={{ marginTop: 10 }}>
+            <span style={{ width: `${logro.reclamado ? 100 : progress}%`, background: `linear-gradient(90deg, ${status.color}, ${rarity.color})` }} />
           </div>
         </div>
-      </motion.div>
+        <div className="ulg-progress-card">
+          <small>Recompensa</small>
+          <strong style={{ color: UI.gold }}>+{logro.xpBonus} XP</strong>
+          <p>{rewardCopy}</p>
+        </div>
+      </div>
+
+      <div className="ulg-inline-detail-actions">
+        {logro.obtenido && !logro.reclamado ? (
+          <button type="button" className="ulg-btn" disabled={claiming === logro.id} onClick={() => onClaim(logro)}>
+            <Gift size={16} />
+            {claiming === logro.id ? "Cobrando..." : "Cobrar"}
+          </button>
+        ) : (
+          <button type="button" className="ulg-btn-ghost" onClick={onClose}>
+            <Trophy size={16} />
+            Cerrar
+          </button>
+        )}
+      </div>
     </motion.div>
   );
 }
@@ -1617,12 +1755,12 @@ export default function UserLogrosLanding({ profile, onNavigate }) {
   })), [logros]);
 
   const ctxMsg = loading
-    ? "La sala esta alineando insignias y lectura del progreso."
+    ? "Estamos ordenando tus logros."
     : claimable.length > 0
-      ? `${claimable.length} recompensas ya quedaron listas para cobrar.`
+      ? `${claimable.length} logro${claimable.length === 1 ? "" : "s"} listo${claimable.length === 1 ? "" : "s"} para cobrar.`
       : pct >= 85
-        ? `Tu coleccion ya pisa ${pct}% del mapa visible.`
-        : `La vitrina sigue ordenando progreso, rareza y botin pendiente.`;
+        ? `Ya llevas ${pct}% de los logros visibles.`
+        : `Aqui puedes ver lo que ya ganaste y lo que te falta.`;
 
   const handleClaim = useCallback(async (logro) => {
     if (!logro || logro.reclamado || claiming === logro.id) return;
@@ -1677,18 +1815,6 @@ export default function UserLogrosLanding({ profile, onNavigate }) {
   return (
     <>
       <style>{CSS}</style>
-
-      <AnimatePresence>
-        {detailOpen && (
-          <DetailModal
-            logro={detailOpen}
-            classTheme={classTheme}
-            onClose={() => setDetailOpen(null)}
-            onClaim={handleClaim}
-            claiming={claiming}
-          />
-        )}
-      </AnimatePresence>
 
       <AnimatePresence>
         {newToast && (
@@ -1769,15 +1895,14 @@ export default function UserLogrosLanding({ profile, onNavigate }) {
               <div>
                 <h1>Convierte esfuerzo real en insignias <span>que si pesan.</span></h1>
                 <p>
-                  El tablero ahora deja ver progreso, rareza y botin pendiente con mucha
-                  mejor lectura. Menos ruido, mas presencia y una vitrina que si se siente parte del mundo RPG.
+                  Revisa tus logros, mira que ya esta listo y encuentra rapido lo siguiente por cerrar.
                 </p>
               </div>
 
               <div className="ulg-chip-row">
                 <span className="ulg-chip is-focus">
                   <Award size={14} />
-                  Clase {classTheme.label}
+                  {classTheme.label}
                 </span>
                 <span className="ulg-chip">
                   <Trophy size={14} color={UI.gold} />
@@ -1786,39 +1911,39 @@ export default function UserLogrosLanding({ profile, onNavigate }) {
                 {claimable.length > 0 && (
                   <span className="ulg-chip">
                     <Gift size={14} color={UI.gold} />
-                    {claimable.length} recompensas listas y +{xpPending.toLocaleString()} XP por cobrar
+                    {claimable.length} listas y +{xpPending.toLocaleString()} XP por cobrar
                   </span>
                 )}
               </div>
 
               <div className="ulg-hero-stats">
                 <StatFlipCard
-                  label="Insignias ganadas"
+                  label="Logros ganados"
                   value={`${obtained.length}/${Math.max(visibleTotal, 1)}`}
-                  desc={`${pct}% de la coleccion visible ya tiene marca del heroe.`}
+                  desc={`${pct}% de los logros visibles ya estan en tu vitrina.`}
                   color={UI.gold}
-                  hint={`${pct}% completado`}
+                  hint={`${pct}% hecho`}
                 />
                 <StatFlipCard
-                  label="Botin pendiente"
+                  label="Pendientes"
                   value={claimable.length}
-                  desc="Premios listos para reclamar sin perderte en el tablero."
+                  desc="Premios listos para cobrar."
                   color={claimable.length > 0 ? UI.gold : UI.muted}
-                  hint={claimable.length > 0 ? "listos para cobrar" : "al dia"}
+                  hint={claimable.length > 0 ? "para cobrar" : "al dia"}
                 />
                 <StatFlipCard
                   label="XP de logros"
                   value={`+${xpTotal.toLocaleString()}`}
-                  desc="Experiencia ya cobrada desde tus medallas y sellos archivados."
+                  desc="XP que ya sumaste con logros cobrados."
                   color={classTheme.accent}
                   hint="xp acumulado"
                 />
                 <StatFlipCard
-                  label="Sala activa"
+                  label="Sala"
                   value={stageTheme.label}
                   desc={stageTheme.copy}
                   color={classTheme.secondary || classTheme.accent}
-                  hint="tu territorio"
+                  hint="tu estilo"
                 />
               </div>
             </div>
@@ -1835,7 +1960,7 @@ export default function UserLogrosLanding({ profile, onNavigate }) {
 
               <div className="ulg-stage-copy">
                 <small style={{ color: UI.mutedDeep, fontFamily: "'Manrope',sans-serif", fontSize: 11, textTransform: "uppercase", letterSpacing: ".1em" }}>
-                  Portada del salon
+                  Portada
                 </small>
                 <strong>{stageTheme.label}</strong>
                 <p>{stageTheme.copy}</p>
@@ -1843,8 +1968,8 @@ export default function UserLogrosLanding({ profile, onNavigate }) {
 
               <div className="ulg-stage-honors">
                 <div>
-                  <small>Honor destacado</small>
-                  <strong>{honorShowcase[0]?.nombre || selectedLogro?.nombre || "Tu siguiente insignia"}</strong>
+                  <small>Destacado</small>
+                  <strong>{honorShowcase[0]?.nombre || selectedLogro?.nombre || "Tu siguiente logro"}</strong>
                 </div>
                 <div className="ulg-badge-row">
                   {(honorShowcase.length > 0 ? honorShowcase : (selectedLogro ? [selectedLogro] : [])).slice(0, 5).map((logro) => (
@@ -1869,11 +1994,10 @@ export default function UserLogrosLanding({ profile, onNavigate }) {
               </div>
               <div>
                 <strong style={{ display: "block", fontFamily: "'Manrope',sans-serif", fontSize: 28 }}>
-                  Tu coleccion ya muestra {pct}% del mapa visible
+                  Ya llevas {pct}% de los logros visibles
                 </strong>
                 <p>
-                  Cada reto completado deja rastro claro: que ya cobraste, que esta listo
-                  y que piezas todavia necesitan otro empuje.
+                  Aqui ves que ya cobraste, que esta listo y que te falta por cerrar.
                 </p>
               </div>
               <div className="ulg-progress" aria-hidden="true">
@@ -1882,7 +2006,7 @@ export default function UserLogrosLanding({ profile, onNavigate }) {
             </div>
 
             <div className="ulg-panel ulg-metric">
-              <small>Rarezas vivas</small>
+              <small>Rarezas</small>
               <strong style={{ color: classTheme.accent }}>{raritySummary.filter((item) => item.count > 0).length}/4</strong>
               <div className="ulg-rarity-row" style={{ marginTop: 10 }}>
                 {raritySummary.map((item) => (
@@ -1895,12 +2019,12 @@ export default function UserLogrosLanding({ profile, onNavigate }) {
             </div>
 
             <div className="ulg-panel ulg-metric">
-              <small>Salon de honor</small>
+              <small>Vitrina</small>
               <strong style={{ color: UI.gold }}>{claimed.length}</strong>
               <div className="ulg-honor-strip">
                 {honorShowcase.length > 0 ? honorShowcase.slice(0, 4).map((logro) => (
                   <BadgeMedallionVisual key={logro.id} logro={logro} size={46} onClick={() => setSelectedId(logro.id)} />
-                )) : <p>Todavia no hay piezas archivadas. Las primeras llegan apenas cierres tus metas base.</p>}
+                )) : <p>Aun no tienes logros cobrados. Los primeros caen rapido.</p>}
               </div>
             </div>
           </section>
@@ -1911,19 +2035,18 @@ export default function UserLogrosLanding({ profile, onNavigate }) {
                 <div>
                   <div className="ulg-kicker">
                     <img src="/ui/header/section-logros.png" alt="" />
-                    <span>Registro del heroe</span>
+                    <span>Registro</span>
                   </div>
                   <h2 style={{ marginTop: 10 }}>Tablero de insignias</h2>
                   <p>
-                    {filtered.length} entradas visibles. Todo queda seccionado para revisar,
-                    seguir o cobrar sin convertir la pantalla en una pared infinita.
+                    {filtered.length} entradas visibles. Todo queda ordenado para revisar o cobrar sin perder tiempo.
                   </p>
                 </div>
 
                 <div className="ulg-progress-card" style={{ minWidth: isMobile ? "auto" : 240 }}>
-                  <small>Lectura actual</small>
-                  <strong style={{ color: classTheme.accent }}>{filterTipo === "Todos" ? "Vista completa" : filterTipo}</strong>
-                  <p>{claimable.length} logros listos y {claimed.length} ya archivados en tu vitrina.</p>
+                  <small>Vista actual</small>
+                  <strong style={{ color: classTheme.accent }}>{filterTipo === "Todos" ? "Todo" : filterTipo}</strong>
+                  <p>{claimable.length} listos y {claimed.length} ya cobrados.</p>
                 </div>
               </div>
 
@@ -1940,7 +2063,7 @@ export default function UserLogrosLanding({ profile, onNavigate }) {
                     return (
                       <button key={tipo} className={`ulg-tab${active ? " is-active" : ""}`} onClick={() => setFilterTipo(tipo)}>
                         {tipo === "Todos" ? <Trophy size={14} /> : <Icon size={14} />}
-                        <span>{tipo === "Todos" ? "Todo el salon" : tipo}</span>
+                        <span>{tipo === "Todos" ? "Todos" : tipo}</span>
                         <small style={{ color: active ? classTheme.accent : UI.mutedDeep }}>{count}</small>
                         {readyCount > 0 && <span style={{ color: UI.gold }}>{readyCount}</span>}
                       </button>
@@ -1954,7 +2077,7 @@ export default function UserLogrosLanding({ profile, onNavigate }) {
                     <input
                       value={search}
                       onChange={(event) => setSearch(event.target.value)}
-                      placeholder="Buscar insignia, objetivo o descripcion..."
+                      placeholder="Buscar logro o descripcion..."
                     />
                     {search && (
                       <button type="button" onClick={() => setSearch("")} style={{ background: "none", border: "none", color: UI.muted, cursor: "pointer", display: "flex" }}>
@@ -2006,8 +2129,8 @@ export default function UserLogrosLanding({ profile, onNavigate }) {
               {!loading && filtered.length === 0 && (
                 <div className="ulg-state">
                   <img src="/ui/header/section-logros.png" alt="" style={{ width: 48, height: 48, objectFit: "contain", opacity: .8 }} />
-                  <strong>El salon no encontro piezas con este filtro</strong>
-                  <p>Prueba otra rareza, abre mas categorias o limpia la busqueda para ver mejor el tablero.</p>
+                  <strong>No encontramos logros con ese filtro</strong>
+                  <p>Prueba otra rareza, otra categoria o limpia la busqueda.</p>
                 </div>
               )}
 
@@ -2083,14 +2206,14 @@ export default function UserLogrosLanding({ profile, onNavigate }) {
                         <p>
                           {selectedLogro.obtenido || !selectedLogro.secreto
                             ? selectedLogro.descripcion
-                            : "Sigue entrenando. Esta pieza se revela cuando el mapa considere que ya la mereces."}
+                            : "Sigue avanzando. Este logro se muestra cuando toque."}
                         </p>
                       </div>
                     </div>
                   </div>
 
                   <div className="ulg-progress-card">
-                    <small>Progreso del sello</small>
+                    <small>Progreso</small>
                     <strong style={{ color: selectedStatus.color }}>
                       {selectedLogro.reclamado ? "Completado" : `${selectedLogro.progreso}/${selectedLogro.total}`}
                     </strong>
@@ -2103,26 +2226,26 @@ export default function UserLogrosLanding({ profile, onNavigate }) {
                   <div className="ulg-spot-grid">
                     <div className="ulg-info-card">
                       <small>Objetivo</small>
-                      <strong>{selectedLogro.secreto && !selectedLogro.obtenido ? "Condicion oculta" : "Meta visible"}</strong>
+                      <strong>{selectedLogro.secreto && !selectedLogro.obtenido ? "Oculto" : "Meta activa"}</strong>
                       <p>
                         {selectedLogro.secreto && !selectedLogro.obtenido
-                          ? "Todavia no toca abrir esta pista. Primero suma mas avance en la zona ligada."
+                          ? "Aun no toca mostrar esta pista. Sigue avanzando."
                           : selectedLogro.descripcion}
                       </p>
                     </div>
                     <div className="ulg-info-card">
-                      <small>Botin del sello</small>
+                      <small>Recompensa</small>
                       <strong style={{ color: UI.gold }}>+{selectedLogro.xpBonus} XP</strong>
                       <p>
                         {selectedLogro.recompensas?.find((reward) => normalizeLoose(reward?.tipo || reward?.nombre || reward?.icon || "") !== "xp")
-                          ? "Incluye botin extra ademas del XP principal."
-                          : `Tambien deja ${Math.max(1, Math.floor(selectedLogro.xpBonus / 10))} gemas como premio secundario.`}
+                          ? "Incluye un extra ademas del XP."
+                          : `Tambien deja ${Math.max(1, Math.floor(selectedLogro.xpBonus / 10))} gemas.`}
                       </p>
                     </div>
                   </div>
 
                   <div className="ulg-info-card">
-                    <small>Lectura del gremio</small>
+                    <small>Lectura</small>
                     <strong style={{ color: classTheme.accent }}>{stageTheme.label}</strong>
                     <p>{stageTheme.copy}</p>
                   </div>
@@ -2131,27 +2254,40 @@ export default function UserLogrosLanding({ profile, onNavigate }) {
                     {selectedLogro.obtenido && !selectedLogro.reclamado ? (
                       <button type="button" className="ulg-btn" disabled={claiming === selectedLogro.id} onClick={() => handleClaim(selectedLogro)}>
                         <Gift size={16} />
-                        {claiming === selectedLogro.id ? "Reclamando..." : "Reclamar recompensa"}
+                        {claiming === selectedLogro.id ? "Cobrando..." : "Cobrar"}
                       </button>
                     ) : (
-                      <button type="button" className="ulg-btn-ghost" onClick={() => setDetailOpen(selectedLogro)}>
+                      <button type="button" className="ulg-btn-ghost" onClick={() => setDetailOpen((current) => current?.id === selectedLogro.id ? null : selectedLogro)}>
                         <Trophy size={16} />
-                        Ver ficha completa
+                        {detailOpen?.id === selectedLogro.id ? "Ocultar ficha" : "Ver ficha"}
                       </button>
                     )}
-                    <button type="button" className="ulg-btn-ghost" onClick={() => setDetailOpen(selectedLogro)}>
+                    <button type="button" className="ulg-btn-ghost" onClick={() => setDetailOpen((current) => current?.id === selectedLogro.id ? null : selectedLogro)}>
                       <Target size={16} />
-                      Abrir detalles
+                      {detailOpen?.id === selectedLogro.id ? "Cerrar detalle" : "Mas detalle"}
                     </button>
                   </div>
                 </>
               ) : (
                 <div className="ulg-empty">
                   <img src="/ui/header/section-logros.png" alt="" style={{ width: 56, height: 56, objectFit: "contain", opacity: .8 }} />
-                  <strong>Selecciona una insignia para verla de cerca</strong>
-                  <p>El panel lateral te muestra objetivo, progreso y botin sin sacar al heroe del tablero principal.</p>
+                  <strong>Elige un logro para verlo mejor</strong>
+                  <p>Aqui veras progreso, objetivo y recompensa sin salir del tablero.</p>
                 </div>
               )}
+              <AnimatePresence>
+                {detailOpen?.id === selectedLogro?.id && (
+                  <div className="ulg-spot-popover">
+                    <DetailDock
+                      logro={detailOpen}
+                      classTheme={classTheme}
+                      onClose={() => setDetailOpen(null)}
+                      onClaim={handleClaim}
+                      claiming={claiming}
+                    />
+                  </div>
+                )}
+              </AnimatePresence>
             </aside>
           </div>
         </div>

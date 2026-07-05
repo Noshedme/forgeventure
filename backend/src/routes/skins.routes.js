@@ -6,6 +6,32 @@ import { bustUserCache } from "../utils/userCache.js";
 
 const router = Router();
 
+function buildSkinProfilePatch(userData = {}, updates = {}, now = new Date().toISOString()) {
+  const merged = { ...userData, ...updates, updatedAt: now };
+  const ownedTitles = Array.isArray(merged.ownedTitles)
+    ? merged.ownedTitles
+    : (merged.titulo ? [merged.titulo] : []);
+
+  return {
+    coins: Number(merged.coins || 0),
+    level: Number(merged.level || 1),
+    xp: Number(merged.xp || 0),
+    xpTotal: Number(merged.xpTotal || 0),
+    xpNext: Number(merged.xpNext || 100),
+    skillPoints: Number(merged.skillPoints || 0),
+    heroClass: merged.heroClass || "",
+    titulo: merged.titulo || "",
+    ownedTitles,
+    ownedAvatars: Array.isArray(merged.ownedAvatars) ? merged.ownedAvatars : ["avatar_01"],
+    ownedFrames: Array.isArray(merged.ownedFrames) ? merged.ownedFrames : [],
+    ownedSkins: Array.isArray(merged.ownedSkins) ? merged.ownedSkins : ["default"],
+    activeAvatar: merged.activeAvatar || "avatar_01",
+    activeFrame: merged.activeFrame ?? null,
+    activeSkin: merged.activeSkin || "default",
+    updatedAt: now,
+  };
+}
+
 // ── Catálogo de skins (fuente de verdad del servidor) ─────────────────────────
 export const SKINS_CATALOG = [
   {
@@ -77,7 +103,14 @@ router.post("/purchase", verifyToken, async (req, res) => {
         updatedAt: now,
       });
 
-      return { newCoins, newOwnedSkins };
+      return {
+        newCoins,
+        newOwnedSkins,
+        profilePatch: buildSkinProfilePatch(data, {
+          ownedSkins: newOwnedSkins,
+          coins: newCoins,
+        }, now),
+      };
     });
 
     Promise.all([
@@ -110,6 +143,7 @@ router.post("/purchase", verifyToken, async (req, res) => {
       message:    `¡Skin "${skin.nombre}" desbloqueada!`,
       ownedSkins: result.newOwnedSkins,
       coins:      result.newCoins,
+      profilePatch: result.profilePatch,
     });
   } catch (err) {
     const status = err.code === 400 || err.code === 404 ? err.code : 500;
@@ -137,10 +171,15 @@ router.patch("/active", verifyToken, async (req, res) => {
       return res.status(403).json({ ok: false, message: "No posees esta skin." });
     }
 
-    await ref.update({ activeSkin: skinId });
+    const now = new Date().toISOString();
+    await ref.update({ activeSkin: skinId, updatedAt: now });
     bustUserCache(uid);
 
-    return res.json({ ok: true, activeSkin: skinId });
+    return res.json({
+      ok: true,
+      activeSkin: skinId,
+      profilePatch: buildSkinProfilePatch(data, { activeSkin: skinId }, now),
+    });
   } catch (err) {
     console.error("Error en PATCH /skins/active:", err);
     return res.status(500).json({ ok: false, message: err.message });

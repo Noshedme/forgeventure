@@ -43,8 +43,8 @@ const TABS = [
     asset: "/ui/health/modules/module-general.png",
     fallbackAsset: "/ui/stat-men.png",
     kicker: "Vision global",
-    title: "Base real de bienestar",
-    lead: "Movimiento, recuperacion y habitos diarios ordenados para que el progreso fisico no quede cojo.",
+    title: "Base diaria que si sostiene",
+    lead: "Sueno, agua y movimiento bien leidos para que el avance fisico no se caiga por detalles basicos.",
   },
   {
     id: "ejercicio",
@@ -53,8 +53,8 @@ const TABS = [
     asset: "/ui/health/modules/module-movement.png",
     fallbackAsset: "/ui/stat-str.png",
     kicker: "Campo fisico",
-    title: "Entrenamiento con estructura",
-    lead: "Aprende frecuencia, volumen y tipos de trabajo sin perder tiempo en consejos sueltos.",
+    title: "Movimiento con mejor lectura",
+    lead: "Carga, ritmo y frecuencia explicados de forma simple para que entrenes mejor y con menos ruido.",
   },
   {
     id: "respiracion",
@@ -63,8 +63,8 @@ const TABS = [
     asset: "/ui/health/modules/module-breath.png",
     fallbackAsset: "/missions/seals/seal-mind.png",
     kicker: "Control del pulso",
-    title: "Foco y calma aplicados",
-    lead: "Tecnicas concretas para regular esfuerzo, bajar ruido y mejorar recuperacion.",
+    title: "Respirar para rendir mejor",
+    lead: "Tecnicas cortas para bajar ruido, ordenar el pulso y cerrar mejor el esfuerzo.",
   },
   {
     id: "hidratacion",
@@ -73,8 +73,8 @@ const TABS = [
     asset: "/ui/health/modules/module-water.png",
     fallbackAsset: "/ui/icons/quest-hidratacion.png",
     kicker: "Reserva corporal",
-    title: "Agua con criterio",
-    lead: "Cuanto, cuando y como reponer para rendir mejor sin improvisar.",
+    title: "Agua sin improvisar",
+    lead: "Cuanto tomar, cuando repartirla y como reponer mejor sin irte al extremo.",
   },
   {
     id: "nutricion",
@@ -83,8 +83,8 @@ const TABS = [
     asset: "/ui/health/modules/module-nutrition.png",
     fallbackAsset: "/ui/icons/quest-nutricion.png",
     kicker: "Mesa del heroe",
-    title: "Comer para avanzar",
-    lead: "Macros, timing y mitos explicados como recursos utiles, no como ruido de internet.",
+    title: "Comer para que el cuerpo responda",
+    lead: "Macros, timing y decisiones simples para tener energia real sin perderte en consejos cruzados.",
   },
 ];
 
@@ -102,7 +102,7 @@ const SALUD_TAB_META = Object.fromEntries(
               ? "agua, claridad y reposicion"
               : tab.id === "nutricion"
                 ? "energia, macros y timing"
-                : "base, descanso y consistencia",
+                : "base, descanso y ritmo",
     },
   ])
 );
@@ -119,38 +119,38 @@ const GENERAL_PILLARS = [
     stat: "150 min/sem",
     color: "#ff6f7d",
     asset: "/ui/stat-str.png",
-    text: "La actividad regular baja riesgo cardiovascular, mejora estado de animo y protege masa muscular con el tiempo.",
+    text: "Moverte bien protege corazon, animo y musculo. No hace falta hacerlo perfecto para que cuente.",
   },
   {
     title: "Nutricion",
     stat: "80% del resultado",
     color: "#80d39b",
     asset: "/ui/icons/quest-nutricion.png",
-    text: "La cocina define energia, recuperacion y composicion corporal mucho antes de que el entreno pueda corregirlo.",
+    text: "Lo que comes mueve energia, hambre y recuperacion mucho antes de que el entreno lo arregle.",
   },
   {
     title: "Recuperacion",
     stat: "7-9 h sueno",
     color: "#5ad8ff",
     asset: "/ui/stat-men.png",
-    text: "Dormir poco eleva cortisol, desordena apetito y frena adaptaciones. Sin descanso, el cuerpo no consolida progreso.",
+    text: "Dormir poco te deja mas cansado y con peor respuesta al esfuerzo. Sin descanso no hay cierre real.",
   },
 ];
 
 const SCIENCE_FACTS = [
-  { value: "30%", color: "#ff6f7d", title: "menos riesgo cardiovascular", text: "Con actividad moderada semanal sostenida.", source: "OMS | guias globales de actividad fisica" },
-  { value: "40%", color: "#80d39b", title: "mejora del estado de animo", text: "El ejercicio aerobico ayuda a reducir sintomas depresivos leves.", source: "revisiones sistematicas en salud mental y ejercicio" },
-  { value: "1.5x", color: "#5ad8ff", title: "mas longevidad en activos", text: "Moverse bien durante anos protege salud metabolica y funcional.", source: "cohortes poblacionales sobre actividad y mortalidad" },
-  { value: "26%", color: "#f3c969", title: "menos riesgo de diabetes tipo 2", text: "Cuando se combina actividad fisica y alimentacion adecuada.", source: "metaanalisis de intervencion en habitos cardiometabolicos" },
+  { value: "30%", color: "#ff6f7d", title: "menos riesgo cardiovascular", text: "Con movimiento sostenido.", source: "OMS | guias de actividad fisica" },
+  { value: "40%", color: "#80d39b", title: "mejor animo y adherencia", text: "El cardio bien llevado ayuda a bajar ruido.", source: "revisiones sobre ejercicio y salud mental" },
+  { value: "1.5x", color: "#5ad8ff", title: "mas anos con mejor funcion", text: "Moverte bien protege energia y capacidad con el tiempo.", source: "cohortes sobre actividad y mortalidad" },
+  { value: "26%", color: "#f3c969", title: "menos riesgo metabolico", text: "Cuando actividad y comida base se sostienen.", source: "metaanalisis cardiometabolicos" },
 ];
 
 const DAILY_CHECKS = [
-  { label: "30 min de movimiento", sub: "Caminar, entrenar o subir escaleras", color: "#ff6f7d" },
-  { label: "Agua repartida durante el dia", sub: "Sube la dosis si hace calor o entrenas", color: "#4cc9f0" },
-  { label: "Proteina en comidas principales", sub: "Base de recuperacion y saciedad", color: "#80d39b" },
-  { label: "5 min de respiracion consciente", sub: "Antes de dormir, antes de entrenar o al cerrar trabajo", color: "#c08aff" },
-  { label: "Corte de pantallas antes del sueno", sub: "La luz azul juega contra tu melatonina", color: "#f3c969" },
-  { label: "Luz natural al despertar", sub: "Ayuda a ordenar ritmo circadiano", color: "#5ad8ff" },
+  { label: "30 min de movimiento", sub: "Caminar o entrenar ya suma", color: "#ff6f7d" },
+  { label: "Agua repartida", sub: "No la dejes para el final", color: "#4cc9f0" },
+  { label: "Proteina base", sub: "Ayuda a recuperar y sostener hambre", color: "#80d39b" },
+  { label: "5 min de respiracion", sub: "Antes de dormir o entrenar", color: "#c08aff" },
+  { label: "Menos pantalla al cerrar", sub: "El descanso lo siente", color: "#f3c969" },
+  { label: "Luz natural al despertar", sub: "Ordena mejor el dia", color: "#5ad8ff" },
 ];
 
 const EXERCISE_TYPES = [
@@ -160,7 +160,7 @@ const EXERCISE_TYPES = [
     asset: "/exercises/daily/daily-zone-cardio.png",
     anatomy: "/exercises/detail/anatomy-cardio.png",
     freq: "150-300 min/sem",
-    benefits: ["Corazon y pulmones", "Resistencia", "Quema calorica", "Mejor animo"],
+    benefits: ["Mas aire", "Mejor resistencia", "Gasto util", "Animo mas estable"],
   },
   {
     title: "Fuerza",
@@ -168,7 +168,7 @@ const EXERCISE_TYPES = [
     asset: "/exercises/daily/daily-zone-fuerza.png",
     anatomy: "/exercises/detail/anatomy-fuerza.png",
     freq: "2-4 dias/sem",
-    benefits: ["Masa muscular", "Densidad osea", "Postura", "Metabolismo"],
+    benefits: ["Mas musculo", "Hueso fuerte", "Mejor postura", "Base metabolica"],
   },
   {
     title: "Movilidad",
@@ -176,7 +176,7 @@ const EXERCISE_TYPES = [
     asset: "/exercises/daily/daily-zone-flexibilidad.png",
     anatomy: "/exercises/detail/anatomy-flexibilidad.png",
     freq: "10-15 min diarios",
-    benefits: ["Rango articular", "Menos rigidez", "Mejor tecnica", "Recuperacion"],
+    benefits: ["Mas rango", "Menos rigidez", "Tecnica mas limpia", "Mejor cierre"],
   },
   {
     title: "HIIT funcional",
@@ -184,15 +184,15 @@ const EXERCISE_TYPES = [
     asset: "/exercises/daily/daily-zone-hiit.png",
     anatomy: "/exercises/detail/anatomy-hiit.png",
     freq: "1-2 dias/sem",
-    benefits: ["Potencia", "Pulso alto en poco tiempo", "Coordinacion", "Capacidad de trabajo"],
+    benefits: ["Mas potencia", "Pulso alto en poco tiempo", "Coordinacion", "Capacidad real"],
   },
 ];
 
 const EXERCISE_PRINCIPLES = [
-  { title: "Sobrecarga progresiva", text: "Si el cuerpo recibe siempre el mismo estimulo, deja de adaptarse. Sube peso, reps o dificultad de forma gradual." },
-  { title: "Especificidad", text: "Entrenas lo que practicas. Si quieres correr mejor, corre; si quieres levantar mas, levanta mejor." },
-  { title: "Recuperacion real", text: "Las mejoras llegan cuando descansas y asimilas la carga. Dormir bien y separar esfuerzos parecidos sigue siendo clave." },
-  { title: "Consistencia", text: "Tres sesiones sostenidas durante meses ganan por goleada a las semanas heroicas que luego se abandonan." },
+  { title: "Sube poco a poco", text: "Si todo se queda igual, el cuerpo deja de responder. Mejor subir carga o dificultad con cabeza." },
+  { title: "Practica lo que quieres mejorar", text: "Si quieres correr mejor, corre mejor. Si quieres fuerza, trabaja fuerza con orden." },
+  { title: "Recupera de verdad", text: "El cuerpo mejora cuando puede cerrar la carga. Sin descanso, la cuenta siempre se cobra." },
+  { title: "Gana el ritmo", text: "Tres sesiones sostenidas valen mas que una semana heroica y luego nada." },
 ];
 
 const BREATH_TECHNIQUES = [
@@ -200,22 +200,22 @@ const BREATH_TECHNIQUES = [
     title: "Box breathing",
     color: "#5ad8ff",
     pattern: "4 - 4 - 4 - 4",
-    use: "Foco, estres agudo y antes de una sesion exigente.",
-    text: "Inhala, reten, exhala y pausa con la misma duracion para bajar ruido sin perder energia.",
+    use: "Antes de una sesion dura o en un momento de estres.",
+    text: "Un patron parejo para bajar ruido sin apagar del todo la energia.",
   },
   {
     title: "4-7-8",
     color: "#c08aff",
     pattern: "4 - 7 - 8",
-    use: "Antes de dormir o cuando necesitas desacelerar rapido.",
-    text: "La exhalacion larga empuja al sistema parasimpatico y reduce activacion interna con bastante eficacia.",
+    use: "Cuando necesitas bajar el pulso rapido.",
+    text: "La exhalacion larga ayuda a frenar la aceleracion interna con bastante retorno.",
   },
   {
     title: "Diafragmatica",
     color: "#80d39b",
     pattern: "5 - 1 - 6",
-    use: "Como respiracion base durante el dia o entre series.",
-    text: "Pecho quieto, abdomen activo. Es la forma mas util para volver a respirar mejor fuera del papel.",
+    use: "Como base del dia o entre series.",
+    text: "Menos pecho, mas abdomen. Es la forma mas util de volver a una respiracion limpia.",
   },
 ];
 
@@ -228,9 +228,9 @@ const HYDRATION_FLOW = [
 ];
 
 const HYDRATION_WARNINGS = [
-  "Sed fuerte ya suele significar que llegaste tarde.",
-  "Color de orina muy oscuro suele apuntar a falta de agua.",
-  "Entrenos largos o dias calurosos piden sodio y no solo agua.",
+  "Si ya tienes mucha sed, casi siempre llegaste tarde.",
+  "Una orina muy oscura suele avisar falta de agua.",
+  "Con calor o sesiones largas, a veces no basta con agua sola.",
 ];
 
 const NUTRITION_BLOCKS = [
@@ -260,15 +260,15 @@ const NUTRITION_BLOCKS = [
 const NUTRITION_MYTHS = [
   {
     myth: "Hay que comer cada 2 horas para activar metabolismo.",
-    truth: "Lo importante sigue siendo el total diario. La frecuencia ayuda por comodidad, no por magia metabolica.",
+    truth: "Lo que mas pesa sigue siendo el total del dia. La frecuencia ayuda por orden, no por magia.",
   },
   {
     myth: "Las grasas siempre engordan.",
-    truth: "Engorda el exceso calorico sostenido. Las grasas de calidad siguen siendo parte de un cuerpo funcional.",
+    truth: "Lo que sube peso es el exceso sostenido. Las grasas de calidad siguen siendo parte de una base buena.",
   },
   {
     myth: "Sin suplementos no progresas.",
-    truth: "Primero manda la comida base, el descanso y el entrenamiento. El suplemento solo rellena huecos.",
+    truth: "Primero mandan comida base, descanso y entreno. El suplemento solo rellena huecos.",
   },
 ];
 
@@ -276,75 +276,75 @@ const NUTRITION_GOALS = [
   {
     title: "Mantenimiento",
     color: "#5ad8ff",
-    detail: "Sostener peso, energia y hambre bajo control con una base estable y flexible.",
+    detail: "Mantener peso y energia con una base repetible y sin drama.",
     focus: ["Proteina estable", "Carbos acordes al gasto", "Comidas repetibles"],
   },
   {
     title: "Perdida de grasa",
     color: "#ff6f7d",
-    detail: "Bajar calorias sin romper rendimiento ni adherencia. Menos castigo, mas precision.",
+    detail: "Bajar grasa sin romper hambre, rendimiento ni continuidad.",
     focus: ["Deficit moderado", "Fibra y saciedad", "Pasos y fuerza constantes"],
   },
   {
     title: "Rendimiento",
     color: "#80d39b",
-    detail: "Empujar entreno y recuperacion con mas energia util alrededor de sesiones exigentes.",
+    detail: "Dar mas energia cuando la carga aprieta y el cuerpo la necesita.",
     focus: ["Carbos alrededor del entreno", "Hidratacion + sodio", "Recuperacion post sesion"],
   },
 ];
 
 const MODULE_COMMON_MISTAKES = {
   general: [
-    "Querer corregir todo a la vez en lugar de ordenar una base simple.",
-    "Dormir mal varios dias y esperar que el entreno compense.",
-    "Saltarse agua y comida base hasta que el cuerpo ya llegue cansado.",
+    "Querer arreglar todo en un solo dia.",
+    "Dormir mal varios dias y esperar que el entreno lo tape.",
+    "Llegar tarde al agua y a la comida base.",
   ],
   ejercicio: [
-    "Subir volumen antes de consolidar tecnica y frecuencia.",
-    "Copiar rutinas duras sin leer recuperacion ni contexto actual.",
-    "Pensar que mas sudor siempre significa mejor progreso.",
+    "Subir volumen antes de tener tecnica y frecuencia.",
+    "Copiar rutinas pesadas sin leer tu recuperacion.",
+    "Creer que sudar mas siempre es progresar mas.",
   ],
   respiracion: [
-    "Usarla solo cuando todo ya esta fuera de control.",
-    "Respirar rapido por pecho y confundir activacion con energia.",
-    "Hacer tecnicas complejas sin constancia en una base simple.",
+    "Usarla solo cuando ya todo va mal.",
+    "Respirar por pecho y llamar energia a lo que es ruido.",
+    "Buscar tecnicas complejas sin dominar una base simple.",
   ],
   hidratacion: [
-    "Tomar casi toda el agua de golpe al final del dia.",
-    "Esperar a tener sed fuerte para empezar a reponer.",
-    "Olvidar sodio y contexto cuando hace calor o el entreno se alarga.",
+    "Beber casi todo al final del dia.",
+    "Esperar a la sed fuerte para empezar a reponer.",
+    "Olvidar sodio y contexto cuando sudas bastante.",
   ],
   nutricion: [
-    "Cambiar de estrategia cada semana por ruido de redes.",
-    "Bajar demasiado los carbohidratos cuando el rendimiento los necesita.",
-    "Perseguir suplementos antes de ordenar comida base y horarios utiles.",
+    "Cambiar de plan cada semana por ruido de redes.",
+    "Cortar demasiado los carbos cuando el cuerpo los necesita.",
+    "Perseguir suplementos antes de arreglar la base.",
   ],
 };
 
 const MODULE_TODAY_GUIDE = {
   general: {
-    title: "Archivo del cuerpo",
-    text: "Base de sueño, agua y movimiento antes de pedirle heroicidades al cuerpo.",
+    title: "Base del dia",
+    text: "Sueno, agua y movimiento antes de pedirle mas al cuerpo.",
     asset: HEALTH_ASSETS.section,
   },
   ejercicio: {
-    title: "Carga y frecuencia",
-    text: "Hoy conviene leer volumen, tecnica y margen de recuperacion antes de sumar mas trabajo.",
+    title: "Carga bien medida",
+    text: "Primero mira volumen, tecnica y margen de recuperacion.",
     asset: HEALTH_ASSETS.seal.movimiento,
   },
   respiracion: {
-    title: "Pulso y enfoque",
-    text: "Usa respiracion util para bajar ruido, ordenar esfuerzo y cerrar mejor el dia.",
+    title: "Pulso mas limpio",
+    text: "Respira con criterio para bajar ruido y cerrar mejor el esfuerzo.",
     asset: HEALTH_ASSETS.seal.sueno,
   },
   hidratacion: {
-    title: "Reserva del dia",
-    text: "Distribuye agua y reposicion antes de que la claridad y el rendimiento se caigan.",
+    title: "Agua a tiempo",
+    text: "Reparte agua antes de que la claridad y el rendimiento bajen.",
     asset: HEALTH_ASSETS.seal.agua,
   },
   nutricion: {
-    title: "Mesa util",
-    text: "Diferencia objetivo, cantidad y timing para no comer bien pero apuntar al sitio equivocado.",
+    title: "Mesa con rumbo",
+    text: "Ajusta objetivo, cantidad y timing para que comer bien si te mueva la aguja.",
     asset: HEALTH_ASSETS.seal.nutricion,
   },
 };
@@ -853,10 +853,10 @@ function renderGeneralTab({ daily, onAction, loading }) {
     <div className="ush-panel">
       <ModuleActionBar
         accent={UI.gold}
-        title={daily.sleep.done ? "Sueño base marcado" : "Abre el día con una señal real"}
+        title={daily.sleep.done ? "Base marcada hoy" : "Abre el dia con una base real"}
         hint={daily.sleep.done
-          ? `Sueño registrado${daily.general.done ? " y checklist base completado" : ""}.`
-          : "Marca sueño o checklist base para que esta zona deje memoria real dentro del mapa."}
+          ? `Sueno registrado${daily.general.done ? " y base cerrada" : ""}.`
+          : "Marca sueno o base para que esta zona deje una huella clara en tu dia."}
         actions={[
           {
             key: "sleep",
@@ -885,11 +885,33 @@ function renderGeneralTab({ daily, onAction, loading }) {
 
       <div className="ush-info-card" style={{ marginBottom: 14 }}>
         <div style={{ color: UI.gold, font: '700 11px/1 "JetBrains Mono", monospace', letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 14, textShadow: "0 0 14px rgba(243,201,105,.72), 0 0 28px rgba(243,201,105,.35)" }}>
-          Lo que si cambia la partida
+          Lo que mas pesa
         </div>
         <div className="ush-grid-4">
           {SCIENCE_FACTS.map((fact) => (
-            <div key={fact.title} className="ush-soft-card">
+            <div key={fact.title} className="ush-soft-card" style={{ position: "relative", paddingTop: 18 }}>
+              <span
+                title={fact.source}
+                aria-hidden="true"
+                style={{
+                  position: "absolute",
+                  top: 12,
+                  right: 12,
+                  width: 24,
+                  height: 24,
+                  borderRadius: 8,
+                  display: "grid",
+                  placeItems: "center",
+                  border: `1px solid ${fact.color}44`,
+                  background: "rgba(12,10,22,.72)",
+                  color: fact.color,
+                  font: '800 11px/1 "JetBrains Mono", monospace',
+                  textShadow: `0 0 8px ${fact.color}`,
+                  boxShadow: `0 0 14px ${fact.color}22`,
+                }}
+              >
+                ?
+              </span>
               <div style={{ color: fact.color, font: '900 40px/1 "Manrope", sans-serif', marginBottom: 10, textShadow: `0 0 22px ${fact.color}cc, 0 0 44px ${fact.color}55, 0 0 72px ${fact.color}22` }}>{fact.value}</div>
               <div style={{ font: '800 15px/1.25 "Manrope", sans-serif', marginBottom: 8 }}>{fact.title}</div>
               <div style={{ color: UI.muted, font: '500 13px/1.55 "Manrope", sans-serif' }}>{fact.text}</div>
@@ -910,25 +932,8 @@ function renderGeneralTab({ daily, onAction, loading }) {
                     textTransform: "uppercase",
                   }}
                 >
-                  Fuente | {fact.source}
+                  Fuente
                 </div>
-                <span
-                  title={fact.source}
-                  aria-hidden="true"
-                  style={{
-                    width: 20,
-                    height: 20,
-                    borderRadius: "50%",
-                    display: "grid",
-                    placeItems: "center",
-                    border: `1px solid ${fact.color}44`,
-                    color: fact.color,
-                    font: '800 11px/1 "JetBrains Mono", monospace',
-                    textShadow: `0 0 8px ${fact.color}`,
-                  }}
-                >
-                  ?
-                </span>
               </div>
             </div>
           ))}
@@ -937,7 +942,7 @@ function renderGeneralTab({ daily, onAction, loading }) {
 
       <div className="ush-info-card" style={{ marginBottom: 14 }}>
         <div style={{ color: UI.gold, font: '700 11px/1 "JetBrains Mono", monospace', letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 14, textShadow: "0 0 14px rgba(243,201,105,.72), 0 0 28px rgba(243,201,105,.35)" }}>
-          Checklist diario base
+          Chequeos simples
         </div>
         <div className="ush-grid-2">
           {DAILY_CHECKS.map((check) => (
@@ -963,10 +968,10 @@ function renderGeneralTab({ daily, onAction, loading }) {
           Regla simple
         </div>
         <div style={{ color: UI.text, font: '700 18px/1.25 "Manrope", sans-serif', marginBottom: 8 }}>
-          Si no puedes hacer todo, prioriza sueno, luego comida base y despues volumen de entreno.
+          Si no puedes con todo, empieza por sueno, luego comida base y despues carga.
         </div>
         <div style={{ color: UI.muted, font: '500 14px/1.6 "Manrope", sans-serif' }}>
-          Dormir mal desordena hambre, comer mal arruina energia y entrenar sin recuperar te deja con cansancio caro. El orden importa.
+          Dormir mal desordena hambre, comer mal baja energia y entrenar sin recuperar siempre se cobra. El orden importa.
         </div>
       </div>
     </div>
@@ -978,10 +983,10 @@ function renderExerciseTab({ daily, onAction, loading }) {
     <div className="ush-panel">
       <ModuleActionBar
         accent={UI.danger}
-        title={daily.ejercicio.done ? "Chequeo de movimiento guardado" : "Registra una lectura corta del movimiento"}
+        title={daily.ejercicio.done ? "Movimiento marcado hoy" : "Abre una lectura corta del movimiento"}
         hint={daily.ejercicio.done
-          ? "El bloque de movimiento ya cuenta hoy. Puedes abrir ejercicios para convertirlo en sesión real."
-          : "Esto deja progreso en salud aunque no arranques todavía una rutina completa."}
+          ? "Ya cuenta en tu dia. Si quieres profundizar, desde aqui saltas directo a ejercicios."
+          : "Aunque hoy no abras una rutina completa, este cierre ya deja progreso real."}
         actions={[
           {
             key: "exercise",
@@ -1021,7 +1026,7 @@ function renderExerciseTab({ daily, onAction, loading }) {
       <div className="ush-grid-2">
         <div className="ush-info-card">
           <div style={{ color: UI.gold, font: '700 11px/1 "JetBrains Mono", monospace', letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 10 }}>
-            Principios que si sostienen progreso
+            Cuatro ideas que si sirven
           </div>
           <div className="ush-list">
             {EXERCISE_PRINCIPLES.map((item, index) => (
@@ -1040,7 +1045,7 @@ function renderExerciseTab({ daily, onAction, loading }) {
 
         <div className="ush-info-card">
           <div style={{ color: UI.success, font: '700 11px/1 "JetBrains Mono", monospace', letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 10 }}>
-            Volumen base semanal
+            Reparto semanal
           </div>
           {[
             { label: "Fuerza", value: 82, color: UI.danger },
@@ -1060,10 +1065,10 @@ function renderExerciseTab({ daily, onAction, loading }) {
           ))}
           <div className="ush-soft-card" style={{ marginTop: 4 }}>
             <div style={{ color: UI.text, font: '700 14px/1.35 "Manrope", sans-serif', marginBottom: 6 }}>
-              Mejor poco y estable que heroico y roto.
+              Mejor ritmo que exceso.
             </div>
             <div style={{ color: UI.muted, font: '500 13px/1.55 "Manrope", sans-serif' }}>
-              Si estas empezando, tres sesiones bien hechas por semana ya cambian mucho el tablero.
+              Si estas empezando, tres sesiones bien hechas por semana ya mueven mucho el resultado.
             </div>
           </div>
         </div>
@@ -1077,10 +1082,10 @@ function renderBreathingTab({ daily, onAction, loading }) {
     <div className="ush-panel">
       <ModuleActionBar
         accent={UI.cyan}
-        title={daily.respiracion.done ? `Recuperación registrada | ${daily.respiracion.minutes || 4} min` : "Cierra el pulso con una acción real"}
+        title={daily.respiracion.done ? `Recuperacion registrada | ${daily.respiracion.minutes || 4} min` : "Cierra el pulso con una accion real"}
         hint={daily.respiracion.done
-          ? "Ya quedó guardada como progreso de salud y empuja la parte mental ligada a respiración."
-          : "Aquí sí puedes cerrar recuperación con persistencia real, no solo leer la técnica."}
+          ? "Ya quedo guardada como progreso real del dia."
+          : "Aqui puedes cerrar recuperacion de verdad, no solo leer la tecnica."}
         actions={[
           {
             key: "breathing",
@@ -1125,14 +1130,14 @@ function renderBreathingTab({ daily, onAction, loading }) {
 
         <div className="ush-info-card">
           <div style={{ color: "#c08aff", font: '700 11px/1 "JetBrains Mono", monospace', letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 10 }}>
-            Lectura util
+            Idea clave
           </div>
           <div className="ush-soft-card" style={{ marginBottom: 10 }}>
             <div style={{ color: UI.text, font: '700 14px/1.35 "Manrope", sans-serif', marginBottom: 6 }}>
-              Respirar mejor no es un extra zen, es una herramienta de rendimiento.
+              Respirar mejor no es relleno, es una herramienta de rendimiento.
             </div>
             <div style={{ color: UI.muted, font: '500 13px/1.55 "Manrope", sans-serif' }}>
-              Una exhalacion larga bien usada mejora control, baja ruido y te ayuda a no confundir activacion con caos.
+              Una exhalacion larga bien usada mejora control, baja ruido y evita confundir activacion con caos.
             </div>
           </div>
           <Img src="/ui/stat-men.png" alt="" style={{ width: 68, height: 68, filter: "drop-shadow(0 0 14px rgba(90,216,255,.38))" }} />
@@ -1149,8 +1154,8 @@ function renderHydrationTab({ daily, onAction, loading }) {
         accent={UI.cyan}
         title={`Vasos registrados ${daily.hidratacion.cups}/${daily.hidratacion.target}`}
         hint={daily.hidratacion.done
-          ? "La meta base de agua ya quedó cerrada hoy."
-          : "Cada toque suma agua al día. El XP cae cuando completas la meta y no por spamear vasos."}
+          ? "La meta base de agua ya quedo cerrada hoy."
+          : "Cada toque suma agua al dia. El XP llega al cerrar la meta, no por spamear vasos."}
         actions={[
           {
             key: "cup",
@@ -1200,7 +1205,7 @@ function renderHydrationTab({ daily, onAction, loading }) {
 
       <div className="ush-soft-card">
         <div style={{ color: UI.text, font: '700 15px/1.35 "Manrope", sans-serif', marginBottom: 8 }}>
-          Regla rapida para entrenos mas largos o dias de mucho calor
+          Regla rapida para calor o sesiones largas
         </div>
         <div style={{ color: UI.muted, font: '500 13px/1.6 "Manrope", sans-serif' }}>
           Si sudas bastante, no siempre basta con agua sola. Reponer sodio y beber repartido suele darte mejor retorno que vaciar una botella de golpe.
@@ -1211,17 +1216,17 @@ function renderHydrationTab({ daily, onAction, loading }) {
 }
 
 const CLASS_NUTRITION_HINT = {
-  GUERRERO: { label: "Prioridad fuerza", text: "Proteína alta y carbohidratos alrededor del entreno sostienen la carga sin perder masa.", color: "#ff4d5e", icon: "/ui/stat-str.png" },
-  ARQUERO: { label: "Balance energético", text: "Macros equilibrados y comidas regulares sostienen ritmo y agudeza táctica sin vaciarte.", color: "#7bdc3b", icon: "/ui/icons/stat-xp.png" },
-  MAGO: { label: "Cerebro activo", text: "Grasas de calidad, omega-3 y carbohidratos estables sostienen foco, memoria y claridad mental.", color: "#4cc9f0", icon: "/ui/stat-men.png" },
-  DEFAULT: { label: "Base sólida", text: "Proteína, carbohidratos acordes al gasto y grasas de calidad. Sin base sólida el resto es ruido.", color: "#c08aff", icon: "/ui/stat-men.png" },
+  GUERRERO: { label: "Prioridad fuerza", text: "Proteina alta y carbos cerca del entreno para sostener carga sin perder masa.", color: "#ff4d5e", icon: "/ui/stat-str.png" },
+  ARQUERO: { label: "Ritmo estable", text: "Comidas regulares y macros equilibrados para sostener velocidad sin vaciarte.", color: "#7bdc3b", icon: "/ui/icons/stat-xp.png" },
+  MAGO: { label: "Claridad mental", text: "Grasas de calidad y carbos estables para sostener foco y cabeza fria.", color: "#4cc9f0", icon: "/ui/stat-men.png" },
+  DEFAULT: { label: "Base solida", text: "Proteina, carbos acordes al gasto y grasas de calidad. Sin base, el resto hace ruido.", color: "#c08aff", icon: "/ui/stat-men.png" },
 };
 
 const TIMING_ITEMS = [
-  { text: "Antes de entrenar: energía fácil de digerir si vienes vacío.", color: UI.success },
-  { text: "Después de entrenar: proteína y comida normal dentro de una ventana razonable.", color: "#4cc9f0" },
-  { text: "Días de mucho volumen: no dejes carbohidratos demasiado bajos.", color: UI.gold },
-  { text: "Control de hambre: proteína, fibra y horarios estables ayudan mucho.", color: "#c08aff" },
+  { text: "Antes de entrenar: energia facil de digerir si vienes vacio.", color: UI.success },
+  { text: "Despues de entrenar: proteina y comida normal en una ventana razonable.", color: "#4cc9f0" },
+  { text: "Dias de mucho volumen: no dejes los carbos demasiado bajos.", color: UI.gold },
+  { text: "Para controlar hambre: proteina, fibra y horarios estables ayudan mucho.", color: "#c08aff" },
 ];
 
 function NutritionTab({ daily, onAction, loading, classKey }) {
@@ -1237,10 +1242,10 @@ function NutritionTab({ daily, onAction, loading, classKey }) {
     <div className="ush-panel">
       <ModuleActionBar
         accent={UI.success}
-        title={meals > 0 ? `${meals} comida${meals !== 1 ? "s" : ""} registrada${meals !== 1 ? "s" : ""} hoy` : "Deja una comida útil marcada"}
+        title={meals > 0 ? `${meals} comida${meals !== 1 ? "s" : ""} marcada${meals !== 1 ? "s" : ""} hoy` : "Marca una comida base"}
         hint={meals > 0
-          ? "El bloque de nutrición ya cuenta hoy. Sigue sumando si tienes más comidas sólidas."
-          : "Un registro simple convierte esta lectura en sistema y no en catálogo bonito."}
+          ? "Este bloque ya sumó hoy. Si quieres, puedes seguir cerrando comidas útiles."
+          : "Un registro simple basta para que esta parte deje memoria real en tu día."}
         actions={[
           {
             key: "meal",
@@ -1267,7 +1272,7 @@ function NutritionTab({ daily, onAction, loading, classKey }) {
       <div className="ush-soft-card" style={{ marginBottom: 14, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
         <Img src="/ui/icons/quest-nutricion.png" fallbackSrc="/items/consumables/pocion_fuerza.png" alt="" style={{ width: 34, height: 34, filter: `drop-shadow(0 0 10px ${UI.success}88)`, flexShrink: 0 }} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ color: UI.deepMuted, font: '700 10px/1 "JetBrains Mono", monospace', letterSpacing: ".12em", textTransform: "uppercase", marginBottom: 10 }}>Comidas hoy</div>
+          <div style={{ color: UI.deepMuted, font: '700 10px/1 "JetBrains Mono", monospace', letterSpacing: ".12em", textTransform: "uppercase", marginBottom: 10 }}>Ritmo de comidas</div>
           <div style={{ display: "flex", gap: 10 }}>
             {[1, 2, 3, 4].map((n) => (
               <div
@@ -1291,13 +1296,13 @@ function NutritionTab({ daily, onAction, loading, classKey }) {
         </div>
         <div style={{ textAlign: "right", flexShrink: 0 }}>
           <div style={{ color: UI.success, font: '900 34px/1 "Manrope", sans-serif', textShadow: `0 0 18px ${UI.success}cc, 0 0 36px ${UI.success}44` }}>{meals}<span style={{ color: UI.deepMuted, font: '500 16px/1 "Manrope", sans-serif' }}>/4</span></div>
-          <div style={{ color: UI.muted, font: '500 11px/1.4 "JetBrains Mono", monospace', marginTop: 4, letterSpacing: ".06em" }}>meta diaria</div>
+          <div style={{ color: UI.muted, font: '500 11px/1.4 "JetBrains Mono", monospace', marginTop: 4, letterSpacing: ".06em" }}>objetivo simple</div>
         </div>
       </div>
 
       {/* ── Macro flip cards ── */}
       <div style={{ color: UI.deepMuted, font: '700 10px/1 "JetBrains Mono", monospace', letterSpacing: ".12em", textTransform: "uppercase", marginBottom: 10 }}>
-        Macronutrientes — toca para leer el uso
+        Macros en claro
       </div>
       <div className="ush-grid-3" style={{ marginBottom: 14 }}>
         {NUTRITION_BLOCKS.map((item, i) => (
@@ -1317,7 +1322,7 @@ function NutritionTab({ daily, onAction, loading, classKey }) {
                 <div style={{ marginTop: 10, color: item.color, font: '700 11px/1 "JetBrains Mono", monospace', letterSpacing: ".1em", textTransform: "uppercase" }}>{item.dose}</div>
                 <div style={{ marginTop: 8, font: '800 18px/1.1 "Manrope", sans-serif' }}>{item.title}</div>
                 <div style={{ marginTop: "auto", paddingTop: 14, display: "flex", alignItems: "center", gap: 6, color: UI.deepMuted }}>
-                  <span style={{ font: '700 10px/1 "JetBrains Mono", monospace', letterSpacing: ".08em" }}>toca para uso</span>
+                  <span style={{ font: '700 10px/1 "JetBrains Mono", monospace', letterSpacing: ".08em" }}>toca para leer</span>
                   <span style={{ font: "800 14px/1", transform: "rotate(-90deg)", display: "inline-block" }}>›</span>
                 </div>
               </div>
@@ -1327,7 +1332,7 @@ function NutritionTab({ daily, onAction, loading, classKey }) {
                 background: `linear-gradient(180deg, color-mix(in srgb, ${item.color}, transparent 78%), rgba(12,9,22,.98))`,
                 minHeight: 190,
               }}>
-                <div style={{ color: item.color, font: '700 11px/1 "JetBrains Mono", monospace', letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 10 }}>Para qué sirve</div>
+                <div style={{ color: item.color, font: '700 11px/1 "JetBrains Mono", monospace', letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 10 }}>Lo que aporta</div>
                 <div style={{ font: '800 17px/1.15 "Manrope", sans-serif', marginBottom: 10 }}>{item.title}</div>
                 <div style={{ color: UI.text, font: '500 13px/1.6 "Manrope", sans-serif', flex: 1 }}>{item.use}</div>
                 <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 6, color: UI.deepMuted }}>
@@ -1342,7 +1347,7 @@ function NutritionTab({ daily, onAction, loading, classKey }) {
 
       {/* ── Goals accordion ── */}
       <div style={{ color: UI.deepMuted, font: '700 10px/1 "JetBrains Mono", monospace', letterSpacing: ".12em", textTransform: "uppercase", marginBottom: 10 }}>
-        Objetivos — toca para ver el enfoque
+        Comer segun tu meta
       </div>
       <div className="ush-list" style={{ marginBottom: 14 }}>
         {NUTRITION_GOALS.map((goal, i) => (
@@ -1367,7 +1372,7 @@ function NutritionTab({ daily, onAction, loading, classKey }) {
                   transition: "box-shadow .2s ease",
                 }} />
                 <div>
-                  <div style={{ color: goal.color, font: '700 10px/1 "JetBrains Mono", monospace', letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 4 }}>Objetivo</div>
+                  <div style={{ color: goal.color, font: '700 10px/1 "JetBrains Mono", monospace', letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 4 }}>Meta</div>
                   <div style={{ font: '800 15px/1.15 "Manrope", sans-serif' }}>{goal.title}</div>
                 </div>
               </div>
@@ -1408,13 +1413,13 @@ function NutritionTab({ daily, onAction, loading, classKey }) {
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <Img src="/ui/icons/quest-nutricion.png" fallbackSrc="/ui/stat-men.png" alt="" style={{ width: 22, height: 22, filter: `drop-shadow(0 0 7px ${UI.success}88)` }} />
               <div style={{ color: UI.success, font: '700 11px/1 "JetBrains Mono", monospace', letterSpacing: ".1em", textTransform: "uppercase" }}>
-                Timing útil
+                Timing simple
               </div>
             </div>
             <span className={`ush-chev${timingOpen ? " open" : ""}`}>›</span>
           </div>
           {!timingOpen && (
-            <div style={{ color: UI.muted, font: '500 13px/1.5 "Manrope", sans-serif', marginTop: 6 }}>Cuándo comer según el entreno y el día.</div>
+            <div style={{ color: UI.muted, font: '500 13px/1.5 "Manrope", sans-serif', marginTop: 6 }}>Cuando comer segun el esfuerzo y el momento del dia.</div>
           )}
           {timingOpen && (
             <div className="ush-list">
@@ -1431,7 +1436,7 @@ function NutritionTab({ daily, onAction, loading, classKey }) {
         {/* Myths flip cards */}
         <div style={{ padding: "14px 16px", borderRadius: 18, border: `1px solid ${UI.gold}22`, background: "rgba(255,255,255,.018)" }}>
           <div style={{ color: UI.gold, font: '700 11px/1 "JetBrains Mono", monospace', letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 12 }}>
-            Mitos — toca para la realidad
+            Mitos que estorban
           </div>
           <div className="ush-list">
             {NUTRITION_MYTHS.map((item, i) => (
@@ -1447,7 +1452,7 @@ function NutritionTab({ daily, onAction, loading, classKey }) {
                   }}>
                     <div style={{ color: UI.danger, font: '700 10px/1 "JetBrains Mono", monospace', letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 6 }}>Mito</div>
                     <div style={{ color: UI.text, font: '500 13px/1.5 "Manrope", sans-serif' }}>{item.myth}</div>
-                    <div style={{ marginTop: 8, color: UI.deepMuted, font: '700 10px/1 "JetBrains Mono", monospace', letterSpacing: ".06em" }}>↩ toca para realidad</div>
+                    <div style={{ marginTop: 8, color: UI.deepMuted, font: '700 10px/1 "JetBrains Mono", monospace', letterSpacing: ".06em" }}>↩ toca para ver claro</div>
                   </div>
                   <div className="ush-flip-face ush-flip-back ush-myth-face" style={{
                     borderColor: `${UI.success}44`,
@@ -1871,9 +1876,9 @@ export default function UserSaludLanding({ profile }) {
   }[timeBand];
 
   const heroLead = {
-    manana: "La pestaña ya no solo te muestra teoría: te marca qué revisar primero según clase, nivel, racha y hora del día para que no entres a ciegas.",
-    tarde: "La lectura cambia según el momento del día. Aquí te conviene revisar lo que más retorno te da ahora mismo y no una guía genérica repetida.",
-    noche: "Al final del día conviene bajar ruido y leer recuperación, hidratación y nutrición con una lógica más cercana a tu estado actual.",
+    manana: "Abres con una lectura simple de sueno, agua y base del cuerpo para no arrancar el dia a ciegas.",
+    tarde: "Aqui ves lo que mas te conviene tocar ahora, segun tu ritmo, tu clase y lo que ya paso hoy.",
+    noche: "Al cerrar el dia, esta lectura te ayuda a ordenar recuperacion, agua y comida sin darle mas vueltas de las necesarias.",
   }[timeBand];
 
   const heroKpis = [
@@ -1884,19 +1889,19 @@ export default function UserSaludLanding({ profile }) {
   ];
 
   const routeSummary = {
-    general: "Sueno, agua y movimiento antes de complicar la partida.",
-    ejercicio: "Hoy te rinde más revisar carga, frecuencia y tipo de esfuerzo antes de sumar volumen sin lectura.",
-    respiracion: "Te conviene bajar ruido interno y ordenar el pulso para que el cuerpo responda mejor.",
-    hidratacion: "El retorno rápido está en repartir agua y reposición, sobre todo si vienes en tramo activo.",
-    nutricion: "La mejor mejora ahora mismo viene de ajustar comida base y energía útil alrededor del día.",
+    general: "Primero base, luego intensidad.",
+    ejercicio: "Mira carga y ritmo antes de meter mas volumen.",
+    respiracion: "Baja ruido y ordena el pulso.",
+    hidratacion: "Reparte agua antes de que el cuerpo la pida tarde.",
+    nutricion: "Ajusta comida base y energia util del dia.",
   };
 
   const rewardSummary = {
-    general: "Checklist base para no regalar progreso por detalles simples.",
-    ejercicio: "Guía para entrenar con intención y menos desgaste torpe.",
-    respiracion: "Control más limpio de estrés, enfoque y recuperación.",
-    hidratacion: "Mejor claridad, digestión y rendimiento sostenido.",
-    nutricion: "Lectura más precisa de macros, timing y errores comunes.",
+    general: "Una base mas ordenada para sostener el resto.",
+    ejercicio: "Mejor tecnica y menos desgaste torpe.",
+    respiracion: "Mas calma y mejor cierre del esfuerzo.",
+    hidratacion: "Mas claridad y mejor reposicion.",
+    nutricion: "Decisiones mas simples y con mas sentido.",
   };
 
   const quickMarkers = [
@@ -1984,28 +1989,28 @@ export default function UserSaludLanding({ profile }) {
   const currentMistakes = MODULE_COMMON_MISTAKES[activeTab] || MODULE_COMMON_MISTAKES.general;
 
   const classHint = classKey === "GUERRERO"
-    ? "Te conviene sostener fuerza con comida útil y no descuidar recuperación cuando la carga sube."
+    ? "A ti te rinde mas sostener fuerza con comida util y sin descuidar recuperacion."
     : classKey === "ARQUERO"
-      ? "Tu mejor retorno suele venir de hidratación, ritmo y control de pulso para no vaciarte antes de tiempo."
+      ? "Tu mejor retorno suele venir de agua, ritmo y control de pulso para no vaciarte pronto."
       : classKey === "MAGO"
-        ? "Respiración, sueño y lectura general suelen darte el mejor piso para que el resto del mapa no se rompa."
-        : "Empieza por la base general y luego empuja el marcador más bajo del día.";
+        ? "Respiracion, sueno y base general suelen darte el mejor piso para que el resto no se rompa."
+        : "Empieza por la base y luego empuja el marcador mas flojo del dia.";
 
   const weeklyRoute = [
-    movementScore < 65 ? "Abre al menos 3 sesiones de movimiento bien cerradas." : "Mantén el bloque de movimiento y cuida no sobrecargarlo.",
-    hydrationScore < 65 ? "Reparte agua durante el día, no solo al entrenar." : "Sostén la hidratación repartida para no perder claridad.",
-    nutritionScore < 65 ? "Sube proteína base y energía útil alrededor de tu jornada." : "Consolida una comida base limpia antes de complicar suplementos.",
-    recoveryPressure < 70 ? "Haz hueco a respiración o sueño más ordenado antes de pedir más rendimiento." : "Protege la recuperación para no pagar caro la racha.",
+    movementScore < 65 ? "Abre al menos 3 sesiones de movimiento bien cerradas." : "Sosten el movimiento sin pasarte de carga.",
+    hydrationScore < 65 ? "Reparte agua durante el dia, no solo al entrenar." : "Manten el agua repartida para no perder claridad.",
+    nutritionScore < 65 ? "Sube proteina base y energia util alrededor del dia." : "Consolida una comida base antes de complicar suplementos.",
+    recoveryPressure < 70 ? "Haz hueco a respiracion o mejor sueno antes de pedir mas rendimiento." : "Protege la recuperacion para no pagar cara la racha.",
   ];
   const summaryBanner = summaryStatus === "ready"
     ? trainedToday === true
-      ? `Lectura viva | entrenamiento detectado por ${saludSummary?.trainedSource || "registro real"}`
+      ? `Lectura viva | hoy ya hay actividad real`
       : trainedToday === false
-        ? "Lectura viva | hoy aún no hay registro físico canónico"
-        : "Lectura viva | señal parcial del día, sin cierre completo aún"
+        ? "Lectura viva | hoy aun no hay actividad cerrada"
+        : "Lectura viva | el dia sigue abierto"
     : summaryStatus === "loading" || summaryStatus === "refreshing"
-      ? "Sincronizando tablero de salud"
-      : "Resumen agregado de salud, mente y actividad semanal";
+      ? "Sincronizando salud"
+      : "Resumen vivo de salud, mente y actividad";
 
   return (
     <div
@@ -2046,7 +2051,7 @@ export default function UserSaludLanding({ profile }) {
                 {heroLead}
               </p>
               <div style={{ marginTop: 12, color: UI.deepMuted, font: '600 12px/1.5 "Manrope", sans-serif', maxWidth: 640 }}>
-                Esta lectura resume recomendaciones de salud general y evidencia ampliamente repetida. No reemplaza evaluacion clinica ni indicaciones medicas personales.
+                Guia orientativa de bienestar. No reemplaza evaluacion clinica ni indicaciones medicas personales.
               </div>
             </div>
 
@@ -2057,7 +2062,7 @@ export default function UserSaludLanding({ profile }) {
               </span>
               <span className="ush-chip">Prioridad sugerida: {recommendedMeta.title}</span>
               <span className="ush-chip" style={{ color: UI.deepMuted }}>
-                Progreso real: {dailyState.completedCount}/6
+                Hoy llevas {dailyState.completedCount}/6 cierres
               </span>
               {(supportFlags.xpBonus || supportFlags.xpMult || supportFlags.streakShieldActive) && (
                 <span className="ush-chip" style={{ color: UI.gold, borderColor: "rgba(243,201,105,.28)" }}>
@@ -2190,10 +2195,10 @@ export default function UserSaludLanding({ profile }) {
                 Que revisar hoy
               </div>
               <div style={{ color: UI.text, font: '800 24px/1.08 "Manrope", sans-serif', marginBottom: 6 }}>
-                Tres señales para no entrar al dia a ciegas
+                Tres senales para leer el dia rapido
               </div>
               <div style={{ color: UI.muted, font: '500 14px/1.55 "Manrope", sans-serif', maxWidth: 760 }}>
-                Sueño, agua y recuperación se leen primero porque cambian claridad, energía y adherencia antes de que el resto del mapa reaccione.
+                Sueno, agua y recuperacion suelen mover claridad, energia y adherencia antes que cualquier otro ajuste.
               </div>
             </div>
             <span className="ush-chip" style={{ color: UI.deepMuted }}>{summaryBanner}</span>
@@ -2211,7 +2216,7 @@ export default function UserSaludLanding({ profile }) {
                     </div>
                     <div>
                       <div style={{ color: UI.text, font: '800 14px/1.2 "Manrope", sans-serif' }}>{signal.label}</div>
-                      <div style={{ color: UI.deepMuted, font: '700 10px/1 "JetBrains Mono", monospace', letterSpacing: ".08em", textTransform: "uppercase", marginTop: 4 }}>senal de hoy</div>
+                  <div style={{ color: UI.deepMuted, font: '700 10px/1 "JetBrains Mono", monospace', letterSpacing: ".08em", textTransform: "uppercase", marginTop: 4 }}>senal de hoy</div>
                     </div>
                   </div>
                   <div style={{ color: signal.color, font: '900 22px/1 "Manrope", sans-serif', textShadow: `0 0 14px ${signal.color}cc, 0 0 28px ${signal.color}55` }}>{signal.value}%</div>
@@ -2322,9 +2327,9 @@ export default function UserSaludLanding({ profile }) {
                   </div>
                 </div>
                 <div className="ush-soft-card">
-                  <div style={{ color: UI.text, font: '800 14px/1.3 "Manrope", sans-serif', marginBottom: 6 }}>Punto mas flojo hoy</div>
+                  <div style={{ color: UI.text, font: '800 14px/1.3 "Manrope", sans-serif', marginBottom: 6 }}>Lo primero por ajustar</div>
                   <div style={{ color: UI.muted, font: '500 13px/1.55 "Manrope", sans-serif' }}>
-                    Tu lectura mas baja ahora cae en <strong style={{ color: lowestMarker.color }}>{lowestMarker.label.toLowerCase()}</strong>. Si ajustas eso primero, el resto del tablero responde mejor.
+                    Tu lectura mas baja hoy cae en <strong style={{ color: lowestMarker.color }}>{lowestMarker.label.toLowerCase()}</strong>. Si empiezas por ahi, el resto suele responder mejor.
                   </div>
                 </div>
                 {(supportFlags.xpBonus || supportFlags.xpMult || supportFlags.streakShieldActive) && (
@@ -2332,15 +2337,15 @@ export default function UserSaludLanding({ profile }) {
                     <div style={{ color: UI.gold, font: '800 14px/1.3 "Manrope", sans-serif', marginBottom: 6 }}>Apoyo del inventario</div>
                     <div style={{ color: UI.muted, font: '500 13px/1.55 "Manrope", sans-serif' }}>
                       {supportFlags.streakShieldActive
-                        ? "Tu escudo de racha sigue activo. Hoy conviene priorizar cierre limpio y recuperación antes de regalar continuidad."
+                        ? "Tu escudo de racha sigue activo. Hoy conviene cerrar bien y no regalar continuidad."
                         : supportFlags.xpMult
-                          ? "Hay un impulso de XP activo. Si abres movimiento o cierras un módulo completo, el retorno del día mejora."
-                          : "Tienes un apoyo activo en economía. Aprovecha un cierre real del módulo recomendado para no desperdiciarlo."}
+                          ? "Hay un impulso de XP activo. Si cierras un modulo completo, el retorno del dia mejora."
+                          : "Tienes un apoyo activo. Aprovecha un cierre real del modulo recomendado para no desperdiciarlo."}
                     </div>
                   </div>
                 )}
                 <div className="ush-soft-card">
-                  <div style={{ color: UI.text, font: '800 14px/1.3 "Manrope", sans-serif', marginBottom: 8 }}>Errores comunes</div>
+                <div style={{ color: UI.text, font: '800 14px/1.3 "Manrope", sans-serif', marginBottom: 8 }}>Errores comunes</div>
                   <div className="ush-list">
                     {currentMistakes.map((line) => (
                       <div key={line} className="ush-row">
@@ -2363,7 +2368,7 @@ export default function UserSaludLanding({ profile }) {
                 </span>
               </div>
               <div style={{ color: UI.muted, font: '500 12px/1.5 "Manrope", sans-serif', marginBottom: 10 }}>
-                Ahora combinan progreso diario real con clase, hora, racha y actividad reciente para que la sugerencia no viva solo de fórmulas locales.
+                Mezclan progreso diario, clase, hora y actividad reciente para que la sugerencia no salga de una formula vacia.
               </div>
               {quickMarkers.map((row) => (
                 <div key={row.label} style={{ marginBottom: 12 }}>
@@ -2381,7 +2386,7 @@ export default function UserSaludLanding({ profile }) {
                   Fortaleza actual
                 </div>
                 <div style={{ color: UI.muted, font: '500 13px/1.55 "Manrope", sans-serif' }}>
-                  El mejor marcador del momento es <strong style={{ color: strongestMarker.color }}>{strongestMarker.label.toLowerCase()}</strong>. La idea ahora es sostenerlo sin descuidar el punto más bajo.
+                  Hoy tu mejor lectura cae en <strong style={{ color: strongestMarker.color }}>{strongestMarker.label.toLowerCase()}</strong>. La idea es sostenerla sin olvidar el punto mas flojo.
                 </div>
               </div>
             </div>

@@ -740,6 +740,142 @@ function CInput({label, value, onChange, onBlur, type="text", placeholder="", di
   );
 }
 
+function EInput({
+  label,
+  value,
+  onChange,
+  onBlur,
+  type = "text",
+  placeholder = "",
+  disabled = false,
+  error = null,
+  rows = 0,
+  badge = null,
+  hint = null,
+}) {
+  const [show, setShow] = useState(false);
+  const inputType = type === "password" && show ? "text" : type;
+  const isTextarea = Number(rows) > 0;
+
+  return (
+    <div style={{ marginBottom: 14 }}>
+      {(label || badge) && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 10,
+            marginBottom: 7,
+          }}
+        >
+          {label ? (
+            <label
+              style={{
+                display: "block",
+                fontFamily: "'Manrope',sans-serif",
+                fontSize: 10,
+                fontWeight: 700,
+                color: C.muted,
+                letterSpacing: ".08em",
+                textTransform: "uppercase",
+              }}
+            >
+              {label}
+            </label>
+          ) : <span />}
+          {badge}
+        </div>
+      )}
+
+      <div style={{ position: "relative" }}>
+        {isTextarea ? (
+          <textarea
+            value={value}
+            onChange={(e) => onChange?.(e.target.value)}
+            onBlur={onBlur}
+            placeholder={placeholder}
+            disabled={disabled}
+            rows={rows}
+            className="up-input"
+            style={{
+              width: "100%",
+              paddingTop: 11,
+              paddingRight: 14,
+              paddingBottom: 11,
+              paddingLeft: 14,
+              background: C.panel,
+              border: `1px solid ${error ? C.red : C.navy}`,
+              color: C.white,
+              ...raj(13, 500),
+              resize: "vertical",
+            }}
+          />
+        ) : (
+          <input
+            type={inputType}
+            value={value}
+            onChange={(e) => onChange?.(e.target.value)}
+            onBlur={onBlur}
+            placeholder={placeholder}
+            disabled={disabled}
+            className="up-input"
+            style={{
+              width: "100%",
+              paddingTop: 11,
+              paddingRight: type === "password" ? 44 : 14,
+              paddingBottom: 11,
+              paddingLeft: 14,
+              background: C.panel,
+              border: `1px solid ${error ? C.red : C.navy}`,
+              color: C.white,
+              ...raj(13, 500),
+            }}
+          />
+        )}
+        {type === "password" && (
+          <button
+            type="button"
+            onClick={() => setShow((s) => !s)}
+            aria-label={show ? "Ocultar contenido" : "Mostrar contenido"}
+            style={{
+              position: "absolute",
+              right: 12,
+              top: "50%",
+              transform: "translateY(-50%)",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: C.muted,
+              display: "flex",
+            }}
+          >
+            {show ? <EyeOff size={14} /> : <Eye size={14} />}
+          </button>
+        )}
+      </div>
+
+      {hint && !error && (
+        <div
+          style={{
+            ...raj(11),
+            color: C.muted,
+            marginTop: 5,
+            lineHeight: 1.45,
+          }}
+        >
+          {hint}
+        </div>
+      )}
+      {error && (
+        <div style={{ ...raj(11), color: C.red, marginTop: 5, animation: "up-inlineErr .25s ease both" }}>
+          âš  {error}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function HeroAvatar({heroClass, size=80, animated=false}) {
   const cls = PROFILE_CLS[heroClass]||PROFILE_CLS.GUERRERO;
   return (
@@ -1043,6 +1179,13 @@ function TabResumen({stats, badges, actividad}) {
   const maxSes = Math.max(...weekData.map(d => d.sesiones), 1);
   const weekTotal = weekData.reduce((s,d) => s + d.sesiones, 0);
   const weekXP = weekData.reduce((s,d) => s + (d.xp||0), 0);
+  const weekSessions = weekTotal;
+  const trainedToday = [
+    stats.lastWorkoutAt,
+    stats.lastExerciseAt,
+    stats.lastActivityAt,
+    stats.updatedAt,
+  ].some((entry) => isTodayStamp(entry) === true);
 
   const now = Date.now();
   const fmtTimer = (ms) => {
@@ -1064,6 +1207,13 @@ function TabResumen({stats, badges, actividad}) {
 
   const obtenidos = badges.filter(b => b.obtenido);
   const pendientes = badges.filter(b => b.obtenido && !b.reclamado);
+  const pendingTodayLabel = pendientes.length > 0
+    ? `Reclama ${pendientes.length} insignias`
+    : !trainedToday
+      ? "Activa una sesión corta"
+      : activeBoostsList.length > 0
+        ? "Aprovecha tus boosts vivos"
+        : "Mantén el ritmo limpio";
   const RAREZA_RPG = { "Común":"r-common", "Raro":"r-rare", "Épico":"r-epic", "Legendario":"r-legend", "Mítico":"r-mythic" };
   const BADGE_ICONS = ["🏆","⚔","🛡","🔥","🎯","⭐","🧙","🏹","💎","👑","🌟","🗡"];
   const BADGE_FALLBACKS = [
@@ -1110,6 +1260,55 @@ function TabResumen({stats, badges, actividad}) {
       glow:summaryPrimary,
     },
   ];
+  const summaryRoutesV2 = [
+    {
+      id:"panel",
+      eyebrow:"Resumen",
+      title:"Pulso, economia y boosts",
+      note:"Lee lo inmediato sin abrir toda la ficha.",
+      glow:summaryPrimary,
+      icon:"/ui/icons/stat-xp.png",
+    },
+    {
+      id:"campo",
+      eyebrow:"Lectura",
+      title:"Semana, clase y marcas",
+      note:"Aqui vive el ritmo real de la semana.",
+      glow:summarySecondary,
+      icon:"/exercises/summary/sum-chart.png",
+    },
+    {
+      id:"insignias",
+      eyebrow:"Vitrina",
+      title:"Logros y rarezas",
+      note:"Tu coleccion queda aparte y mas limpia.",
+      glow:summaryPrimary,
+      icon:"/ui/medals/rank-crown.png",
+    },
+  ];
+  const panelSnapshots = [
+    {
+      label:"Ahora mismo",
+      value: pendingTodayLabel,
+      meta: weekSessions > 0 ? `${weekSessions} sesiones esta semana` : "Sin sesiones esta semana",
+      tone: summaryPrimary,
+      icon: "/ui/header/notifications/notif-shield.png",
+    },
+    {
+      label:"Reserva util",
+      value: `${(stats.coins || 0).toLocaleString()} monedas listas`,
+      meta: activeBoostsList.length > 0 ? `${activeBoostsList.length} boosts activos` : "Sin boosts vivos",
+      tone: "#f4cc78",
+      icon: "/ui/shop/icons/shop-coin-stack.png",
+    },
+    {
+      label:"Coleccion",
+      value: `${obtenidos.length} logros ya cerrados`,
+      meta: pendientes.length > 0 ? `${pendientes.length} por reclamar` : "Todo al dia",
+      tone: summarySecondary,
+      icon: "/ui/medals/medal-gold.png",
+    },
+  ];
 
   return (
     <div style={{display:"flex",flexDirection:"column",gap:14}}>
@@ -1117,11 +1316,11 @@ function TabResumen({stats, badges, actividad}) {
       <div
         style={{
           display:"grid",
-          gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",
+          gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",
           gap:12,
         }}
       >
-        {summaryRoutes.map((route) => {
+        {summaryRoutesV2.map((route) => {
           const active = summaryPane === route.id;
           return (
             <button
@@ -1129,7 +1328,7 @@ function TabResumen({stats, badges, actividad}) {
               onClick={() => setSummaryPane(route.id)}
               style={{
                 textAlign:"left",
-                padding:"16px 16px 14px",
+                padding:"14px 15px 13px",
                 borderRadius:18,
                 border:`1px solid ${active ? withAlpha(route.glow, 0.5) : withAlpha(summaryPrimary, 0.16)}`,
                 background:active
@@ -1140,13 +1339,30 @@ function TabResumen({stats, badges, actividad}) {
                 transition:"all .2s ease",
               }}
             >
-              <div style={{fontFamily:"'Manrope',sans-serif",fontSize:10,fontWeight:800,letterSpacing:".09em",textTransform:"uppercase",color:active ? route.glow : "#9d93b8",marginBottom:8}}>
-                {route.eyebrow}
+              <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12,marginBottom:8}}>
+                <div style={{fontFamily:"'Manrope',sans-serif",fontSize:10,fontWeight:800,letterSpacing:".09em",textTransform:"uppercase",color:active ? route.glow : "#9d93b8"}}>
+                  {route.eyebrow}
+                </div>
+                <div
+                  style={{
+                    width:34,
+                    height:34,
+                    borderRadius:12,
+                    border:`1px solid ${withAlpha(route.glow, 0.28)}`,
+                    background:`linear-gradient(145deg, rgba(10,14,26,.82), ${withAlpha(route.glow, 0.14)})`,
+                    display:"grid",
+                    placeItems:"center",
+                    boxShadow:`0 8px 18px ${withAlpha(route.glow, 0.14)}`,
+                    flex:"0 0 auto",
+                  }}
+                >
+                  <img src={route.icon} alt="" style={{width:18,height:18,objectFit:"contain"}} />
+                </div>
               </div>
-              <div style={{fontFamily:"'Manrope',sans-serif",fontSize:20,fontWeight:800,lineHeight:1.05,color:"#fff",letterSpacing:"-.03em",marginBottom:7}}>
+              <div style={{fontFamily:"'Manrope',sans-serif",fontSize:18,fontWeight:800,lineHeight:1.05,color:"#fff",letterSpacing:"-.03em",marginBottom:6}}>
                 {route.title}
               </div>
-              <div style={{fontFamily:"'Manrope',sans-serif",fontSize:12,lineHeight:1.65,color:"rgba(229,223,242,.76)"}}>
+              <div style={{fontFamily:"'Manrope',sans-serif",fontSize:11.5,lineHeight:1.55,color:"rgba(229,223,242,.76)"}}>
                 {route.note}
               </div>
             </button>
@@ -1156,6 +1372,55 @@ function TabResumen({stats, badges, actividad}) {
 
       {summaryPane==="panel" && (
         <>
+      <div
+        style={{
+          display:"grid",
+          gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",
+          gap:12,
+        }}
+      >
+        {panelSnapshots.map((item) => (
+          <div
+            key={item.label}
+            style={{
+              borderRadius:18,
+              border:`1px solid ${withAlpha(item.tone, 0.24)}`,
+              background:`linear-gradient(145deg, rgba(12,14,28,.92), ${withAlpha(item.tone, 0.1)})`,
+              boxShadow:`0 12px 26px rgba(0,0,0,.24), 0 0 20px ${withAlpha(item.tone, 0.12)}`,
+              padding:"14px 14px 13px",
+              display:"grid",
+              gap:10,
+              minHeight:112,
+            }}
+          >
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
+              <div style={{fontFamily:"'Manrope',sans-serif",fontSize:10,fontWeight:800,letterSpacing:".08em",textTransform:"uppercase",color:item.tone}}>
+                {item.label}
+              </div>
+              <div
+                style={{
+                  width:36,
+                  height:36,
+                  borderRadius:12,
+                  border:`1px solid ${withAlpha(item.tone, 0.26)}`,
+                  background:`linear-gradient(145deg, rgba(10,14,26,.82), ${withAlpha(item.tone, 0.16)})`,
+                  display:"grid",
+                  placeItems:"center",
+                }}
+              >
+                <img src={item.icon} alt="" style={{width:18,height:18,objectFit:"contain"}} />
+              </div>
+            </div>
+            <div style={{fontFamily:"'Manrope',sans-serif",fontSize:18,fontWeight:800,lineHeight:1.16,color:"#fff8ef"}}>
+              {item.value}
+            </div>
+            <div style={{fontFamily:"'Manrope',sans-serif",fontSize:12,lineHeight:1.55,color:"rgba(229,223,242,.72)"}}>
+              {item.meta}
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* BENTO GRID */}
       <div className="mp-bento">
 
@@ -1583,26 +1848,24 @@ function PerfilPlaceholderTab({ tabId, stats, badges, actividad, cls, onJump, on
     ? Math.round((stats.xpTotal || 0) / stats.sesionesTotales)
     : 0;
   const realAttributeRows = [
-    { label: "Nivel actual", value: `Lv ${stats.nivel || 1}` },
-    { label: "XP total", value: (stats.xpTotal || 0).toLocaleString() },
-    { label: "Monedas", value: (stats.coins || 0).toLocaleString() },
-    { label: "Sesiones totales", value: `${stats.sesionesTotales || 0}` },
+    { label: "HP actual", value: `${stats.hp || 100}%` },
     { label: "Dias activos", value: `${stats.diasActivo || 0}` },
     { label: "Tiempo total", value: totalHoursLabel },
+    { label: "Registro", value: stats.createdAt || "Sin fecha" },
   ];
 
   const tabMeta = {
     estadisticas: {
       eyebrow: "Lectura del cuerpo",
-      title: "Mesa de estadisticas",
-      copy: "Aqui mandan las cifras reales del perfil: nivel, economia, tiempo invertido y base del rendimiento sin maquillaje de fantasia.",
+      title: "Mesa de lectura",
+      copy: "Aqui queda la lectura base del perfil: constancia, tiempo acumulado y señales generales del avance.",
       accent: cls.color,
       stats: realAttributeRows,
-      note: "La afinidad de clase sigue guiando color y foco, pero esta mesa ya se apoya en progreso real del perfil.",
+      note: "La clase sigue marcando el tono, pero la lectura ya sale de progreso real.",
       modules: [
-        { title:"Base del perfil", text:"Nivel, XP, monedas y tiempo acumulado para leer la solidez general del avance.", metric:`${stats.sesionesTotales || 0} sesiones`, glow:cls.color },
-        { title:"Pulso de consistencia", text:"Dias activos y tiempo total ayudan a detectar si el progreso viene por volumen o por habito.", metric:`${stats.diasActivo || 0} dias activos`, glow:"#4CC9F0" },
-        { title:"Reserva util", text:"La economia del perfil se cruza con tu ritmo para decidir compras, mejoras y cambios de ficha.", metric:`${(stats.coins || 0).toLocaleString()} monedas`, glow:"#f4cc78" },
+        { title:"Base del perfil", text:"Sesiones, tiempo y continuidad ayudan a ver si el avance viene estable o todavia intermitente.", metric:`${stats.sesionesTotales || 0} sesiones`, glow:cls.color },
+        { title:"Pulso de constancia", text:"La semana deja claro si el cuerpo viene con ritmo o si hace falta retomar el paso.", metric:`${weekSessions} sesiones esta semana`, glow:"#4CC9F0" },
+        { title:"Sello de clase", text:"La clase activa y la zona mas repetida ayudan a leer hacia donde se inclina tu build actual.", metric:stats.categFav || stats.heroClass || "Sin sello claro", glow:"#f4cc78" },
       ],
       actions: [
         { label: "Abrir resumen", target: "resumen" },
@@ -1612,22 +1875,20 @@ function PerfilPlaceholderTab({ tabId, stats, badges, actividad, cls, onJump, on
     progreso: {
       eyebrow: "Ritmo del heroe",
       title: "Ruta de progreso",
-      copy: "Este modulo ya no es solo una extension del resumen: ordena lo que viene, lo que falta cerrar y lo que hoy conviene empujar.",
+      copy: "Esta subseccion se queda solo con lo que empuja el siguiente paso: racha, empuje y margen para subir.",
       accent: cls.secondary || cls.color,
       heroIcon: "/exercises/summary/sum-chart.png",
       stats: [
-        { label: "Nivel actual", value: `Lv ${stats.nivel || 1}`, icon: "/ui/icons/stat-xp.png" },
+        { label: "XP restante", value: `${Math.max(0, (stats.xpNext || 1000) - (stats.xp || 0)).toLocaleString()}`, icon: "/ui/icons/stat-xp.png" },
         { label: "Racha activa", value: `${stats.streak || 0} dias` },
         { label: "Racha maxima", value: `${stats.rachaMax || 0} dias` },
         { label: "Boosts vivos", value: `${activeBoosts}` },
-        { label: "Logros abiertos", value: `${unlocked}` },
-        { label: "XP por sesion", value: avgXpPerSession ? `${avgXpPerSession} XP` : "Sin registros" },
       ],
-      note: "Aqui lees momentum real: siguiente empuje, energia util y si toca rematar o sostener.",
+      note: "La ruta junta empuje, proteccion y ritmo sin volverlo una pared de datos.",
       modules: [
         { title:"Siguiente empuje", text:"Si el nivel esta cerca, conviene rematarlo. Si no, la prioridad es sostener una sesion limpia.", metric:`${Math.max(0, (stats.xpNext || 1000) - (stats.xp || 0)).toLocaleString()} XP restantes`, glow:cls.secondary || cls.color },
         { title:"Proteccion activa", text:"Los boosts y el escudo de racha condicionan cuanto vale seguir hoy mismo.", metric:`${activeBoosts} mejoras vivas`, glow:"#f4cc78" },
-        { title:"Ritmo del tramo", text:"La racha y la media de XP por sesion dejan ver si el avance esta subiendo o se quedo plano.", metric:avgXpPerSession ? `${avgXpPerSession} XP por sesion` : "Sin media todavia", glow:"#ff6b6b" },
+        { title:"Pendiente de hoy", text:"Este tramo aterriza rapido si quedan logros por reclamar o una racha corta por sostener.", metric:pending > 0 ? `${pending} insignias por reclamar` : stats.streak > 0 ? `${stats.streak} dias en curso` : "Sin pendiente fuerte", glow:"#ff6b6b" },
       ],
       actions: [
         { label: "Abrir resumen", target: "resumen" },
@@ -1636,19 +1897,17 @@ function PerfilPlaceholderTab({ tabId, stats, badges, actividad, cls, onJump, on
     },
     historial: {
       eyebrow: "Memoria del mapa",
-      title: "Registro del heroe",
-      copy: "La memoria del perfil queda como bitacora editorial: semana reciente, huellas favoritas y marcas que explican por donde has crecido.",
+      title: "Bitacora del heroe",
+      copy: "Aqui queda la huella reciente del perfil: que repetiste, que zona pesa mas y desde cuando vienes construyendo el mapa.",
       accent: cls.color,
       heroIcon: "/exercises/summary/sum-logbook.png",
       stats: [
         { label: "Sesiones de la semana", value: `${weekSessions}`, icon: "/exercises/summary/sum-logbook.png" },
-        { label: "XP semanal", value: weekXP.toLocaleString(), icon: "/ui/icons/stat-xp.png" },
-        { label: "Misiones cerradas", value: `${stats.misionesCompletadas || 0}`, icon: "/ui/medals/medal-gold.png" },
         { label: "Ejercicio clave", value: stats.ejercicioFav || "-", icon: "/missions/rewards/reward-xp-scroll.png" },
         { label: "Zona favorita", value: stats.categFav || "-", icon: "/exercises/summary/sum-zones.png" },
         { label: "Ingreso al mapa", value: stats.createdAt || "-", icon: "/ui/header/section-perfil.png" },
       ],
-      note: "La idea aqui es leer memoria util, no tirar una lista infinita. Lo cronologico fino puede crecer despues.",
+      note: "La memoria sirve para ubicar patrones y marcas, no para ahogar la vista con historiales eternos.",
       modules: [
         { title:"Semana reciente", text:"Volumen de sesiones y XP ganado para ver si la curva de la semana estuvo viva o plana.", metric:`${weekXP.toLocaleString()} XP`, glow:cls.secondary || cls.color, icon: "/exercises/summary/sum-chart.png" },
         { title:"Huella favorita", text:"Tu ejercicio y zona mas repetidos ayudan a entender por que el perfil se inclino hacia cierta build.", metric:`${stats.ejercicioFav || "Sin huella"} `, glow:"#4CC9F0" },
@@ -1662,9 +1921,15 @@ function PerfilPlaceholderTab({ tabId, stats, badges, actividad, cls, onJump, on
   };
 
   const meta = tabMeta[tabId] || tabMeta.estadisticas;
+  const isReadingTab = tabId === "estadisticas";
+  const isRouteTab = tabId === "progreso";
+  const isMemoryTab = tabId === "historial";
   const estimatedState = tabId === "estadisticas"
     ? "Base real con lectura complementaria del perfil."
     : "Algunas capas siguen resumidas mientras llega el historial fino del backend.";
+  const readingQuickPanels = [];
+  const routeQuickPanels = [];
+  const memoryQuickPanels = [];
   const routeStatIcons = [
     "/ui/icons/stat-xp.png",
     "/ui/header/notifications/notif-shield.png",
@@ -1808,7 +2073,7 @@ function PerfilPlaceholderTab({ tabId, stats, badges, actividad, cls, onJump, on
         />
         <div style={{ position:"relative", zIndex:1, display:"grid", gap:14 }}>
           <div style={{ display:"flex", justifyContent:"space-between", gap:16, flexWrap:"wrap", alignItems:"start" }}>
-            <div style={{ maxWidth:760 }}>
+            <div style={{ maxWidth:(isReadingTab || isRouteTab || isMemoryTab) ? 700 : 760 }}>
               <div
                 style={{
                   display:"inline-flex",
@@ -1856,7 +2121,7 @@ function PerfilPlaceholderTab({ tabId, stats, badges, actividad, cls, onJump, on
                   fontSize:14,
                   lineHeight:1.7,
                   color:"rgba(230,224,245,.82)",
-                  maxWidth:760,
+                  maxWidth:(isReadingTab || isRouteTab || isMemoryTab) ? 620 : 760,
                 }}
               >
                 {meta.copy}
@@ -1910,7 +2175,59 @@ function PerfilPlaceholderTab({ tabId, stats, badges, actividad, cls, onJump, on
             </div>
           </div>
 
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(160px, 1fr))", gap:12 }}>
+          {((isReadingTab && readingQuickPanels.length > 0) || (isRouteTab && routeQuickPanels.length > 0) || (isMemoryTab && memoryQuickPanels.length > 0)) && (
+            <div
+              style={{
+                display:"grid",
+                gridTemplateColumns:"repeat(auto-fit, minmax(220px, 1fr))",
+                gap:12,
+              }}
+            >
+              {(isReadingTab ? readingQuickPanels : isRouteTab ? routeQuickPanels : memoryQuickPanels).map((panel) => (
+                <div
+                  key={panel.label}
+                  style={{
+                    padding:"14px 14px 13px",
+                    borderRadius:18,
+                    border:`1px solid ${rgbaHex(panel.glow, 0.24)}`,
+                    background:`linear-gradient(145deg, rgba(10,14,26,.9), ${rgbaHex(panel.glow, 0.1)})`,
+                    boxShadow:`0 12px 24px rgba(0,0,0,.24), 0 0 18px ${rgbaHex(panel.glow, 0.12)}`,
+                    display:"grid",
+                    gap:10,
+                    minHeight:116,
+                  }}
+                >
+                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:12 }}>
+                    <div style={{ fontFamily:"'Manrope',sans-serif", fontSize:10, fontWeight:800, letterSpacing:".08em", textTransform:"uppercase", color:panel.glow }}>
+                      {panel.label}
+                    </div>
+                    <div
+                      style={{
+                        width:36,
+                        height:36,
+                        borderRadius:12,
+                        border:`1px solid ${rgbaHex(panel.glow, 0.26)}`,
+                        background:`linear-gradient(145deg, rgba(10,14,26,.84), ${rgbaHex(panel.glow, 0.14)})`,
+                        display:"grid",
+                        placeItems:"center",
+                        flex:"0 0 auto",
+                      }}
+                    >
+                      <img src={panel.icon} alt="" style={{ width:18, height:18, objectFit:"contain" }} />
+                    </div>
+                  </div>
+                  <div style={{ fontFamily:"'Manrope',sans-serif", fontSize:18, fontWeight:800, lineHeight:1.16, color:"#fff8ef" }}>
+                    {panel.value}
+                  </div>
+                  <div style={{ fontFamily:"'Manrope',sans-serif", fontSize:12, lineHeight:1.55, color:"rgba(229,223,242,.72)" }}>
+                    {panel.note}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div style={{ display:"grid", gridTemplateColumns:(isReadingTab || isRouteTab || isMemoryTab) ? "repeat(auto-fit, minmax(150px, 1fr))" : "repeat(auto-fit, minmax(160px, 1fr))", gap:12 }}>
             {meta.stats.map((item, index) => {
               const metricAccent = classTones[index % classTones.length];
               const metricIcon =
@@ -1921,7 +2238,7 @@ function PerfilPlaceholderTab({ tabId, stats, badges, actividad, cls, onJump, on
               <div
                 key={item.label}
                 style={{
-                  padding:"14px 14px 12px",
+                  padding:(isReadingTab || isRouteTab || isMemoryTab) ? "13px 13px 11px" : "14px 14px 12px",
                   borderRadius:16,
                   ...makePanelStyle(metricAccent, 0.14, 0.08),
                   boxShadow:`inset 0 1px 0 rgba(255,255,255,.03), 0 0 14px ${rgbaHex(metricAccent, 0.12)}`,
@@ -1938,14 +2255,14 @@ function PerfilPlaceholderTab({ tabId, stats, badges, actividad, cls, onJump, on
                   )}
                   <span>{item.label}</span>
                 </div>
-                <div style={{ fontFamily:"'Manrope',sans-serif", fontSize:20, fontWeight:800, color:"#fff", lineHeight:1.1, textShadow:`0 0 12px ${rgbaHex(metricAccent, 0.12)}` }}>
+                <div style={{ fontFamily:"'Manrope',sans-serif", fontSize:(isReadingTab || isRouteTab || isMemoryTab) ? 18 : 20, fontWeight:800, color:"#fff", lineHeight:1.1, textShadow:`0 0 12px ${rgbaHex(metricAccent, 0.12)}` }}>
                   {item.value}
                 </div>
               </div>
             )})}
           </div>
 
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(220px, 1fr))", gap:12 }}>
+          <div style={{ display:"grid", gridTemplateColumns:(isReadingTab || isRouteTab || isMemoryTab) ? "repeat(auto-fit, minmax(240px, 1fr))" : "repeat(auto-fit, minmax(220px, 1fr))", gap:12 }}>
             {(meta.modules || []).map((module, index) => {
               const moduleIcon =
                 module.icon
@@ -1957,7 +2274,7 @@ function PerfilPlaceholderTab({ tabId, stats, badges, actividad, cls, onJump, on
                 style={{
                   position:"relative",
                   overflow:"hidden",
-                  padding:"16px 16px 14px",
+                  padding:(isReadingTab || isRouteTab || isMemoryTab) ? "15px 15px 14px" : "16px 16px 14px",
                   borderRadius:18,
                   ...makePanelStyle(module.glow || classPrimary, 0.16, 0.08),
                 }}
@@ -1980,7 +2297,7 @@ function PerfilPlaceholderTab({ tabId, stats, badges, actividad, cls, onJump, on
                     )}
                     <span>{module.title}</span>
                   </div>
-                  <div style={{ fontFamily:"'Manrope',sans-serif", fontSize:22, fontWeight:800, color:"#fff", lineHeight:1.05, marginBottom:8, textShadow:`0 0 14px ${rgbaHex(module.glow || classPrimary, 0.14)}` }}>
+                  <div style={{ fontFamily:"'Manrope',sans-serif", fontSize:(isReadingTab || isRouteTab || isMemoryTab) ? 20 : 22, fontWeight:800, color:"#fff", lineHeight:1.05, marginBottom:8, textShadow:`0 0 14px ${rgbaHex(module.glow || classPrimary, 0.14)}` }}>
                     {module.metric}
                   </div>
                   <div style={{ fontFamily:"'Manrope',sans-serif", fontSize:12, lineHeight:1.7, color:"rgba(226,219,238,.76)" }}>
@@ -2013,7 +2330,13 @@ function PerfilPlaceholderTab({ tabId, stats, badges, actividad, cls, onJump, on
                     Sistema del modulo
                   </div>
                   <div style={{ fontFamily:"'Manrope',sans-serif", fontSize:13, lineHeight:1.65, color:"rgba(230,224,245,.78)" }}>
-                    Esta subseccion ya guarda su foco y su ancla en Firebase. Asi, lectura, ruta y memoria dejan una huella propia dentro de tu ficha.
+                    {isReadingTab
+                      ? "Esta lectura ya puede guardar foco y ancla, asi la ficha recuerda que cifra quieres ver primero."
+                      : isRouteTab
+                        ? "La ruta tambien guarda su foco y su ancla, para que el perfil recuerde si estabas empujando nivel, racha o proteccion."
+                        : isMemoryTab
+                          ? "La memoria tambien puede fijar su foco, para que la ficha recuerde si estabas leyendo semana, huella u origen."
+                          : "Esta subseccion ya guarda su foco y su ancla en Firebase. Asi, lectura, ruta y memoria dejan una huella propia dentro de tu ficha."}
                   </div>
                 </div>
 
@@ -2159,6 +2482,13 @@ function TabEditar({stats, onSaved, showToast, titleCatalog = TITULOS_CATALOG}) 
   const [editMode,     setEditMode]     = useState(false);
   const [viewPane,     setViewPane]     = useScopedStorageState("fv-profile-edit-view-pane-v1", "identidad");
   const [editPane,     setEditPane]     = useScopedStorageState("fv-profile-edit-form-pane-v1", "perfil");
+  const buildFormFromStats = useCallback(() => ({
+    username:  stats.username  || "",
+    heroName:  stats.heroName  || "",
+    titulo:    stats.titulo    || "",
+    bio:       stats.bio       || "",
+    heroClass: stats.heroClass || "GUERRERO",
+  }), [stats.bio, stats.heroClass, stats.heroName, stats.titulo, stats.username]);
   const [form,         setForm]         = useState({
     username:  stats.username  || "",
     heroName:  stats.heroName  || "",
@@ -2175,17 +2505,20 @@ function TabEditar({stats, onSaved, showToast, titleCatalog = TITULOS_CATALOG}) 
   const isMobile = useIsMobile();
 
   const cancel = () => {
-    setForm({
-      username:  stats.username  || "",
-      heroName:  stats.heroName  || "",
-      titulo:    stats.titulo    || "",
-      bio:       stats.bio       || "",
-      heroClass: stats.heroClass || "GUERRERO",
-    });
+    setForm(buildFormFromStats());
     setErrors({}); setDirty(new Set());
     setConfirmClass(false); setPendingClass(null);
     setEditMode(false);
   };
+
+  useEffect(() => {
+    if (editMode) return;
+    setForm(buildFormFromStats());
+    setErrors({});
+    setDirty(new Set());
+    setConfirmClass(false);
+    setPendingClass(null);
+  }, [buildFormFromStats, editMode]);
 
   const validateField = (k, v) => {
     if (k === "username") {
@@ -2230,31 +2563,60 @@ function TabEditar({stats, onSaved, showToast, titleCatalog = TITULOS_CATALOG}) 
   };
 
   const save = async () => {
-    setDirty(new Set(["username","heroName","bio"]));
+    setDirty(new Set(["username","heroName","bio","titulo","heroClass"]));
     const e = validate();
     if (Object.values(e).some(Boolean)) {
       setErrors(e); setShake(true); setTimeout(()=>setShake(false),500); return;
+    }
+    const trimmedUsername = form.username.trim();
+    const trimmedHeroName = form.heroName.trim();
+    const trimmedTitulo = form.titulo.trim();
+    const trimmedBio = form.bio.trim();
+    const payload = {};
+
+    if (trimmedUsername !== (stats.username || "")) payload.username = trimmedUsername;
+    if (trimmedHeroName !== (stats.heroName || "")) payload.heroName = trimmedHeroName;
+    if (trimmedTitulo !== (stats.titulo || "")) payload.titulo = trimmedTitulo;
+    if (trimmedBio !== (stats.bio || "")) payload.bio = trimmedBio;
+    if (form.heroClass !== (stats.heroClass || "GUERRERO")) payload.heroClass = form.heroClass;
+
+    if (!Object.keys(payload).length) {
+      setEditMode(false);
+      showToast?.({ ok:true, message:"No habia cambios por guardar." });
+      return;
+    }
+
+    if (stats.coins < totalCost) {
+      const missingCoins = Math.max(totalCost - stats.coins, 0);
+      const message = `Te faltan ${missingCoins} monedas para aplicar este cambio.`;
+      setErrors({ general: message });
+      setShake(true); setTimeout(()=>setShake(false),500);
+      showToast?.({ ok:false, message:"No alcanza la reserva", sub:message });
+      return;
     }
     setLoading(true); setErrors({});
     try {
       const token = auth.currentUser && await auth.currentUser.getIdToken();
       if (!token) throw new Error("Sin autenticación");
-      const response = await updateProfile(token, {
-        username:  form.username.trim(),
-        heroName:  form.heroName.trim(),
-        titulo:    form.titulo.trim(),
-        bio:       form.bio.trim(),
-        heroClass: form.heroClass,
-      });
+      const response = await updateProfile(token, payload);
       if (!response.ok) throw new Error(response.message || "Error al guardar");
+      const nextUser = { ...stats, ...payload, ...(response.user || {}) };
       setEditMode(false);
-      onSaved?.(response.user || form);
+      setForm({
+        username:  nextUser.username  || "",
+        heroName:  nextUser.heroName  || "",
+        titulo:    nextUser.titulo    || "",
+        bio:       nextUser.bio       || "",
+        heroClass: nextUser.heroClass || "GUERRERO",
+      });
+      onSaved?.(nextUser);
       window.dispatchEvent(new CustomEvent("profileUpdated", {
         detail: {
           scope: "profile-edit",
           ts: Date.now(),
-          heroClass: form.heroClass,
-          username: form.username.trim(),
+          uid: auth.currentUser?.uid || response.user?.uid || "guest",
+          ...nextUser,
+          updatedUser: nextUser,
         },
       }));
       showToast?.({ ok:true, message:t("pr.toast.profile_saved") });
@@ -2278,6 +2640,55 @@ function TabEditar({stats, onSaved, showToast, titleCatalog = TITULOS_CATALOG}) 
   const classCost        = classChanging ? CLASS_COST : 0;
   const totalCost        = usernameCost + classCost;
   const canAfford        = stats.coins >= totalCost;
+
+  const applyPendingClassChange = async () => {
+    if (!pendingClass || pendingClass === (stats.heroClass || "GUERRERO")) {
+      setConfirmClass(false);
+      setPendingClass(null);
+      return;
+    }
+
+    if ((stats.coins || 0) < CLASS_COST) {
+      const missingCoins = Math.max(CLASS_COST - (stats.coins || 0), 0);
+      const message = `Te faltan ${missingCoins} monedas para cambiar de clase.`;
+      setErrors({ general: message });
+      setShake(true); setTimeout(()=>setShake(false),500);
+      showToast?.({ ok:false, message:"No alcanza la reserva", sub:message });
+      return;
+    }
+
+    const nextClass = pendingClass;
+    setLoading(true);
+    setErrors({});
+    try {
+      const token = auth.currentUser && await auth.currentUser.getIdToken();
+      if (!token) throw new Error("Sin autenticacion");
+      const response = await updateProfile(token, { heroClass: nextClass });
+      if (!response.ok) throw new Error(response.message || "Error al cambiar la clase");
+      const nextUser = { ...stats, heroClass: nextClass, ...(response.user || {}) };
+      setForm((prev) => ({ ...prev, heroClass: nextUser.heroClass || "GUERRERO" }));
+      setConfirmClass(false);
+      setPendingClass(null);
+      setEditMode(false);
+      onSaved?.(nextUser);
+      window.dispatchEvent(new CustomEvent("profileUpdated", {
+        detail: {
+          scope: "profile-class-change",
+          ts: Date.now(),
+          uid: auth.currentUser?.uid || response.user?.uid || "guest",
+          ...nextUser,
+          updatedUser: nextUser,
+        },
+      }));
+      showToast?.({ ok:true, message:`Clase activa: ${nextUser.heroClass || nextClass}.` });
+    } catch (err) {
+      setErrors({ general: err.message || "No pudimos cambiar la clase." });
+      setShake(true); setTimeout(()=>setShake(false),500);
+      showToast?.({ ok:false, message:"Cambio de clase fallido", sub:err.message });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const FV = {
     wrap:{ hidden:{}, show:{ transition:{ staggerChildren:.07 } } },
@@ -2367,7 +2778,7 @@ function TabEditar({stats, onSaved, showToast, titleCatalog = TITULOS_CATALOG}) 
                   color:SC.muted, letterSpacing:".12em"}}>{t("pr.edit.public_info")}</div>
               </div>
               <motion.button whileHover={{scale:1.06}} whileTap={{scale:.94}}
-                onClick={()=>setEditMode(true)}
+                onClick={() => { setEditPane("perfil"); setEditMode(true); }}
                 style={{
                   display:"flex", alignItems:"center", gap:6,
                   fontFamily:"'Manrope',sans-serif", fontSize:10, fontWeight:700,
@@ -2519,7 +2930,7 @@ function TabEditar({stats, onSaved, showToast, titleCatalog = TITULOS_CATALOG}) 
             <motion.button
               whileHover={{scale:1.02, borderColor:`${viewCls.color}55`}}
               whileTap={{scale:.97}}
-              onClick={()=>setEditMode(true)}
+              onClick={() => { setEditPane("clase"); setEditMode(true); }}
               style={{
                 display:"flex", alignItems:"center", justifyContent:"center", gap:8,
                 width:"100%", padding:"10px 0",
@@ -2880,7 +3291,7 @@ function TabEditar({stats, onSaved, showToast, titleCatalog = TITULOS_CATALOG}) 
                   </motion.button>
                   <motion.button whileTap={hasCoins?{scale:.95}:{}}
                     disabled={!hasCoins}
-                    onClick={()=>{ if(hasCoins){ set("heroClass",pendingClass); setConfirmClass(false); setPendingClass(null); }}}
+                    onClick={() => { if (hasCoins) applyPendingClassChange(); }}
                     style={{
                       fontFamily:"'Manrope',sans-serif", fontSize:12, fontWeight:700,
                       color:hasCoins?SC.bg:SC.muted,
@@ -4063,6 +4474,7 @@ function TabSeguridad({stats, showToast, onLogout}) {
   const currentUser = auth.currentUser;
   const providerIds = currentUser?.providerData?.map((provider) => provider.providerId).filter(Boolean) || [];
   const usesPasswordReauth = providerIds.includes("password") || providerIds.length === 0;
+  const canUsePasswordFlow = usesPasswordReauth && Boolean(currentUser?.email);
   const providerLabel = providerIds.length ? providerIds.map(getReadableProvider).join(" + ") : "Correo y clave";
   const accountAuditRows = [
     { label:"Proveedor", value:providerLabel, icon:"link" },
@@ -4082,6 +4494,24 @@ function TabSeguridad({stats, showToast, onLogout}) {
       return stats.pendingEmailStatus || "idle";
     });
   }, [stats.pendingEmailStatus, stats.pendingEmailTarget]);
+
+  const reauthenticateActiveUser = useCallback(async (passwordValue = "") => {
+    const user = auth.currentUser;
+    if (!user) throw new Error("Sin sesion activa");
+
+    if (canUsePasswordFlow) {
+      if (!user.email) throw new Error("Tu cuenta no tiene correo disponible para validar identidad.");
+      if (!passwordValue) throw new Error("Escribe tu clave actual para confirmar.");
+      const credential = EmailAuthProvider.credential(user.email, passwordValue);
+      await reauthenticateWithCredential(user, credential);
+      return auth.currentUser || user;
+    }
+
+    const googleProvider = new GoogleAuthProvider();
+    googleProvider.setCustomParameters({ prompt: "select_account" });
+    await reauthenticateWithPopup(user, googleProvider);
+    return auth.currentUser || user;
+  }, [canUsePasswordFlow]);
 
   const syncPendingEmailState = useCallback(async ({
     target = "",
@@ -4129,18 +4559,7 @@ function TabSeguridad({stats, showToast, onLogout}) {
     setDeleteLoading(true);
     setDeleteError("");
     try {
-      const user = auth.currentUser;
-      if (!user) throw new Error("Sin sesión activa");
-      if (usesPasswordReauth) {
-        if (!user.email) throw new Error("Tu cuenta no tiene correo disponible para validar identidad.");
-        if (!deletePassword) throw new Error("Escribe tu clave actual para confirmar.");
-        const deleteCred = EmailAuthProvider.credential(user.email, deletePassword);
-        await reauthenticateWithCredential(user, deleteCred);
-      } else {
-        const googleProvider = new GoogleAuthProvider();
-        googleProvider.setCustomParameters({ prompt: "select_account" });
-        await reauthenticateWithPopup(user, googleProvider);
-      }
+      const user = await reauthenticateActiveUser(deletePassword);
       const token = await user.getIdToken();
       await deleteProfile(token, stats.username);
       showToast?.({ ok: true, message: t("pr.toast.account_deleted") });
@@ -4154,7 +4573,7 @@ function TabSeguridad({stats, showToast, onLogout}) {
 
   // ── Password helpers ──────────────────────────────────────────
   const validatePwField = (k, v) => {
-    if (k==="actual")    return { actual:    !v ? t("pr.val.pw_required") : null };
+    if (k==="actual")    return { actual:    canUsePasswordFlow && !v ? t("pr.val.pw_required") : null };
     if (k==="nueva")     return { nueva:     !v||v.length<6 ? t("pr.val.pw_min") : null };
     if (k==="confirmar") return { confirmar: v!==pwForm.nueva ? t("pr.val.pw_mismatch") : null };
     return {};
@@ -4174,13 +4593,13 @@ function TabSeguridad({stats, showToast, onLogout}) {
   };
   const validatePw = () => {
     const e = {};
-    if (!pwForm.actual)                       e.actual    = t("pr.val.pw_required");
+    if (canUsePasswordFlow && !pwForm.actual) e.actual    = t("pr.val.pw_required");
     if (!pwForm.nueva||pwForm.nueva.length<6) e.nueva     = t("pr.val.pw_min");
     if (pwForm.nueva !== pwForm.confirmar)    e.confirmar = t("pr.val.pw_mismatch");
     return e;
   };
   const savePw = async () => {
-    setPwDirty(new Set(["actual","nueva","confirmar"]));
+    setPwDirty(new Set(canUsePasswordFlow ? ["actual","nueva","confirmar"] : ["nueva","confirmar"]));
     const e = validatePw();
     if (Object.values(e).some(Boolean)) {
       setPwErrors(e); setPwShake(true); setTimeout(()=>setPwShake(false),500); return;
@@ -4188,12 +4607,16 @@ function TabSeguridad({stats, showToast, onLogout}) {
     setPwLoading(true); setPwErrors({});
     setPwPhase("reauth");
     try {
-      const user = auth.currentUser;
-      if (!user||!user.email) throw new Error("No hay sesión activa");
-      const cred = EmailAuthProvider.credential(user.email, pwForm.actual);
-      await reauthenticateWithCredential(user, cred);
+      const user = await reauthenticateActiveUser(pwForm.actual);
       setPwPhase("updating");
       await updatePassword(user, pwForm.nueva);
+      await user.reload().catch(() => {});
+      window.dispatchEvent(new CustomEvent("profileSecurityUpdated", {
+        detail: {
+          passwordUpdatedAt: new Date().toISOString(),
+          ts: Date.now(),
+        },
+      }));
       setPwForm({actual:"",nueva:"",confirmar:""});
       setPwDirty(new Set());
       setPwPhase("done");
@@ -4213,10 +4636,10 @@ function TabSeguridad({stats, showToast, onLogout}) {
     }
   };
 
-  // ── Email helpers ─────────────────────────────────────────────
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Email helpers ─────────────────────────────────────────────
   const validateEmailField = (k, v) => {
     if (k==="nuevo")    return { nuevo:    !v||!/\S+@\S+\.\S+/.test(v) ? t("pr.val.email_invalid") : null };
-    if (k==="password") return { password: !v ? t("pr.val.pw_required") : null };
+    if (k==="password") return { password: canUsePasswordFlow && !v ? t("pr.val.pw_required") : null };
     return {};
   };
   const setEmailF = (k, v) => {
@@ -4228,18 +4651,15 @@ function TabSeguridad({stats, showToast, onLogout}) {
     setEmailErrors(prev=>({...prev,...validateEmailField(k,emailForm[k])}));
   };
   const handleEmailChange = async () => {
-    setEmailDirty(new Set(["nuevo","password"]));
+    setEmailDirty(new Set(canUsePasswordFlow ? ["nuevo","password"] : ["nuevo"]));
     const e = {};
-    if (!emailForm.nuevo||!/\S+@\S+\.\S+/.test(emailForm.nuevo)) e.nuevo    = t("pr.val.email_invalid");
-    if (!emailForm.password)                                       e.password = t("pr.val.pw_required");
+    if (!emailForm.nuevo||!/\S+@\S+\.\S+/.test(emailForm.nuevo)) e.nuevo = t("pr.val.email_invalid");
+    if (canUsePasswordFlow && !emailForm.password) e.password = t("pr.val.pw_required");
     if (Object.values(e).some(Boolean)) { setEmailErrors(e); return; }
     setEmailLoading(true); setEmailErrors({});
     setEmailStatus("reauth");
     try {
-      const user = auth.currentUser;
-      if (!user) throw new Error("Sin sesión activa");
-      const cred = EmailAuthProvider.credential(user.email, emailForm.password);
-      await reauthenticateWithCredential(user, cred);
+      const user = await reauthenticateActiveUser(emailForm.password);
       setEmailStatus("sending");
       await verifyBeforeUpdateEmail(user, emailForm.nuevo);
       const normalizedTarget = emailForm.nuevo.trim().toLowerCase();
@@ -4762,7 +5182,7 @@ function TabSeguridad({stats, showToast, onLogout}) {
           </div>
           {[
             { label:"Estado", value:pwPhase === "done" ? "Clave aplicada" : pwLoading ? "Actualizando acceso" : "Pendiente", glow:pwPhase === "done" ? SC.green : SC.orange },
-            { label:"Validacion", value:usesPasswordReauth ? "Clave actual obligatoria" : "Proveedor externo", glow:usesPasswordReauth ? SC.orange : SC.blue },
+            { label:"Validacion", value:canUsePasswordFlow ? "Clave actual obligatoria" : "Confirmacion con Google", glow:canUsePasswordFlow ? SC.orange : SC.blue },
             { label:"Fortaleza", value:strengthMeta[pwStrength]?.label || "Sin nueva clave", glow:strengthMeta[pwStrength]?.c || SC.muted },
           ].map((item) => (
             <div key={item.label} style={{
@@ -5463,7 +5883,30 @@ export default function UserPerfil({profile, onLogout}) {
   useEffect(() => {
     if (!profile) return;
     const nextStats = profileToStats(profile);
-    setLocalStats((prev) => ({ ...prev, ...nextStats }));
+    setLocalStats((prev) => ({
+      ...prev,
+      heroClass: nextStats.heroClass || prev.heroClass,
+      username: nextStats.username || prev.username,
+      email: nextStats.email || prev.email,
+      heroName: nextStats.heroName || prev.heroName,
+      titulo: nextStats.titulo || prev.titulo,
+      bio: nextStats.bio || prev.bio,
+      createdAt: nextStats.createdAt || prev.createdAt,
+      updatedAt: nextStats.updatedAt || prev.updatedAt,
+      pendingEmailTarget: nextStats.pendingEmailTarget || prev.pendingEmailTarget,
+      pendingEmailStatus: nextStats.pendingEmailStatus || prev.pendingEmailStatus,
+      pendingEmailRequestedAt: nextStats.pendingEmailRequestedAt || prev.pendingEmailRequestedAt,
+      pendingEmailResolvedAt: nextStats.pendingEmailResolvedAt || prev.pendingEmailResolvedAt,
+      usernameChanged: nextStats.usernameChanged ?? prev.usernameChanged,
+      profileModules: nextStats.profileModules || prev.profileModules,
+      activeSkin: nextStats.activeSkin || prev.activeSkin,
+      activeAvatar: nextStats.activeAvatar || prev.activeAvatar,
+      activeFrame: nextStats.activeFrame ?? prev.activeFrame,
+      ownedSkins: nextStats.ownedSkins || prev.ownedSkins,
+      ownedAvatars: nextStats.ownedAvatars || prev.ownedAvatars,
+      ownedFrames: nextStats.ownedFrames || prev.ownedFrames,
+      ownedTitles: nextStats.ownedTitles || prev.ownedTitles,
+    }));
     setOwnedSkins(nextStats.ownedSkins || ["default"]);
     setActiveSkinL(nextStats.activeSkin || "default");
     setOwnedAvatars(nextStats.ownedAvatars || ["avatar_01"]);
@@ -5719,18 +6162,10 @@ export default function UserPerfil({profile, onLogout}) {
                 ? "Remata el nivel actual"
                 : Object.keys(localStats.activeBoosts || {}).length > 0 || localStats.streakShield
                   ? "Aprovecha tus boosts vivos"
-                  : "Mantener la constancia";
-          const heroHighlights = [
-            { label:"Nivel", value:`Lv ${localStats.nivel || 1}`, tone:cls.color },
-            { label:"Racha", value:`${localStats.streak || 0} días`, tone:"#f4cc78" },
-            { label:"Logros", value:`${unlockedBadges}`, tone:"#c084fc" },
-            { label:"Sesiones", value:`${localStats.sesionesTotales || 0}`, tone:"#4CC9F0" },
-          ];
+                  : "Mantén la constancia";
           const sideFacts = [
-            { label:"Última actualización", value:lastProfileUpdate },
-            { label:"Próximo desbloqueo", value:nextUnlockLabel },
-            { label:"Rareza dominante", value:dominantRarity },
-            { label:"Pendiente hoy", value:pendingTodayLabel },
+            { label:"Última lectura", value:lastProfileUpdate },
+            { label:"Rareza base", value:dominantRarity },
           ];
 
           return (
@@ -5763,45 +6198,18 @@ export default function UserPerfil({profile, onLogout}) {
             <div style={{ position:"absolute", right:-80, top:-80, width:260, height:260, borderRadius:"50%", background:classPrimary, opacity:.2, filter:"blur(120px)", pointerEvents:"none" }} />
             <div style={{ position:"absolute", left:"18%", bottom:-120, width:240, height:240, borderRadius:"50%", background:classSecondary, opacity:.16, filter:"blur(120px)", pointerEvents:"none" }} />
             <div style={{ position:"absolute", inset:"0 0 auto 0", height:1, background:`linear-gradient(90deg, transparent, ${classPrimary}, ${classSecondary}, transparent)`, opacity:.95 }} />
-            <div style={{ position:"absolute", right:22, top:18, display:"flex", gap:10, zIndex:1, flexWrap:"wrap", justifyContent:"flex-end" }}>
-              {[
-                { value:(localStats.coins||0).toLocaleString(), tone:"#f4cc78", bg:"rgba(244,204,120,.16)" },
-                { value:localStats.nivel||1, tone:classSecondary, bg:`${classSecondary}1c` },
-                { value:localStats.hp||100, tone:classPrimary, bg:`${classPrimary}1c` },
-              ].map((pill) => (
-                <div
-                  key={pill.value}
-                  style={{
-                    display:"inline-flex",
-                    alignItems:"center",
-                    gap:8,
-                    padding:"7px 12px",
-                    borderRadius:999,
-                    border:`1px solid ${pill.tone}36`,
-                    background:`linear-gradient(135deg, ${pill.bg}, rgba(10,14,26,.72))`,
-                    color:pill.tone,
-                    boxShadow:`0 8px 18px ${pill.tone}16`,
-                    fontFamily:"'Manrope',sans-serif",
-                    fontSize:11,
-                    fontWeight:800,
-                  }}
-                >
-                  <span style={{ width:8, height:8, borderRadius:"50%", background:pill.tone, boxShadow:`0 0 10px ${pill.tone}` }} />
-                  {pill.value}
-                </div>
-              ))}
-            </div>
             <div
               style={{
                 position:"relative",
                 zIndex:1,
                 display:"grid",
-                gridTemplateColumns:"1fr",
-                gap:isMobile ? 16 : 18,
+                gridTemplateColumns:(isMobile || isNarrow) ? "1fr" : "minmax(0, 1.16fr) minmax(360px, .84fr)",
+                gap:isMobile ? 16 : 22,
                 padding:isMobile ? "22px 18px 18px" : "28px 28px 22px",
+                alignItems:"start",
               }}
             >
-              <div style={{ display:"grid", gap:16, alignContent:"start" }}>
+              <div style={{ display:"grid", gap:isMobile ? 16 : 18, alignContent:"start", minWidth:0 }}>
                 <div
                   style={{
                     display:"inline-flex",
@@ -5824,19 +6232,19 @@ export default function UserPerfil({profile, onLogout}) {
                 >
                   Ficha del héroe
                 </div>
-                <div style={{ display:"grid", gap:8, maxWidth:760 }}>
+                <div style={{ display:"grid", gap:10, maxWidth:isMobile ? "100%" : 700 }}>
                   <div
                     style={{
                       fontFamily:"'Manrope',sans-serif",
-                      fontSize:"clamp(30px,4.6vw,58px)",
-                      fontWeight:800,
-                      lineHeight:.96,
-                      letterSpacing:"-.05em",
-                      color:"#f7f4ff",
-                      textShadow:`0 0 32px ${classPrimary}, 0 0 64px ${classGlow}, 0 0 100px ${classGlowSoft}`,
+                      fontSize:"clamp(46px, 6.4vw, 104px)",
+                      fontWeight:900,
+                      lineHeight:.92,
+                      letterSpacing:0,
+                      color:"#fff9ef",
+                      overflowWrap:"anywhere",
                     }}
                   >
-                    Tu build, tu ruta y tu memoria del mapa en una sola portada.
+                    Tu build, tu ruta y tu memoria del mapa <span style={{ color:classPrimary, textShadow:`0 0 34px ${classGlow}, 0 0 68px ${classGlowSoft}` }}>en una sola portada.</span>
                   </div>
                   <div
                     style={{
@@ -5844,97 +6252,11 @@ export default function UserPerfil({profile, onLogout}) {
                       fontSize:"clamp(13px,1.1vw,15px)",
                       lineHeight:1.7,
                       color:"rgba(229,223,242,.8)",
-                      maxWidth:720,
+                      maxWidth:620,
                     }}
                   >
-                    La ficha del héroe ahora funciona como panel central: identidad, avance, guardarropa y ajustes en una lectura compacta con tono RPG real.
+                    Todo tu perfil vive aquí: identidad, progreso, guardarropa y ajustes en una lectura clara, cómoda y sin ruido.
                   </div>
-                </div>
-                <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
-                  {[
-                    `${localStats.heroClass || "GUERRERO"}`,
-                    `Ruta activa: ${activeTabLabel}`,
-                    `${pendingBadges} pendientes por reclamar`,
-                    `${weekSessions} sesiones esta semana`,
-                  ].map((item) => (
-                    <div
-                      key={item}
-                      style={{
-                        padding:"7px 12px",
-                        borderRadius:999,
-                        border:`1px solid ${classEdge}`,
-                        background:`linear-gradient(135deg, ${classSurface} 0%, rgba(10,14,26,.68) 100%)`,
-                        color:"#f7f4ff",
-                        boxShadow:`inset 0 1px 0 rgba(255,255,255,.03), 0 8px 16px rgba(0,0,0,.14)`,
-                        fontFamily:"'Manrope',sans-serif",
-                        fontSize:11,
-                        fontWeight:700,
-                      }}
-                    >
-                      {item}
-                    </div>
-                  ))}
-                </div>
-                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(140px, 1fr))", gap:10 }}>
-                  {heroHighlights.map((item, itemIndex) => {
-                    const metricTone = heroMetricTones[itemIndex] || item.tone;
-                    return (
-                    <div
-                      key={item.label}
-                      style={{
-                        padding:"12px 14px",
-                        borderRadius:16,
-                        border:`1px solid ${metricTone}38`,
-                        background:`linear-gradient(145deg, rgba(8,12,24,.82), ${metricTone}12)`,
-                        boxShadow:`0 10px 24px ${metricTone}18`,
-                        backdropFilter:"blur(12px)",
-                      }}
-                    >
-                      <div style={{ fontFamily:"'Manrope',sans-serif", fontSize:10, fontWeight:700, letterSpacing:".08em", textTransform:"uppercase", color:"rgba(182,173,204,.72)", marginBottom:7 }}>
-                        {item.label}
-                      </div>
-                      <div style={{ fontFamily:"'Manrope',sans-serif", fontSize:22, fontWeight:800, color:metricTone, textShadow:`0 0 20px ${metricTone}cc, 0 0 40px ${metricTone}55, 0 0 66px ${metricTone}22` }}>
-                        {item.value}
-                      </div>
-                    </div>
-                  )})}
-                </div>
-                <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
-                  {[
-                    { label:"Abrir resumen", action:() => setTab("resumen"), solid:true },
-                    { label:"Editar ficha", action:() => setTab("editar") },
-                    { label:"Guardarropa", action:() => setTab("guardarropa") },
-                    { label:"Seguridad", action:() => setTab("seguridad") },
-                  ].map((action) => (
-                    <motion.button
-                      key={action.label}
-                      whileHover={{
-                        y:-2,
-                        scale:1.02,
-                        boxShadow:action.solid ? `0 14px 26px ${classGlow}` : `0 12px 22px ${classGlow}`,
-                        borderColor:action.solid ? classPrimary : classSecondary,
-                      }}
-                      whileTap={{ scale:.98 }}
-                      onClick={action.action}
-                      style={{
-                        padding:"11px 15px",
-                        borderRadius:14,
-                        border:`1px solid ${action.solid ? classPrimary : classEdge}`,
-                        background:action.solid
-                          ? `linear-gradient(135deg, ${classPrimary}, ${classSecondary})`
-                          : `linear-gradient(135deg, ${classSurface} 0%, rgba(8,12,24,.72) 100%)`,
-                        color:"#fff",
-                        fontFamily:"'Manrope',sans-serif",
-                        fontSize:12,
-                        fontWeight:800,
-                        cursor:"pointer",
-                        boxShadow:action.solid ? `0 10px 22px ${classGlow}` : `0 8px 18px ${classGlowSoft}`,
-                        transition:"border-color .2s, box-shadow .2s, background .2s",
-                      }}
-                    >
-                      {action.label}
-                    </motion.button>
-                  ))}
                 </div>
               </div>
               <div
@@ -5943,8 +6265,9 @@ export default function UserPerfil({profile, onLogout}) {
                   gap:12,
                   alignContent:"start",
                   padding:0,
-                  width:isMobile ? "100%" : "min(100%, 680px)",
-                  maxWidth:isMobile ? "100%" : 680,
+                  width:"100%",
+                  maxWidth:"100%",
+                  minWidth:0,
                 }}
               >
                 <div
@@ -5962,43 +6285,36 @@ export default function UserPerfil({profile, onLogout}) {
                     src={cls.crest}
                     alt=""
                     onError={(e) => { e.currentTarget.style.display = "none"; }}
-                    style={{ position:"absolute", right:12, top:12, width:62, height:62, objectFit:"contain", opacity:.95 }}
+                    style={{ position:"absolute", right:14, top:14, width:54, height:54, objectFit:"contain", opacity:.95 }}
                   />
-                  <div style={{ display:"flex", gap:isMobile ? 14 : 18, alignItems:"center", marginBottom:16, flexWrap:isMobile ? "wrap" : "nowrap" }}>
-                    <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:10 }}>
+                  <div style={{ display:"flex", gap:isMobile ? 12 : 16, alignItems:"center", marginBottom:16, flexWrap:isMobile ? "wrap" : "nowrap" }}>
+                    <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", width:isMobile ? 88 : 104, flex:"0 0 auto" }}>
                       <ProfileAvatar
                         heroClass={localStats.heroClass}
                         avatarId={activeAvatarL}
                         frameId={activeFrameL}
-                        size={108}
+                        size={isMobile ? 74 : 86}
                         cls={cls}
                       />
-                      <AvatarStrip
-                        ownedAvatars={ownedAvatars}
-                        activeAvatarId={activeAvatarL}
-                        onEquip={handleEquipAvatar}
-                        size={30}
-                        avatarChanging={avatarChanging}
-                      />
                     </div>
-                    <div style={{ minWidth:0, paddingRight:isMobile ? 0 : 72, flex:1 }}>
-                      <div style={{ fontFamily:"'Manrope',sans-serif", fontSize:10, fontWeight:700, letterSpacing:".08em", textTransform:"uppercase", color:cls.color, marginBottom:8, textShadow:`0 0 12px ${cls.color}cc, 0 0 24px ${cls.color}44` }}>
+                    <div style={{ minWidth:0, paddingRight:isMobile ? 0 : 54, flex:1, maxWidth:isMobile ? "100%" : 320 }}>
+                      <div style={{ fontFamily:"'Manrope',sans-serif", fontSize:10, fontWeight:700, letterSpacing:".08em", textTransform:"uppercase", color:cls.color, marginBottom:6, textShadow:`0 0 12px ${cls.color}cc, 0 0 24px ${cls.color}44` }}>
                         Registro activo
                       </div>
-                      <div style={{ fontFamily:"'Manrope',sans-serif", fontSize:30, fontWeight:800, color:"#fff", lineHeight:.95, letterSpacing:"-.04em", marginBottom:6, textShadow:`0 0 26px ${cls.color}aa, 0 0 52px ${cls.color}44, 0 0 80px ${cls.color}18` }}>
+                      <div style={{ fontFamily:"'Manrope',sans-serif", fontSize:isMobile ? 24 : 28, fontWeight:800, color:"#fff", lineHeight:.96, letterSpacing:"-.04em", marginBottom:4, textShadow:`0 0 26px ${cls.color}aa, 0 0 52px ${cls.color}44, 0 0 80px ${cls.color}18` }}>
                         {(localStats.username || "Héroe").toUpperCase()}
                       </div>
                       {localStats.heroName && (
-                        <div style={{ fontFamily:"'Manrope',sans-serif", fontSize:13, fontWeight:600, color:cls.color, marginBottom:6, textShadow:`0 0 10px ${cls.color}bb, 0 0 20px ${cls.color}44` }}>
+                        <div style={{ fontFamily:"'Manrope',sans-serif", fontSize:12, fontWeight:700, color:cls.color, marginBottom:6, textShadow:`0 0 10px ${cls.color}bb, 0 0 20px ${cls.color}44` }}>
                           "{localStats.heroName}"
                         </div>
                       )}
-                      <div style={{ fontFamily:"'Manrope',sans-serif", fontSize:13, lineHeight:1.65, color:"rgba(228,223,240,.78)" }}>
-                        {localStats.bio || "Tu retrato aún puede crecer con una bio corta, clase bien marcada y una lectura clara del progreso."}
+                      <div style={{ fontFamily:"'Manrope',sans-serif", fontSize:13, lineHeight:1.6, color:"rgba(228,223,240,.78)", maxWidth:340 }}>
+                        {localStats.bio || "Tu ficha marca tu clase, tu presencia y el tono general del perfil. El resto lo ajustas por secciones segun lo que quieras revisar."}
                       </div>
                     </div>
                   </div>
-                  <div style={{ display:"grid", gridTemplateColumns:isMobile ? "1fr 1fr" : "repeat(4, minmax(0, 1fr))", gap:10, marginBottom:12 }}>
+                  <div style={{ display:"grid", gridTemplateColumns:"repeat(2, minmax(0, 1fr))", gap:10, marginBottom:12 }}>
                     {sideFacts.map((fact, factIndex) => {
                       const factTone = factIndex % 2 === 0 ? classPrimary : classSecondary;
                       return (
@@ -6016,51 +6332,11 @@ export default function UserPerfil({profile, onLogout}) {
                         <div style={{ fontFamily:"'Manrope',sans-serif", fontSize:9, fontWeight:700, letterSpacing:".08em", textTransform:"uppercase", color:"rgba(178,169,202,.72)", marginBottom:6 }}>
                           {fact.label}
                         </div>
-                        <div style={{ fontFamily:"'Manrope',sans-serif", fontSize:isMobile ? 17 : 15, fontWeight:800, color:factIndex === 3 ? factTone : "#fff", lineHeight:1.2, textShadow:`0 0 14px ${factTone}88, 0 0 28px ${factTone}33` }}>
+                        <div style={{ fontFamily:"'Manrope',sans-serif", fontSize:isMobile ? 17 : 15, fontWeight:800, color:"#fff", lineHeight:1.2, textShadow:`0 0 14px ${factTone}88, 0 0 28px ${factTone}33` }}>
                           {fact.value}
                         </div>
                       </div>
                     )})}
-                  </div>
-                  <div style={{ display:"grid", gap:10 }}>
-                    {[
-                      {
-                        label:"Pulso vital",
-                        value:`${localStats.hp || 100}%`,
-                        pct:Math.min(localStats.hp || 0, 100),
-                        color:cls.color,
-                      },
-                      {
-                        label:`XP del nivel ${localStats.nivel || 1}`,
-                        value:`${(localStats.xp || 0).toLocaleString()} / ${(localStats.xpNext || 1000).toLocaleString()}`,
-                        pct:Math.min((localStats.xpNext || 1000) > 0 ? ((localStats.xp || 0) / (localStats.xpNext || 1000)) * 100 : 0, 100),
-                        color:"#f4cc78",
-                      },
-                    ].map((bar) => (
-                      <div key={bar.label}>
-                        <div style={{ display:"flex", justifyContent:"space-between", gap:10, marginBottom:6 }}>
-                          <span style={{ fontFamily:"'Manrope',sans-serif", fontSize:10, fontWeight:700, letterSpacing:".08em", textTransform:"uppercase", color:"rgba(176,167,201,.78)" }}>
-                            {bar.label}
-                          </span>
-                          <span style={{ fontFamily:"'Manrope',sans-serif", fontSize:12, fontWeight:700, color:bar.color, textShadow:`0 0 10px ${bar.color}cc, 0 0 20px ${bar.color}44` }}>
-                            {bar.value}
-                          </span>
-                        </div>
-                        <div style={{ height:8, borderRadius:999, overflow:"hidden", border:`1px solid ${bar.color}22`, background:"rgba(8,12,24,.82)" }}>
-                          <motion.div
-                            initial={{ width:0 }}
-                            animate={{ width:`${bar.pct}%` }}
-                            transition={{ duration:1, ease:"easeOut" }}
-                            style={{
-                              height:"100%",
-                              borderRadius:999,
-                              background:`linear-gradient(90deg, ${bar.color}88, ${bar.color})`,
-                              boxShadow:`0 0 12px ${bar.color}40`,
-                            }}
-                          />
-                        </div>
-                      </div>
-                    ))}
                   </div>
                 </div>
                 <div style={{ display:"flex", justifyContent:"space-between", gap:10, flexWrap:"wrap" }}>
@@ -6076,7 +6352,7 @@ export default function UserPerfil({profile, onLogout}) {
                       flex:"1 1 220px",
                     }}
                   >
-                    <span style={{ color:cls.color, fontWeight:800, textShadow:`0 0 10px ${cls.color}bb, 0 0 20px ${cls.color}44` }}>Ruta activa:</span> {activeTabLabel}
+                    <span style={{ color:cls.color, fontWeight:800, textShadow:`0 0 10px ${cls.color}bb, 0 0 20px ${cls.color}44` }}>Modulo abierto:</span> {activeTabLabel}
                   </div>
                   <button
                     onClick={onLogout}

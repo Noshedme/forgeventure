@@ -31,6 +31,32 @@ const FRAMES_CATALOG = [
 
 const ALL_CATALOG = [...AVATARS_CATALOG, ...FRAMES_CATALOG];
 
+function buildAvatarProfilePatch(userData = {}, updates = {}, now = new Date().toISOString()) {
+  const merged = { ...userData, ...updates, updatedAt: now };
+  const ownedTitles = Array.isArray(merged.ownedTitles)
+    ? merged.ownedTitles
+    : (merged.titulo ? [merged.titulo] : []);
+
+  return {
+    coins: Number(merged.coins || 0),
+    level: Number(merged.level || 1),
+    xp: Number(merged.xp || 0),
+    xpTotal: Number(merged.xpTotal || 0),
+    xpNext: Number(merged.xpNext || 100),
+    skillPoints: Number(merged.skillPoints || 0),
+    heroClass: merged.heroClass || "",
+    titulo: merged.titulo || "",
+    ownedTitles,
+    ownedAvatars: Array.isArray(merged.ownedAvatars) ? merged.ownedAvatars : ["avatar_01"],
+    ownedFrames: Array.isArray(merged.ownedFrames) ? merged.ownedFrames : [],
+    ownedSkins: Array.isArray(merged.ownedSkins) ? merged.ownedSkins : ["default"],
+    activeAvatar: merged.activeAvatar || "avatar_01",
+    activeFrame: merged.activeFrame ?? null,
+    activeSkin: merged.activeSkin || "default",
+    updatedAt: now,
+  };
+}
+
 // ── GET /api/avatars ── catálogo público ──────────────────────────────────────
 router.get("/", (_req, res) => {
   res.set("Cache-Control", "public, max-age=3600");
@@ -83,6 +109,7 @@ router.post("/purchase", verifyToken, async (req, res) => {
           newCoins,
           newOwnedAvatars,
           newOwnedFrames: ownedFrames,
+          profilePatch: buildAvatarProfilePatch(data, update, now),
         };
       }
 
@@ -94,6 +121,7 @@ router.post("/purchase", verifyToken, async (req, res) => {
         newCoins,
         newOwnedAvatars: ownedAvatars,
         newOwnedFrames,
+        profilePatch: buildAvatarProfilePatch(data, update, now),
       };
     });
 
@@ -129,6 +157,7 @@ router.post("/purchase", verifyToken, async (req, res) => {
       ownedAvatars: result.newOwnedAvatars,
       ownedFrames: result.newOwnedFrames,
       coins: result.newCoins,
+      profilePatch: result.profilePatch,
     });
   } catch (err) {
     const status = err.code === 400 || err.code === 404 ? err.code : 500;
@@ -154,9 +183,14 @@ router.patch("/active", verifyToken, async (req, res) => {
       return res.status(403).json({ ok:false, message:"No posees este avatar." });
     }
 
-    await ref.update({ activeAvatar: avatarId });
+    const now = new Date().toISOString();
+    await ref.update({ activeAvatar: avatarId, updatedAt: now });
     bustUserCache(uid);
-    return res.json({ ok:true, activeAvatar: avatarId });
+    return res.json({
+      ok:true,
+      activeAvatar: avatarId,
+      profilePatch: buildAvatarProfilePatch(data, { activeAvatar: avatarId }, now),
+    });
   } catch (err) {
     console.error("Error en PATCH /avatars/active:", err);
     return res.status(500).json({ ok:false, message:err.message });
@@ -181,9 +215,14 @@ router.patch("/active-frame", verifyToken, async (req, res) => {
       return res.status(403).json({ ok:false, message:"No posees este marco." });
     }
 
-    await ref.update({ activeFrame: frameId ?? null });
+    const now = new Date().toISOString();
+    await ref.update({ activeFrame: frameId ?? null, updatedAt: now });
     bustUserCache(uid);
-    return res.json({ ok:true, activeFrame: frameId ?? null });
+    return res.json({
+      ok:true,
+      activeFrame: frameId ?? null,
+      profilePatch: buildAvatarProfilePatch(data, { activeFrame: frameId ?? null }, now),
+    });
   } catch (err) {
     console.error("Error en PATCH /avatars/active-frame:", err);
     return res.status(500).json({ ok:false, message:err.message });

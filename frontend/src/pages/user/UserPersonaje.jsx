@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useLang } from "../../hooks/useLang.js";
 import { auth } from "../../firebase.js";
 import { getUserStats } from "../../services/api.js";
-import SkillTree from "../../components/shared/SkillTree.jsx";
 import { USER_CLASS_THEME as CLASS_THEME } from "./userClassTheme.js";
 import { getFrameCount, getFramePath, getFps, getSkinPreview } from "../../avatar/SpriteMap.js";
 import { AVATARS_CATALOG, FRAMES_CATALOG, getAvatarImage } from "../../avatar/AvatarCatalog.js";
@@ -14,80 +13,80 @@ export const STAGES = [
     min: 1,
     max: 4,
     label: "Primer impulso",
-    desc: "La base se esta forjando. Lo importante aqui es sostener constancia y tecnica.",
-    focus: "Rutina ligera, tecnica limpia y ritmo estable.",
-    bonus: "Pulso de inicio y señal basica del mapa.",
-    body: "Activa coordinacion, respiracion y tolerancia al esfuerzo.",
-    unlocks: "Abre habilidades base, primeras rutas y seguimiento inicial.",
+    desc: "Estas arrancando. Lo importante aqui es tomar ritmo y repetir bien.",
+    focus: "Bloques cortos, tecnica clara y semana ordenada.",
+    bonus: "Marca de inicio y avance visible en el mapa.",
+    body: "Empieza a despertar coordinacion, aire y tolerancia al esfuerzo.",
+    unlocks: "Abre mejoras base, primeras rutas y mejor seguimiento.",
   },
   {
     id: 2,
     min: 5,
     max: 9,
     label: "Forma creciente",
-    desc: "Ya se nota avance fisico. Tu tablero empieza a responder a cada sesion.",
+    desc: "Ya se nota el avance. Cada sesion deja una huella mas clara.",
     focus: "Mas volumen semanal y mejor control del esfuerzo.",
-    bonus: "Mejor ritmo de XP y rutas mas consistentes.",
-    body: "Mejora resistencia de trabajo y control del pulso.",
-    unlocks: "Abre nodos intermedios y misiones con mas carga.",
+    bonus: "Sube el ritmo de XP y mejora la constancia.",
+    body: "Ganas fondo de trabajo y un pulso mas estable.",
+    unlocks: "Abre nodos intermedios y encargos con mas peso.",
   },
   {
     id: 3,
     min: 10,
     max: 19,
     label: "Presencia marcada",
-    desc: "El personaje deja de ser promesa y empieza a sentirse como una build real.",
+    desc: "Tu perfil ya se siente trabajado. No es promesa: ya hay base real.",
     focus: "Ritmo sostenido, mejor recuperacion y sesiones completas.",
-    bonus: "Mayor estabilidad para cerrar semanas sin cortar la racha.",
-    body: "Se nota mas tono, recuperacion y capacidad de repetir esfuerzo.",
-    unlocks: "Activa builds mas serias, bosses medios y mejor presencia del personaje.",
+    bonus: "Mas estabilidad para cerrar semanas sin romper la racha.",
+    body: "Se nota mejor tono, recuperacion y capacidad para repetir esfuerzo.",
+    unlocks: "Abre rutas mas serias, bosses medios y una presencia mas clara del personaje.",
   },
   {
     id: 4,
     min: 20,
     max: 29,
     label: "Dominio visible",
-    desc: "Tu progreso ya pesa. El mapa te reconoce por constancia y potencia.",
-    focus: "Cierres fuertes, misiones largas y control del desgaste.",
-    bonus: "Botin mas valioso y progresion mas solida por sesion.",
+    desc: "Tu avance ya pesa dentro del mapa. Se ve constancia y buena capacidad.",
+    focus: "Cierres fuertes, retos largos y control del desgaste.",
+    bonus: "Mejor botin y progreso mas firme por sesion.",
     body: "Representa potencia, tolerancia alta y control del cansancio.",
-    unlocks: "Abre contenido avanzado, rutas largas y presencia rara en el perfil.",
+    unlocks: "Abre contenido avanzado, rutas largas y mejores sellos en perfil.",
   },
   {
     id: 5,
     min: 30,
     max: 999,
     label: "Leyenda activa",
-    desc: "No solo entrenas: sostienes una identidad completa dentro del gremio.",
-    focus: "Mantenimiento elite, precision y presencia total.",
-    bonus: "Cima activa con brillo alto, loot premium y presencia total.",
+    desc: "Tu progreso ya tiene identidad propia dentro del gremio.",
+    focus: "Pulir detalles, sostener el ritmo y mantener presencia.",
+    bonus: "Maximo brillo, mejor loot y una ruta muy solida.",
     body: "Consolida una forma estable, potente y sostenible.",
-    unlocks: "Mantiene abierta toda la capa avanzada del gameplay.",
+    unlocks: "Mantiene abierta toda la capa avanzada del juego.",
   },
 ];
 
 const CLASS_COPY = {
   GUERRERO: {
-    title: "Forja fuerza, presencia y dominio sin perder tecnica limpia.",
-    lead: "Tu personaje refleja fuerza, constancia y trabajo real. Cada sesion alimenta una build mas pesada y mas estable.",
-    flavor: "Fuerza, calistenia y control de carga empujan esta ruta.",
+    title: "Tu progreso gana fuerza y peso propio sin perder control.",
+    lead: "Cada sesion suma potencia, constancia y una forma clara de ver lo que ya construiste.",
+    flavor: "Fuerza, calistenia y trabajo de carga sostienen esta ruta.",
     zone: "Bastion de fuerza",
   },
   ARQUERO: {
-    title: "Sostiene ritmo, velocidad y precision como una build afinada.",
-    lead: "Tu enfoque favorece cardio, agilidad y sesiones que empujan el pulso sin romper control ni continuidad.",
-    flavor: "Cardio, movilidad activa y remates cortos dominan esta clase.",
+    title: "Tu progreso se mueve con ritmo, velocidad y buena precision.",
+    lead: "Esta clase prioriza cardio, agilidad y sesiones que suben el pulso sin perder orden.",
+    flavor: "Cardio, movilidad activa y cierres cortos mandan aqui.",
     zone: "Ruta de precision",
   },
   MAGO: {
-    title: "Convierte enfoque, respiracion y tecnica en progreso visible.",
-    lead: "Aqui la build premia control corporal, foco y consistencia. La pantalla debe sentirse viva, no ruidosa.",
+    title: "Tu progreso crece con foco, respiracion y tecnica limpia.",
+    lead: "Aqui pesa el control corporal, la calma y la constancia mas que el ruido.",
     flavor: "Flexibilidad, mente y recuperacion marcan esta afinidad.",
     zone: "Camara de foco",
   },
   DEFAULT: {
-    title: "Lee tu progreso como una build viva, no como una ficha plana.",
-    lead: "Nivel, racha, sesiones y logros quedan ordenados en una portada mas clara y mucho mas protagonista.",
+    title: "Lee tu avance como una ruta viva, no como una ficha pesada.",
+    lead: "Nivel, racha, sesiones y logros quedan ordenados para que entiendas rapido donde vas.",
     flavor: "Cada sesion deja marca y abre nuevas piezas del personaje.",
     zone: "Portada del heroe",
   },
@@ -109,24 +108,6 @@ const STAGE_CLASS_ASSET = {
 
 const CHAT_DEEPLINK_KEY = "fv-chat-deeplink-v1";
 
-const CLASS_SKILL_HINTS = {
-  GUERRERO: {
-    recommendation: "Prioriza fuerza, control de carga y nodos que sostengan sesiones pesadas.",
-    nodes: "Fuerza base, constancia de combate y recuperacion de impacto.",
-  },
-  ARQUERO: {
-    recommendation: "Te conviene abrir nodos de ritmo, precision y control del pulso.",
-    nodes: "Velocidad limpia, cardio tactico y movilidad sostenida.",
-  },
-  MAGO: {
-    recommendation: "Invierte primero en foco, tecnica y precision corporal fina.",
-    nodes: "Respiracion guiada, precision tecnica y recuperacion mental.",
-  },
-  DEFAULT: {
-    recommendation: "Sube nodos que ayuden a sostener la semana sin romper continuidad.",
-    nodes: "Constancia, tecnica base y recuperacion simple.",
-  },
-};
 
 const SKIN_META = {
   default: { name: "Flex original", rarity: "Comun", origin: "Carga base del gremio", type: "Cosmetico" },
@@ -141,7 +122,7 @@ const JOURNAL_MEDALS = [
     asset: "/logros/medals/medal-first-blood.png",
     state: (ctx) => ({
       done: ctx.sesiones >= 1,
-      progress: ctx.sesiones >= 1 ? "Activa" : "1 sesion",
+      progress: ctx.sesiones >= 1 ? "Actual" : "1 sesion",
       detail: "Abre tu memoria fisica inicial.",
     }),
   },
@@ -172,12 +153,11 @@ const JOURNAL_MEDALS = [
     state: (ctx) => ({
       done: ctx.level >= 12,
       progress: `${Math.min(ctx.level, 12)}/12`,
-      detail: "Tu build ya se nota dentro del portal.",
+      detail: "Tu progreso ya se nota dentro del portal.",
     }),
   },
 ];
 
-const TAB_STORAGE_KEY = "fv-user-personaje-tab";
 
 const PANEL_CSS = `
   @keyframes up2Drift {
@@ -423,24 +403,64 @@ const PANEL_CSS = `
   .up2-meta-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 12px;
+    gap: 14px;
   }
   .up2-stat-card {
-    min-height: 108px;
-    padding: 16px;
-    border-radius: 8px;
-    border: 1px solid rgba(255,255,255,.08);
-    background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    gap: 10px;
+    min-height: 144px;
+    padding: 16px 16px 14px;
+    border-radius: 10px;
+    border: 1px solid color-mix(in srgb, var(--hero-accent), transparent 84%);
+    background:
+      radial-gradient(circle at top right, color-mix(in srgb, var(--hero-accent), transparent 93%), transparent 54%),
+      linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.018));
+    display: grid;
+    grid-template-rows: auto 1fr;
+    gap: 14px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 16px 28px rgba(0,0,0,.18);
+  }
+  .up2-stat-card::after {
+    content: "";
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--hero-accent), transparent 70%), transparent);
+    opacity: .6;
   }
   .up2-stat-top {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 12px;
+    gap: 14px;
+  }
+  .up2-stat-copy {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+  }
+  .up2-stat-icon-wrap {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    border: 1px solid color-mix(in srgb, var(--hero-secondary), transparent 80%);
+    background:
+      radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--hero-secondary), transparent 88%), transparent 58%),
+      rgba(10, 7, 18, .56);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+  }
+  .up2-stat-icon-wrap img {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 0 10px color-mix(in srgb, var(--hero-accent), transparent 76%));
   }
   .up2-kicker {
     color: #8f85a8;
@@ -450,11 +470,21 @@ const PANEL_CSS = `
   }
   .up2-stat-value {
     color: #fff7dc;
-    font: 900 clamp(28px, 2vw, 36px)/1 "Manrope", sans-serif;
+    font: 900 clamp(28px, 2vw, 36px)/.94 "Manrope", sans-serif;
+    letter-spacing: 0;
+    text-wrap: balance;
+    word-break: break-word;
+  }
+  .up2-stat-support {
+    color: var(--hero-accent-soft);
+    font: 800 11px/1.2 "JetBrains Mono", monospace;
+    letter-spacing: .05em;
+    text-transform: uppercase;
   }
   .up2-stat-note {
     color: #c7bad9;
     font: 500 12px/1.5 "Manrope", sans-serif;
+    max-width: 18ch;
   }
   .up2-stage-shell {
     position: relative;
@@ -1395,159 +1425,7 @@ const PANEL_CSS = `
     letter-spacing: .06em;
     text-transform: uppercase;
   }
-  .up2-skill-wrap {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 14px;
-    align-items: start;
-  }
-  .up2-skill-summary {
-    display: grid;
-    gap: 12px;
-  }
-  .up2-skill-hero {
-    display: grid;
-    gap: 14px;
-  }
-  .up2-skill-head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-    flex-wrap: wrap;
-  }
-  .up2-skill-copy {
-    display: grid;
-    gap: 6px;
-    max-width: 680px;
-  }
-  .up2-skill-copy p {
-    margin: 0;
-    color: #bbaed0;
-    font: 500 12px/1.55 "Manrope", sans-serif;
-  }
-  .up2-skill-chipline {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-  .up2-skill-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    border-radius: 999px;
-    border: 1px solid color-mix(in srgb, var(--hero-accent), transparent 68%);
-    background: color-mix(in srgb, var(--hero-accent), transparent 92%);
-    color: #f7f2ff;
-    font: 700 11px/1 "Manrope", sans-serif;
-    letter-spacing: .04em;
-  }
-  .up2-skill-pill strong {
-    color: var(--hero-accent-soft);
-    font-weight: 800;
-  }
-  .up2-skill-hud {
-    display: grid;
-    grid-template-columns: minmax(0, 1.1fr) repeat(2, minmax(0, .95fr));
-    gap: 12px;
-    align-items: start;
-  }
-  .up2-skill-box {
-    min-height: 94px;
-    padding: 14px 15px;
-    border-radius: 8px;
-    border: 1px solid rgba(255,255,255,.08);
-    background:
-      linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.02)),
-      radial-gradient(circle at top right, color-mix(in srgb, var(--hero-accent), transparent 88%), transparent 58%);
-    display: grid;
-    align-content: start;
-    gap: 7px;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
-  }
-  .up2-skill-box strong {
-    color: #fff8eb;
-    font: 800 14px/1.2 "Manrope", sans-serif;
-  }
-  .up2-skill-box span {
-    color: #bcaed0;
-    font: 500 12px/1.55 "Manrope", sans-serif;
-  }
-  .up2-skill-box.is-compact {
-    min-height: 0;
-    gap: 8px;
-  }
-  .up2-skill-inline {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .up2-skill-inline span {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 10px;
-    border-radius: 999px;
-    border: 1px solid rgba(255,255,255,.08);
-    background: rgba(255,255,255,.035);
-    color: #e7deff;
-    font: 700 10px/1 "JetBrains Mono", monospace;
-    letter-spacing: .04em;
-    text-transform: uppercase;
-  }
-  .up2-skill-inline strong {
-    color: var(--hero-accent-soft);
-    font-weight: 800;
-  }
-  .up2-skill-mini {
-    border-radius: 8px;
-    border: 1px solid rgba(255,255,255,.08);
-    background:
-      linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.02)),
-      radial-gradient(circle at top right, color-mix(in srgb, var(--hero-accent), transparent 88%), transparent 58%);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
-    overflow: hidden;
-  }
-  .up2-skill-mini summary {
-    list-style: none;
-    cursor: pointer;
-    display: grid;
-    gap: 6px;
-    padding: 14px 15px;
-  }
-  .up2-skill-mini summary::-webkit-details-marker {
-    display: none;
-  }
-  .up2-skill-mini summary strong {
-    color: #fff8eb;
-    font: 800 14px/1.2 "Manrope", sans-serif;
-  }
-  .up2-skill-mini summary span {
-    color: #bcaed0;
-    font: 500 12px/1.5 "Manrope", sans-serif;
-  }
-  .up2-skill-mini-body {
-    display: grid;
-    gap: 8px;
-    padding: 0 15px 14px;
-    border-top: 1px solid rgba(255,255,255,.06);
-  }
-  .up2-skill-mini-body p {
-    margin: 10px 0 0;
-    color: #cdbfe0;
-    font: 500 12px/1.55 "Manrope", sans-serif;
-  }
-  .up2-skill-mini-body small {
-    color: #9287aa;
-    font: 700 10px/1.45 "JetBrains Mono", monospace;
-    letter-spacing: .05em;
-    text-transform: uppercase;
-  }
-  .up2-skill-tree-panel .up2-panel-pad {
-    padding: 14px;
-  }
+
   .up2-empty-art {
     width: 88px;
     height: 88px;
@@ -1609,12 +1487,6 @@ const PANEL_CSS = `
       min-height: 0;
     }
     .up2-stage-footer,
-    .up2-skill-wrap {
-      grid-template-columns: 1fr;
-    }
-    .up2-skill-hud {
-      grid-template-columns: 1fr;
-    }
     .up2-meta-grid,
     .up2-compact-grid,
     .up2-journey-marks,
@@ -1628,8 +1500,7 @@ const PANEL_CSS = `
     .up2-compact-grid,
     .up2-journey-marks,
     .up2-loadout,
-    .up2-utility,
-    .up2-skill-hud {
+    .up2-utility {
       grid-template-columns: 1fr;
     }
     .up2-journey {
@@ -1772,11 +1643,6 @@ function HeroSparkLayer() {
 
 export default function UserPersonaje({ profile = {} }) {
   const { t } = useLang();
-  const [activeTab, setActiveTab] = useState(() => {
-    if (typeof window === "undefined") return "personaje";
-    const stored = window.localStorage.getItem(TAB_STORAGE_KEY);
-    return stored === "habilidades" ? "habilidades" : "personaje";
-  });
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [viewedPhase, setViewedPhase] = useState(null);
@@ -1907,18 +1773,11 @@ export default function UserPersonaje({ profile = {} }) {
   ]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(TAB_STORAGE_KEY, activeTab);
-  }, [activeTab]);
-
-  useEffect(() => {
     if (typeof window === "undefined") return undefined;
 
     const applyChatAction = (raw) => {
       const payload = raw?.detail || raw;
       if (!payload || payload.section !== "personaje") return false;
-      const nextTab = payload.entityId === "habilidades" ? "habilidades" : "personaje";
-      setActiveTab(nextTab);
       return true;
     };
 
@@ -1979,14 +1838,13 @@ export default function UserPersonaje({ profile = {} }) {
   const heroClass = getClassKey(stats?.heroClass ?? profile.heroClass ?? "DEFAULT");
   const coins = profile?.coins ?? stats?.coins ?? 0;
   const gems = profile?.gems ?? stats?.gems ?? 0;
-  const misiones = stats?.misionesCompletadas ?? 0;
+  const misiones = stats?.misionesListas ?? 0;
   const calorias = stats?.calorias ?? 0;
   const recordPeso = stats?.recordPeso ?? 0;
   const tiempoRaw = stats?.tiempoTotal ?? 0;
   const tiempoTotal = typeof tiempoRaw === "number" && tiempoRaw > 0
     ? tiempoRaw >= 60 ? `${Math.floor(tiempoRaw / 60)}h ${tiempoRaw % 60}m` : `${tiempoRaw} min`
     : "0 min";
-  const skillPoints = stats?.skillPoints ?? profile?.skillPoints ?? 0;
   const activeSkinId = stats?.activeSkin ?? profile?.activeSkin ?? "default";
   const activeAvatarId = stats?.activeAvatar ?? profile?.activeAvatar ?? "avatar_01";
   const activeFrameId = stats?.activeFrame !== undefined ? stats?.activeFrame : profile?.activeFrame ?? null;
@@ -2004,7 +1862,6 @@ export default function UserPersonaje({ profile = {} }) {
   const heroFrameCount = getFrameCount(heroAnimState);
   const heroFrame = getFramePath(heroAnimState, frameIdx, activeSkinId);
   const stageBannerSrc = getStageBannerSrc(heroClass, currentStage.id);
-  const classSkillHint = CLASS_SKILL_HINTS[heroClass] || CLASS_SKILL_HINTS.DEFAULT;
   const skinMeta = SKIN_META[activeSkinId] || {
     name: activeSkinId,
     rarity: activeSkinId === "default" ? "Comun" : "Raro",
@@ -2025,11 +1882,11 @@ export default function UserPersonaje({ profile = {} }) {
   );
 
   const stageTone = useMemo(() => {
-    if (levelUpAnim) return "Subida reciente: el brillo del personaje sigue encendido.";
-    if (streak === 0) return "Hoy la escena baja un poco. Un entrenamiento basta para volver a activarla.";
-    if (streak >= 14) return "Racha alta. El tablero esta leyendo un heroe muy estable.";
-    if (streak >= 7) return "Buen ritmo. Tu build ya tiene una presencia clara en el mapa.";
-    return "La forma sigue viva. Mantener sesiones cortas pero limpias sostendra esta ruta.";
+    if (levelUpAnim) return "Subida reciente. La forja sigue encendida.";
+    if (streak === 0) return "Hoy el ritmo esta bajo. Una buena sesion basta para reactivarlo.";
+    if (streak >= 14) return "Racha alta. Se nota un heroe muy estable.";
+    if (streak >= 7) return "Buen ritmo. Ya se ve una linea clara de progreso.";
+    return "La forma sigue viva. Sostener sesiones limpias mantendra esta ruta.";
   }, [levelUpAnim, streak]);
 
   const etaDays = useMemo(() => {
@@ -2092,7 +1949,7 @@ export default function UserPersonaje({ profile = {} }) {
     return {
       title: `${classBadge.label}: ${strongestPrimary?.label || "Base"} al frente`,
       lead: `${strongestPrimary?.label || "Base"} y ${strongestSecondary?.label || "Tecnica"} son las piezas que mas empujan tu personaje hoy.`,
-      note: `Si mantienes este ritmo, ${currentStage.label.toLowerCase()} sigue consolidando una build mas estable y menos improvisada.`,
+      note: `Si mantienes este ritmo, ${currentStage.label.toLowerCase()} sigue afirmando una base mas estable y menos improvisada.`,
     };
   }, [classBadge.label, currentStage.label, primaryStats, secondaryStats]);
 
@@ -2111,8 +1968,8 @@ export default function UserPersonaje({ profile = {} }) {
                 ? "/ui/dailybonus/day-locked.png"
                 : null,
           displayName: isSecret ? "Sello sellado" : medal.name,
-          displayDetail: isSecret ? "Aun no revelas esta marca. Sube presencia y volvera a mostrarse." : medal.detail,
-          displayState: medal.done ? "Completada" : isSecret ? "Secreta" : medal.progress,
+          displayDetail: isSecret ? "Esta marca sigue oculta. Sube tu avance y se revelara." : medal.detail,
+          displayState: medal.done ? "Lista" : isSecret ? "Oculta" : medal.progress,
         };
       }),
     [level, medals],
@@ -2121,14 +1978,6 @@ export default function UserPersonaje({ profile = {} }) {
   const hasEstimatedPrimaryStats = primaryStats.some((stat) => stat.estimated);
   const hasEstimatedSecondaryStats = secondaryStats.some((stat) => stat.estimated);
   const hasDerivedMedals = medalCards.some((medal) => medal.derived);
-
-  const tabs = useMemo(
-    () => [
-      { id: "personaje", label: t("pe.tab.personaje") || "Personaje" },
-      { id: "habilidades", label: t("pe.tab.habilidades") || "Habilidades", badge: skillPoints > 0 ? skillPoints : null },
-    ],
-    [skillPoints, t],
-  );
 
   const showMsg = useCallback((text, duration = 3600) => {
     clearTimeout(msgTimer.current);
@@ -2144,18 +1993,18 @@ export default function UserPersonaje({ profile = {} }) {
       const byMode = {
         tired: [
           "Hoy la escena esta tenue. Una sola sesion basta para volver a encenderla.",
-          "Tu build pide movimiento suave para retomar ritmo.",
+          "Tu progreso pide movimiento suave para retomar ritmo.",
           "No hace falta una maraton. Un buen bloque corto ya reabre el mapa.",
         ],
         excited: [
-          "Buen avance. El tablero esta leyendo progreso real.",
-          "La build responde bien. Sigue por esta fase y el cambio se nota mas.",
-          "Tu personaje ya no se siente estatico. Se ve trabajado.",
+          "Buen avance. El progreso ya se nota de verdad.",
+          "La ruta responde bien. Si sigues asi, el cambio se nota mas.",
+          "Tu personaje ya no se ve quieto. Se nota trabajado.",
         ],
         levelup: [
-          "Nivel arriba. La ruta acaba de abrir una presencia mas seria.",
-          "Subiste el perfil del personaje. Ahora el escenario te acompana mejor.",
-          "Ascenso confirmado. Sostener esta energia vale oro.",
+          "Nivel arriba. Se abre una etapa mas seria.",
+          "Tu perfil acaba de subir. Ahora el escenario acompana mejor.",
+          "Ascenso confirmado. Mantener este ritmo vale oro.",
         ],
         idle: [
           getTimeTone(),
@@ -2276,10 +2125,10 @@ export default function UserPersonaje({ profile = {} }) {
             <div className="up2-loading-card">
               <div className="up2-spinner" />
               <strong style={{ color: "#fff8e8", font: '800 18px/1 "Manrope", sans-serif' }}>
-                {t("pe.loading") || "Cargando personaje"}
+                {t("pe.loading") || "Cargando forja"}
               </strong>
               <span style={{ color: "#b9aecb", font: '500 13px/1.5 "Manrope", sans-serif', textAlign: "center" }}>
-                Ordenando clase, progreso y presencia visual del heroe.
+                Ordenando clase, progreso y la imagen general del heroe.
               </span>
             </div>
           </div>
@@ -2301,7 +2150,7 @@ export default function UserPersonaje({ profile = {} }) {
               <div>
                 <span className="up2-eyebrow">
                   <img className="up2-icon" src="/ui/header/section-personaje.png" alt="" />
-                  Portada del personaje
+                  Forja del heroe
                 </span>
 
                 <h1 className="up2-title">
@@ -2331,19 +2180,16 @@ export default function UserPersonaje({ profile = {} }) {
               </div>
 
               <div className="up2-action-row">
-                <button type="button" className="up2-btn up2-btn--primary" onClick={() => setActiveTab("habilidades")}>
-                  Abrir habilidades
-                </button>
                 <button
                   type="button"
                   className="up2-btn up2-btn--ghost"
                   onClick={() => window.dispatchEvent(new CustomEvent("flexNavigate", { detail: { section: "logros" } }))}
                 >
-                  Ver medallas del heroe
+                  Ver medallas
                 </button>
                 {viewedPhase !== null && viewedPhase !== currentStage.id && (
                   <button type="button" className="up2-btn up2-btn--ghost" onClick={() => setViewedPhase(null)}>
-                    Volver a mi etapa activa
+                    Volver a mi etapa
                   </button>
                 )}
               </div>
@@ -2353,35 +2199,42 @@ export default function UserPersonaje({ profile = {} }) {
                   {
                     label: "Nivel",
                     value: level,
-                    note: `${xp.toLocaleString()} / ${xpNext.toLocaleString()} XP en este nivel`,
+                    support: `${xp.toLocaleString()} / ${xpNext.toLocaleString()} XP`,
+                    note: "Avance dentro del nivel actual.",
                     icon: "/ui/medals/rank-crown.png",
                   },
                   {
                     label: "XP total",
                     value: xpTotal.toLocaleString(),
-                    note: "Toda la memoria fisica ya ganada por el personaje.",
+                    support: "Acumulado",
+                    note: "Todo lo que ya sumaste en el mapa.",
                     icon: "/ui/header/notifications/notif-quest.png",
                   },
                   {
                     label: "Sesiones",
                     value: sesiones.toLocaleString(),
-                    note: "Entradas reales que sostienen presencia y build.",
+                    support: "Registradas",
+                    note: "Sesiones reales que sostienen tu avance.",
                     icon: "/ui/header/section-ejercicios.png",
                   },
                   {
                     label: "Reserva",
-                    value: `${coins.toLocaleString()} / ${gems.toLocaleString()}`,
-                    note: "Oro y gemas vivas para mercado, boosts y piezas.",
+                    value: coins.toLocaleString(),
+                    support: `${gems.toLocaleString()} gemas`,
+                    note: "Monedas listas para mejoras y compras.",
                     icon: "/ui/header/section-tienda.png",
                   },
                 ].map((item) => (
                   <div key={item.label} className="up2-stat-card">
                     <div className="up2-stat-top">
-                      <div>
+                      <div className="up2-stat-copy">
                         <div className="up2-kicker">{item.label}</div>
                         <div className="up2-stat-value">{item.value}</div>
+                        {item.support ? <div className="up2-stat-support">{item.support}</div> : null}
                       </div>
-                      <img className="up2-icon up2-icon--lg" src={item.icon} alt="" />
+                      <div className="up2-stat-icon-wrap">
+                        <img className="up2-icon up2-icon--lg" src={item.icon} alt="" />
+                      </div>
                     </div>
                     <div className="up2-stat-note">{item.note}</div>
                   </div>
@@ -2413,7 +2266,7 @@ export default function UserPersonaje({ profile = {} }) {
                 <div className="up2-stage-pedestal" />
                 <div className="up2-stage-mark">
                   <img className="up2-icon up2-icon--lg" src="/ui/header/section-personaje.png" alt="" />
-                  <span>Camara de forja</span>
+                  <span>Camara del heroe</span>
                 </div>
                 <img className="up2-crest-pin" src={theme.crest} alt="" />
 
@@ -2475,7 +2328,7 @@ export default function UserPersonaje({ profile = {} }) {
 
                 <div className="up2-stage-footer">
                 <div className="up2-strip-card">
-                  <div className="up2-kicker">Pulso de progreso</div>
+                  <div className="up2-kicker">Progreso actual</div>
                   <h3>{currentStage.label}</h3>
                   <p>{currentStage.desc}</p>
                   <ProgressMeter
@@ -2487,51 +2340,31 @@ export default function UserPersonaje({ profile = {} }) {
                   />
                 </div>
                 <div className="up2-strip-card">
-                  <div className="up2-kicker">Siguiente salto</div>
-                  <h3>{nextStage ? nextStage.label : "Forma maxima"}</h3>
+                  <div className="up2-kicker">Proxima etapa</div>
+                  <h3>{nextStage ? nextStage.label : "Etapa maxima"}</h3>
                   <p>
                     {nextStage
                       ? etaDays
-                        ? `Manteniendo este ritmo, puedes tocar la siguiente forma en ${etaDays} dias.`
+                        ? `Manteniendo este ritmo, puedes llegar a la siguiente etapa en ${etaDays} dias.`
                         : "Una semana con mejor XP ya acelera la siguiente forma."
-                      : "Tu build ya esta en la cima actual del personaje."}
+                      : "Ya tocaste la etapa mas alta disponible por ahora."}
                   </p>
                 </div>
               </div>
             </div>
           </section>
 
-          <section className="up2-panel">
-            <div className="up2-tabs">
-              {tabs.map((tab) => {
-                const active = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    className={`up2-tab${active ? " is-active" : ""}`}
-                    onClick={() => setActiveTab(tab.id)}
-                  >
-                    <span>{tab.label}</span>
-                    {tab.badge ? <span className="up2-tab-badge">{tab.badge}</span> : null}
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-
-          {activeTab === "personaje" ? (
-            <>
+          <>
               <section className="up2-band">
                 <div className="up2-panel">
                   <div className="up2-panel-pad">
                     <div className="up2-section-head">
                       <div>
-                        <div className="up2-kicker">Ruta del cuerpo</div>
-                        <h2 className="up2-panel-title">Mapa de formas</h2>
-                        <p>Fases claras, hito exacto y lectura rápida de avance.</p>
+                        <div className="up2-kicker">Ruta fisica</div>
+                        <h2 className="up2-panel-title">Ruta de etapas</h2>
+                        <p>Fases claras, meta siguiente y avance facil de leer.</p>
                       </div>
-                      <span className="up2-tag is-estimate">Ruta por nivel real</span>
+                      <span className="up2-tag is-estimate">Ruta segun tu nivel</span>
                     </div>
 
                     <div className="up2-journey">
@@ -2549,7 +2382,7 @@ export default function UserPersonaje({ profile = {} }) {
                           const progress = getStageProgress(stage, level, xpPct);
                           const milestone = getStageMilestone(stage, currentStage, level);
                           const tone = stage.id === 1 ? "#8f85a8" : stage.id === 2 ? theme.secondary : stage.id === 3 ? theme.accent : stage.id === 4 ? "#c08aff" : "#f6b44b";
-                          const statusLabel = unlocked ? (stage.id === currentStage.id ? "Etapa activa" : "Desbloqueada") : "Bloqueada";
+                          const statusLabel = unlocked ? (stage.id === currentStage.id ? "Etapa actual" : "Abierta") : "Bloqueada";
                           return (
                             <motion.button
                               key={stage.id}
@@ -2574,7 +2407,7 @@ export default function UserPersonaje({ profile = {} }) {
                                   <div className="up2-phase-name">{stage.label}</div>
                                   <div className="up2-phase-chiprow">
                                     <span className="up2-phase-chip">Lv {stage.min}{stage.max >= 999 ? "+" : `-${stage.max}`}</span>
-                                    <span className="up2-phase-chip">{unlocked ? (stage.id === currentStage.id ? "Activa" : "Abierta") : "Bloqueada"}</span>
+                                    <span className="up2-phase-chip">{unlocked ? (stage.id === currentStage.id ? "Actual" : "Abierta") : "Bloqueada"}</span>
                                   </div>
                                   <ProgressMeter value={progress} max={100} tone={tone} />
                                   <span className="up2-tag" style={{ marginTop:"auto" }}>{statusLabel}</span>
@@ -2612,11 +2445,11 @@ export default function UserPersonaje({ profile = {} }) {
                   <div className="up2-panel-pad">
                     <div className="up2-section-head">
                         <div>
-                          <div className="up2-kicker">Bitacora fisica</div>
-                          <h2 className="up2-panel-title">Estadisticas centrales</h2>
-                        <p>Lectura rápida de tus cuatro atributos base.</p>
+                          <div className="up2-kicker">Lectura fisica</div>
+                          <h2 className="up2-panel-title">Atributos clave</h2>
+                        <p>Tus cuatro bases en una vista rapida.</p>
                       </div>
-                      {hasEstimatedPrimaryStats ? <span className="up2-tag is-estimate">Base estimada</span> : null}
+                      {hasEstimatedPrimaryStats ? <span className="up2-tag is-estimate">Base calculada</span> : null}
                     </div>
 
                     <div className="up2-build-list">
@@ -2625,7 +2458,7 @@ export default function UserPersonaje({ profile = {} }) {
                           <img className="up2-icon up2-icon--lg" src={stat.asset} alt="" />
                           <div>
                             <strong>{stat.label}</strong>
-                            <span>{stat.estimated ? "Lectura estimada" : "Lectura real"}</span>
+                            <span>{stat.estimated ? "Lectura estimada" : "Dato real"}</span>
                           </div>
                           <div style={{ width: "min(180px, 34vw)" }}>
                             <ProgressMeter value={stat.value} max={100} tone={stat.tone} label={stat.estimated ? "Estimado" : "Real"} valueLabel={`${stat.value}`} />
@@ -2642,11 +2475,11 @@ export default function UserPersonaje({ profile = {} }) {
                     <div className="up2-panel-pad">
                       <div className="up2-section-head">
                         <div>
-                          <div className="up2-kicker">Subatributos</div>
-                          <h2 className="up2-panel-title">Detalle de build</h2>
-                          <p>Cuatro lecturas finas para calidad, control y recuperación.</p>
+                          <div className="up2-kicker">Detalle fino</div>
+                          <h2 className="up2-panel-title">Detalle de avance</h2>
+                          <p>Cuatro se�ales para calidad, control y recuperacion.</p>
                         </div>
-                        {hasEstimatedSecondaryStats ? <span className="up2-tag is-estimate">Calculado con progreso real</span> : null}
+                        {hasEstimatedSecondaryStats ? <span className="up2-tag is-estimate">Calculado con tu progreso</span> : null}
                       </div>
 
                       <div className="up2-build-summary">
@@ -2673,9 +2506,9 @@ export default function UserPersonaje({ profile = {} }) {
                     <div className="up2-panel-pad">
                     <div className="up2-section-head">
                       <div>
-                        <div className="up2-kicker">Resumen util</div>
-                        <h2 className="up2-panel-title">Economia del personaje</h2>
-                        <p>Recursos, energía y marcas sin pared de texto.</p>
+                        <div className="up2-kicker">Resumen rapido</div>
+                        <h2 className="up2-panel-title">Recursos del heroe</h2>
+                        <p>Recursos y marcas en una vista simple.</p>
                       </div>
                     </div>
 
@@ -2686,7 +2519,7 @@ export default function UserPersonaje({ profile = {} }) {
                         { label:"Misiones",   value: misiones.toLocaleString(),                   note:"Completas",icon:"/ui/header/section-misiones.png" },
                         { label:"Tiempo",     value: tiempoTotal,                                 note:"Acumulado",icon:"/ui/header/section-ejercicios.png" },
                         { label:"Rec. peso",  value: recordPeso ? `${recordPeso} kg` : "--",     note:"Pico",     icon:"/ui/icons/quest-fuerza.png" },
-                        { label:"Calorías",   value: calorias > 0 ? calorias.toLocaleString() : "--", note:"Registradas", icon:"/ui/icon-energy.png" },
+                        { label:"Calorias",   value: calorias > 0 ? calorias.toLocaleString() : "--", note:"Registradas", icon:"/ui/icon-energy.png" },
                       ].map((item) => (
                         <div key={item.label} className="up2-utility-card">
                           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:6 }}>
@@ -2708,9 +2541,9 @@ export default function UserPersonaje({ profile = {} }) {
                   <div className="up2-panel-pad">
                     <div className="up2-section-head">
                       <div>
-                        <div className="up2-kicker">Carga util</div>
-                        <h2 className="up2-panel-title">Loadout actual</h2>
-                        <p>Tres piezas clave arriba; ficha completa al desplegar.</p>
+                        <div className="up2-kicker">Equipo activo</div>
+                        <h2 className="up2-panel-title">Equipo actual</h2>
+                        <p>Tres piezas clave arriba y el resto al desplegar.</p>
                       </div>
                     </div>
 
@@ -2723,7 +2556,7 @@ export default function UserPersonaje({ profile = {} }) {
                           kind: "cosmetic",
                           kindAsset: "/ui/shop/icons/shop-cosmetic.png",
                           rarityFrameAsset: activeAvatarMeta?.rareza === "Legendario" ? "/ui/rarity/rarity-legendary.png" : null,
-                          tooltip: "Avatar de perfil para tablero, home y presencia social del heroe.",
+                          tooltip: "Avatar usado en tu perfil, home y parte social.",
                           meta: [
                             ["Rareza", activeAvatarMeta?.rareza || "Comun"],
                             ["Origen", activeAvatarMeta?.precio > 0 ? "Mercado del gremio" : "Base del perfil"],
@@ -2762,7 +2595,7 @@ export default function UserPersonaje({ profile = {} }) {
                           kind: "cosmetic",
                           kindAsset: "/ui/shop/icons/shop-cosmetic.png",
                           rarityFrameAsset: skinMeta.rarity === "Legendaria" ? "/ui/rarity/rarity-legendary.png" : null,
-                          tooltip: "Skin principal que cambia el heroe grande y el tono visual del personaje.",
+                          tooltip: "Skin principal que cambia el heroe grande y el tono visual.",
                           meta: [
                             ["Rareza", skinMeta.rarity],
                             ["Origen", skinMeta.origin],
@@ -2786,15 +2619,15 @@ export default function UserPersonaje({ profile = {} }) {
                         },
                         {
                           title: "Insignia de etapa",
-                          note: currentStage.id >= 4 ? "Rareza alta y presencia visible" : "Tramo en crecimiento firme",
+                          note: currentStage.id >= 4 ? "Sello fuerte y presencia clara" : "Etapa en crecimiento",
                           rarity: currentStage.id >= 5 ? "Legendaria" : currentStage.id >= 4 ? "Epica" : "Rara",
                           kind: "functional",
                           kindAsset: "/ui/shop/icons/shop-service.png",
                           rarityFrameAsset: currentStage.id >= 5 ? "/ui/rarity/rarity-legendary.png" : null,
-                          tooltip: "Sello funcional del mapa de formas. Resume avance real y presencia actual dentro del juego.",
+                          tooltip: "Sello de etapa que resume tu avance actual dentro del juego.",
                           meta: [
                             ["Rareza", currentStage.id >= 5 ? "Legendaria" : currentStage.id >= 4 ? "Epica" : "Rara"],
-                            ["Origen", "Mapa de formas"],
+                            ["Origen", "Ruta de etapas"],
                             ["Tipo", "Sello funcional"],
                             ["Activo", `Desde nivel ${currentStage.min}`],
                           ],
@@ -2855,11 +2688,11 @@ export default function UserPersonaje({ profile = {} }) {
                   <div className="up2-panel-pad">
                     <div className="up2-section-head">
                       <div>
-                        <div className="up2-kicker">Marcas del heroe</div>
+                        <div className="up2-kicker">Marcas recientes</div>
                         <h2 className="up2-panel-title">Medallas recientes</h2>
-                        <p>Sellos recientes con estado claro y menos ruido.</p>
+                        <p>Sellos recientes con estado claro y lectura simple.</p>
                       </div>
-                      {hasDerivedMedals ? <span className="up2-tag is-estimate">Sellos derivados</span> : null}
+                      {hasDerivedMedals ? <span className="up2-tag is-estimate">Sellos calculados</span> : null}
                     </div>
 
                     <div className="up2-journey-marks">
@@ -2880,82 +2713,10 @@ export default function UserPersonaje({ profile = {} }) {
                   </div>
                 </div>
               </section>
-            </>
-          ) : (
-            <section className="up2-skill-wrap">
-              <div className="up2-panel up2-skill-hero">
-                <div className="up2-panel-pad">
-                  <div className="up2-skill-head">
-                    <div className="up2-skill-copy">
-                      <div className="up2-section-head">
-                        <div>
-                          <div className="up2-kicker">Talentos vivos</div>
-                          <h2 className="up2-panel-title">Mesa de habilidades</h2>
-                        </div>
-                      </div>
-                      <p>
-                        Abre talentos con una lectura mas limpia: estado rapido arriba y ayuda puntual solo cuando la necesites.
-                      </p>
-                      <div className="up2-skill-chipline">
-                        <span className="up2-skill-pill">
-                          Clase <strong>{classBadge.label}</strong>
-                        </span>
-                        <span className="up2-skill-pill">
-                          Nivel <strong>{level}</strong>
-                        </span>
-                        <span className="up2-skill-pill">
-                          Puntos <strong>{skillPoints}</strong>
-                        </span>
-                        <span className="up2-skill-pill">
-                          Afinidad <strong>{classSkillHint.recommendation}</strong>
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="up2-skill-hud">
-                    <div className="up2-skill-box is-compact">
-                      <strong>Estado del arbol</strong>
-                      <span>{skillPoints > 0 ? `${skillPoints} puntos listos para invertir.` : "Sin puntos nuevos por ahora."}</span>
-                      <div className="up2-skill-inline">
-                        <span>Clase <strong>{classBadge.label}</strong></span>
-                        <span>Nivel <strong>{level}</strong></span>
-                        <span>Ruta <strong>{classSkillHint.nodes.split(",")[0]}</strong></span>
-                      </div>
-                    </div>
-                    <details className="up2-skill-mini">
-                      <summary>
-                        <strong>Recomendacion por clase</strong>
-                        <span>{classSkillHint.recommendation}</span>
-                      </summary>
-                      <div className="up2-skill-mini-body">
-                        <p>Usa esta pista para priorizar nodos que de verdad empujen tu estilo antes de repartir puntos en todo el arbol.</p>
-                        <small>La afinidad cambia el orden recomendado, no bloquea ramas.</small>
-                      </div>
-                    </details>
-                    <details className="up2-skill-mini">
-                      <summary>
-                        <strong>Nodos sugeridos hoy</strong>
-                        <span>{classSkillHint.nodes}</span>
-                      </summary>
-                      <div className="up2-skill-mini-body">
-                        <p>{skillPoints > 0 ? "Si quieres gastar rapido, empieza por esta linea y luego abre soporte o recuperacion." : "Cierra sesiones, misiones o logros para volver con puntos y abrir esta linea sin perder ritmo."}</p>
-                        <small>Ganas 1 punto por nivel y el resto del arbol queda siempre disponible.</small>
-                      </div>
-                    </details>
-                  </div>
-                </div>
-              </div>
-
-              <div className="up2-panel up2-skill-tree-panel">
-                <div className="up2-panel-pad">
-                  <SkillTree profile={profile} />
-                </div>
-              </div>
-            </section>
-          )}
+          </>
         </div>
       </div>
     </>
   );
 }
+

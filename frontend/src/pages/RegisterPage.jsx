@@ -352,7 +352,7 @@ function ClassSprite({ classIndex = 0, size = 160, fps = 8 }) {
 const CSS = `
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
-  body { background: ${C.bg}; overflow-x: hidden; font-family: 'Rajdhani', sans-serif; }
+  body { background: ${C.bg}; overflow-y: auto; overflow-x: hidden; font-family: 'Rajdhani', sans-serif; }
 
   @media (prefers-reduced-motion:reduce) {
     *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
@@ -426,6 +426,30 @@ const CSS = `
   }
 
   /* ── Responsive ── */
+  .rg6-shell {
+    min-height: 100dvh;
+    height: auto;
+    padding: clamp(10px, 1.35vw, 18px);
+    overflow: visible;
+  }
+  .rg6-frame {
+    width: min(1380px, 100%);
+    height: auto;
+    max-height: none;
+    min-height: 100%;
+    min-width: 0;
+    overflow-x: hidden;
+  }
+  .rg6-left,
+  .rg6-right {
+    min-height: 0;
+    min-width: 0;
+  }
+  .rg6-right-scroll {
+    overflow-y: visible;
+    overflow-x: hidden;
+  }
+
   .rg6-page-shell { width: 100%; max-width: 1440px; display: grid; gap: 20px; }
   .rg6-content-grid { display: grid; grid-template-columns: minmax(300px, 360px) minmax(0, 1fr); gap: 20px; align-items: start; }
   .rg6-form-shell {
@@ -462,13 +486,26 @@ const CSS = `
     .rg6-lower-grid { grid-template-columns: 1fr !important; }
   }
   @media (max-width: 640px) {
+    body { overflow-y: auto; overflow-x: hidden; }
+    .rg6-shell { height: auto; min-height: 100dvh; overflow: visible; padding: 0; }
+    .rg6-frame { height: auto; max-height: none; width: 100%; }
     .rg6-grid { grid-template-columns: 1fr !important; }
     .rg6-left { display: none !important; }
     .rg6-right { padding: clamp(24px,6vw,52px) clamp(16px,5vw,36px) !important; overflow-y: auto; max-height: 100vh; }
+    .rg6-right-scroll { overflow-y: auto; }
     .rg6-class-grid { grid-template-columns: 1fr !important; }
     .rg6-lower-step { grid-template-columns: 24px 1fr !important; gap: 8px !important; }
     .rg6-page-shell { gap: 16px; }
     .rg6-content-grid { gap: 16px; }
+  }
+
+  @media (max-height: 860px) and (min-width: 641px) {
+    .rg6-shell { padding: 8px; }
+    .rg6-back { top: 20px; left: 26px; }
+  }
+
+  @media (max-height: 760px) and (min-width: 641px) {
+    .rg6-shell { padding: 6px; }
   }
 
   /* ── Mobile top banner ── */
@@ -718,7 +755,7 @@ function InputField({ id, label, type = "text", value, onChange, onBlur, placeho
           placeholder={placeholder} disabled={disabled} autoComplete={autoComplete}
           inputMode={inputMode} aria-invalid={!!error}
           style={{ position: "relative", zIndex: 1, width: "100%",
-            padding: type === "password" ? "12px 44px 12px 14px" : "12px 14px",
+            padding: type === "password" ? "11px 42px 11px 13px" : "11px 13px",
             background: disabled ? P.bg2 : focused ? P.bg1 : P.bg0,
             border: `1px solid ${error ? P.error : focused ? P.accent : P.line}`,
             color: disabled ? P.muted : P.text,
@@ -774,8 +811,8 @@ function PasswordStrength({ password }) {
     <AnimatePresence>
       {!!password && (
         <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
-          transition={{ duration: 0.22 }} style={{ overflow: "hidden", marginTop: -4, marginBottom: 14 }}>
-          <div style={{ background: P.bg1, border: `1px solid ${P.line}`, padding: "8px 12px" }}>
+          transition={{ duration: 0.22 }} style={{ overflow: "hidden", marginTop: -3, marginBottom: 10 }}>
+          <div style={{ background: P.bg1, border: `1px solid ${P.line}`, padding: "7px 11px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
               <span style={{ ...mono(8, 700), color: P.muted, letterSpacing: ".12em" }}>[ FORTALEZA ]</span>
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -1108,21 +1145,17 @@ function RegisterLandingPanel({
   classIdx,
   fromGoogle = false,
   fromHome = false,
-  afterEnterSteps = [],
-  registerTrustBand = [],
-  registerStats = [],
-  onReturnHome,
 }) {
   const cls = CLASSES[classIdx] ?? CLASSES[0];
   const media = step === 2 ? REGISTER_CLASS_MEDIA[classIdx] ?? REGISTER_CLASS_MEDIA[0] : REGISTER_NEUTRAL_MEDIA;
   const accent = getRegisterAccent(step, classIdx);
   const stageIntro = step === 2
-    ? "La clase que elijas define color, ritmo y primeras rutas del tablero."
-    : "Una sola entrada clara para crear cuenta, marcar clase y abrir el mapa con identidad.";
-  const stageFocusTitle = step === 2 ? cls.name : "Forja tu llegada";
+    ? "La clase ya empieza a moldear lo que veras primero dentro del mapa."
+    : "Una portada viva para crear cuenta, marcar clase y entrar al sistema con identidad.";
+  const stageFocusTitle = step === 2 ? media.route : "Mesa de entrada";
   const stageFocusCopy = step === 2
-    ? "Tu clase queda enlazada a recomendaciones, tono visual y primeras quests de entrenamiento."
-    : "Cuenta, acceso y clase quedan alineados para que luego misiones, rutinas y entrenamiento se sientan parte del mismo mundo.";
+    ? media.routeCopy
+    : "Cuenta, acceso y afinidad quedan alineados desde aqui para que home, quests, rutinas y entrenamiento hablen el mismo idioma visual.";
   const contextPills = [
     fromGoogle ? "Entrada con Google" : null,
     fromHome ? "Clase heredada desde Home" : null,
@@ -1138,10 +1171,10 @@ function RegisterLandingPanel({
         position: "relative",
         overflow: "hidden",
         borderRight: `1px solid ${P.line}`,
-        padding: "24px",
+        padding: "18px",
         display: "grid",
         alignContent: "start",
-        gap: 16,
+        gap: 12,
         background: `linear-gradient(180deg, rgba(9,8,18,0.96), rgba(8,7,16,0.92))`,
       }}
     >
@@ -1170,7 +1203,7 @@ function RegisterLandingPanel({
         }}
       />
 
-      <div style={{ position: "relative", zIndex: 2, display: "grid", gap: 16 }}>
+      <div style={{ position: "relative", zIndex: 2, display: "grid", gap: 12, minHeight: "100%" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ ...makeHomePanel({ radius: 16, surface: "rgba(10,12,20,0.72)", outerGlow: "rgba(0,0,0,0.22)" }), width: 48, height: 48, display: "grid", placeItems: "center" }}>
@@ -1194,34 +1227,31 @@ function RegisterLandingPanel({
           </div>
         )}
 
-        <div style={{ ...makeHomePanel({ radius: 26, surface: "rgba(7,8,18,0.66)", outerGlow: "rgba(0,0,0,0.32)" }), position: "relative", minHeight: 500, overflow: "hidden" }}>
-          <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(8,8,16,0.18), rgba(8,8,16,0.68)), url('${media.hero}') center / cover no-repeat` }} />
-          <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(9,8,18,0.02), rgba(9,8,18,0.44)), radial-gradient(circle at 18% 16%, ${HOME_PUBLIC_COLORS.warrior}12 0%, transparent 24%), radial-gradient(circle at 84% 12%, ${HOME_PUBLIC_COLORS.mage}12 0%, transparent 22%)` }} />
+        <div style={{ ...makeHomePanel({ radius: 24, surface: "rgba(7,8,18,0.66)", outerGlow: "rgba(0,0,0,0.32)" }), position: "relative", minHeight: "clamp(360px, 49vh, 540px)", overflow: "hidden" }}>
+          <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(7,8,16,0.1), rgba(7,8,16,0.78)), url('${media.hero}') center / cover no-repeat` }} />
+          <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(9,8,18,0.02), rgba(9,8,18,0.58)), radial-gradient(circle at 20% 16%, ${HOME_PUBLIC_COLORS.warrior}12 0%, transparent 24%), radial-gradient(circle at 82% 12%, ${HOME_PUBLIC_COLORS.mage}12 0%, transparent 20%), radial-gradient(circle at 54% 82%, ${accent}14 0%, transparent 28%)` }} />
 
-          <div style={{ position: "relative", zIndex: 1, height: "100%", padding: "20px 20px 18px", display: "grid", alignContent: "space-between" }}>
-            <div style={{ ...makeHomePanel({ radius: 18, surface: "rgba(8,9,18,0.72)", outerGlow: "rgba(0,0,0,0.18)" }), maxWidth: 330, padding: "14px 15px" }}>
-              <div style={{ ...mono(7, 700), color: accent, letterSpacing: ".12em", marginBottom: 8 }}>{step === 2 ? "RUTA ACTIVA" : "PORTADA DE INGRESO"}</div>
-              <div style={{ ...homeHeading(22, 700), color: "#f5f2ff", marginBottom: 8, lineHeight: 1.08 }}>{step === 2 ? media.route : "Mesa de bienvenida"}</div>
-              <p style={{ ...sans(12, 500), color: "#c7d1e5", lineHeight: 1.6 }}>
-                {stageIntro}
-              </p>
-            </div>
-
-            <div style={{ position: "relative", minHeight: 184, display: "grid", justifyItems: "center", alignItems: "end" }}>
-              {step === 2 ? <ClassSprite classIndex={classIdx} size={230} fps={8} /> : <SpriteIdle size={220} fps={8} />}
-            </div>
-
-            <div style={{ display: "grid", gap: 12 }}>
-              <div>
-                <div style={{ ...homeHeading("clamp(24px,2.4vw,34px)", 700), color: "#f7f3ff", marginBottom: 8, lineHeight: 1.02 }}>{stageFocusTitle}</div>
-                <p style={{ ...sans(13, 500), color: "#d0d8ea", lineHeight: 1.6, maxWidth: 520 }}>
-                  {stageFocusCopy}
-                </p>
+          <div style={{ position: "relative", zIndex: 1, height: "100%", padding: "14px", display: "grid", gridTemplateRows: "auto 1fr auto", gap: 12 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 10, alignItems: "start" }}>
+              <div style={{ ...makeHomePanel({ radius: 18, surface: "rgba(8,9,18,0.78)", outerGlow: "rgba(0,0,0,0.18)" }), maxWidth: 330, padding: "11px 12px" }}>
+                <div style={{ ...mono(7, 700), color: accent, letterSpacing: ".12em", marginBottom: 7 }}>{step === 2 ? "RUTA MARCADA" : "PORTADA DE INGRESO"}</div>
+                <div style={{ ...homeHeading(21, 700), color: "#f5f2ff", marginBottom: 7, lineHeight: 1.06 }}>{step === 2 ? cls.name : "Mesa de bienvenida"}</div>
+                <p style={{ ...sans(11, 500), color: "#c7d1e5", lineHeight: 1.55, margin: 0 }}>{stageIntro}</p>
               </div>
+            </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 10 }}>
-                {(step === 2 ? media.bullets : ["Cuenta segura", "Clase personal", "Mapa listo"]).map((bullet) => (
-                  <div key={bullet} style={{ ...makeHomePanel({ radius: 14, surface: "rgba(8,9,18,0.72)", outerGlow: "rgba(0,0,0,0.14)" }), padding: "10px 12px", ...sans(11, 600), color: "#f3f6ff" }}>
+            <div style={{ position: "relative", minHeight: 164, display: "grid", justifyItems: "center", alignItems: "end" }}>
+              {step === 2 ? <ClassSprite classIndex={classIdx} size={192} fps={8} /> : <SpriteIdle size={184} fps={8} />}
+            </div>
+
+            <div style={{ ...makeHomePanel({ radius: 18, surface: "rgba(8,9,18,0.74)", outerGlow: "rgba(0,0,0,0.18)" }), padding: "12px 13px", display: "grid", gap: 9 }}>
+              <div>
+                <div style={{ ...homeHeading("clamp(24px,2.4vw,34px)", 700), color: "#f7f3ff", marginBottom: 7, lineHeight: 1.02 }}>{stageFocusTitle}</div>
+                <p style={{ ...sans(12, 500), color: "#d0d8ea", lineHeight: 1.48, maxWidth: 540, margin: 0 }}>{stageFocusCopy}</p>
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {(step === 2 ? media.bullets : ["Cuenta segura", "Clase personal", "Mapa listo"]).map((bullet, index) => (
+                  <div key={bullet} style={{ ...makeHomePill([accent, HOME_PUBLIC_COLORS.mage, HOME_PUBLIC_COLORS.archer][index] ?? accent, true), padding: "7px 10px", ...sans(10, 700), color: "#eef4ff" }}>
                     {bullet}
                   </div>
                 ))}
@@ -1229,31 +1259,6 @@ function RegisterLandingPanel({
             </div>
           </div>
         </div>
-
-        {step === 1 && (
-          <div style={{ display: "flex", gap: 10 }}>
-            <motion.button
-              type="button"
-              onClick={onReturnHome}
-              whileHover={{ y: -2, borderColor: `${accent}66`, color: accent }}
-              whileTap={{ scale: 0.98 }}
-              style={{
-                ...sans(12, 700),
-                ...makeHomePill(accent),
-                minHeight: 44,
-                padding: "0 20px",
-                color: P.muted,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                letterSpacing: ".06em",
-              }}
-            >
-              Volver al portal
-            </motion.button>
-          </div>
-        )}
       </div>
     </motion.div>
   );
@@ -1264,9 +1269,9 @@ function StepIndicator({ step, total = 2, classIdx = 0 }) {
   const STEP_SEALS = [REGISTER_NEUTRAL_MEDIA.crest, REGISTER_CLASS_MEDIA[classIdx]?.crest ?? REGISTER_CLASS_MEDIA[0].crest];
   const accent = getRegisterAccent(step, classIdx);
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24,
+    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16,
       ...makeHomePanel({ radius: 14, surface: "rgba(11,14,24,0.82)", outerGlow: "rgba(0,0,0,0.18)" }),
-      padding: "12px 16px" }}>
+      padding: "10px 14px" }}>
       {Array.from({ length: total }, (_, i) => (
         <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, flex: i < total - 1 ? 1 : "none" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -1592,11 +1597,28 @@ export default function RegisterPage({ onGoLogin, onGoBack, onSuccess, googleDat
     () => (step === 2 ? REGISTER_CLASS_MEDIA[classIdx] ?? REGISTER_CLASS_MEDIA[0] : REGISTER_NEUTRAL_MEDIA),
     [classIdx, step]
   );
+  const selectedClass = CLASSES[classIdx] ?? CLASSES[0];
   const activeAccent = getRegisterAccent(step, classIdx);
   const activeTitle = step === 2 ? (CLASSES[classIdx]?.name ?? "Tu clase") : "Tu cuenta";
   const verificationLabel = fromGoogle ? "Acceso validado" : "Correo de verificación";
   const verificationValue = fromGoogle ? "Google listo" : "Se envia al crear";
-
+  const registerRailPrimary = step === 2
+    ? [
+        { label: "CLASE", value: selectedClass.name, accent: activeAccent },
+        { label: "AFINIDAD", value: selectedClass.tag ?? "Ruta propia", accent: HOME_PUBLIC_COLORS.archer },
+        { label: "ENTRADA", value: fromGoogle ? "Google" : "Correo", accent: HOME_PUBLIC_COLORS.mage },
+      ]
+    : [
+        { label: "CUENTA", value: "Nombre + acceso", accent: activeAccent },
+        { label: "VERIFICACION", value: verificationValue, accent: HOME_PUBLIC_COLORS.archer },
+        { label: "DESTINO", value: "Home y mapa", accent: HOME_PUBLIC_COLORS.mage },
+      ];
+  const registerRailSecondary = step === 2
+    ? REGISTER_REWARD_PREVIEW
+    : REGISTER_VALUE_STRIPS.map((item, index) => ({
+        ...item,
+        accent: [HOME_PUBLIC_COLORS.archer, HOME_PUBLIC_COLORS.mage, HOME_PUBLIC_COLORS.warrior][index] ?? activeAccent,
+      }));
 
   return (
     <>
@@ -1626,15 +1648,15 @@ export default function RegisterPage({ onGoLogin, onGoBack, onSuccess, googleDat
       <motion.div
         initial={{ opacity: 0 }} animate={{ opacity: 1 }}
         transition={{ duration: skipBoot ? 0.3 : 0.01 }}
-        style={{ minHeight: "100vh", display: "flex", alignItems: "stretch", justifyContent: "center", position: "relative", zIndex: 2 }}>
+        className="rg6-shell"
+        style={{ display: "flex", alignItems: "stretch", justifyContent: "center", position: "relative", zIndex: 2 }}>
 
         <motion.div
           initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.55, ease }}
-          className="px6r-corners rg6-grid"
+          className="px6r-corners rg6-grid rg6-frame"
           style={{
             "--cc": activeAccent,
-            width: "100%", maxWidth: 1380,
-            display: "grid", gridTemplateColumns: "minmax(420px, 0.92fr) minmax(560px, 1.08fr)",
+            display: "grid", gridTemplateColumns: "minmax(400px, 0.88fr) minmax(540px, 1.12fr)",
             background: `linear-gradient(180deg, rgba(9,8,18,0.94), rgba(8,7,16,0.9))`, border: `1px solid rgba(255,255,255,0.08)`,
             boxShadow: `${HOME_PANEL_INSET}, 0 30px 80px rgba(0,0,0,0.6)`,
             overflow: "hidden", position: "relative", alignSelf: "stretch",
@@ -1658,19 +1680,12 @@ export default function RegisterPage({ onGoLogin, onGoBack, onSuccess, googleDat
             classIdx={classIdx}
             fromGoogle={fromGoogle}
             fromHome={fromHome}
-            onReturnHome={() => {
-              if (onGoBack) {
-                onGoBack();
-                return;
-              }
-              window.location.assign("/home");
-            }}
           />
 
           {/* ── RIGHT PANEL ── */}
-          <div className="rg6-right"
-            style={{ padding: "36px 40px 20px", display: "flex", flexDirection: "column", justifyContent: "flex-start",
-              position: "relative", background: `linear-gradient(180deg, rgba(9,8,18,0.9), rgba(8,7,16,0.96))`, backdropFilter: "blur(16px)", overflowY: "auto" }}>
+          <div className="rg6-right rg6-right-scroll"
+            style={{ padding: "20px 22px 14px", display: "flex", flexDirection: "column", justifyContent: "flex-start",
+              position: "relative", background: `linear-gradient(180deg, rgba(9,8,18,0.9), rgba(8,7,16,0.96))`, backdropFilter: "blur(16px)" }}>
 
             {/* Ambient orbs */}
             <div style={{ position: "absolute", right: "-10%", top: "5%", width: 280, height: 280, borderRadius: "50%",
@@ -1716,29 +1731,29 @@ export default function RegisterPage({ onGoLogin, onGoBack, onSuccess, googleDat
               )}
             </div>
 
-            <div style={{ width: "100%", maxWidth: 760, marginRight: "auto" }}>
+            <div style={{ width: "100%", maxWidth: 720, marginRight: "auto" }}>
             {/* Header */}
-            <motion.div variants={FV.up} initial="hidden" animate="show" style={{ marginBottom: 28 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
-                <div style={{ ...makeHomePanel({ radius: 14, surface: "rgba(10,12,20,0.72)", outerGlow: "rgba(0,0,0,0.22)" }), width: 44, height: 44, display: "grid", placeItems: "center", flexShrink: 0 }}>
-                  <img src="/logo.png" alt="ForgeVenture" style={{ width: 26, height: 26, objectFit: "contain" }} />
+            <motion.div variants={FV.up} initial="hidden" animate="show" style={{ marginBottom: 14, display: "grid", gap: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                <div style={{ ...makeHomePanel({ radius: 14, surface: "rgba(10,12,20,0.72)", outerGlow: "rgba(0,0,0,0.22)" }), width: 40, height: 40, display: "grid", placeItems: "center", flexShrink: 0 }}>
+                  <img src="/logo.png" alt="ForgeVenture" style={{ width: 22, height: 22, objectFit: "contain" }} />
                 </div>
                 <div>
                   <div style={{ ...homeHeading(14, 700), color: "#f5f1ff" }}>ForgeVenture</div>
                   <div style={{ ...mono(7, 600), color: HOME_PUBLIC_COLORS.neutral, letterSpacing: ".12em" }}>PORTAL DE REGISTRO</div>
                 </div>
               </div>
-              <h1 style={{ ...homeHeading("clamp(26px,3vw,38px)", 700), color: "#f7f3ff", marginBottom: 10, lineHeight: 1.04 }}>
+              <h1 style={{ ...homeHeading("clamp(22px,2.2vw,33px)", 700), color: "#f7f3ff", marginBottom: 6, lineHeight: 1.02 }}>
                 {step === 1 ? "Crea tu cuenta." : "Elige tu clase."}
               </h1>
-              <p style={{ ...sans(14, 500), color: "#ccd5e7", lineHeight: 1.65, maxWidth: 480 }}>
+              <p style={{ ...sans(12, 500), color: "#ccd5e7", lineHeight: 1.45, maxWidth: 460 }}>
                 {step === 1
                   ? "Nombre de héroe, acceso seguro y clase en dos pasos. Sin ruido."
                   : "La clase define tu mapa, colores y primeras recomendaciones."}
               </p>
             </motion.div>
 
-            <div style={{ ...makeHomePanel({ radius: 22, surface: "rgba(9,10,18,0.86)", outerGlow: "rgba(0,0,0,0.28)" }), marginBottom: 12, padding: "14px 16px 14px" }}>
+            <div style={{ ...makeHomePanel({ radius: 22, surface: "rgba(9,10,18,0.86)", outerGlow: "rgba(0,0,0,0.28)" }), marginBottom: 10, padding: "12px 14px 12px" }}>
               <StepIndicator step={step} classIdx={classIdx} />
 
               {/* General error */}
@@ -1746,7 +1761,7 @@ export default function RegisterPage({ onGoLogin, onGoBack, onSuccess, googleDat
                 {errors.general && (
                   <motion.div role="alert"
                     initial={{ opacity: 0, y: -10, height: 0 }} animate={{ opacity: 1, y: 0, height: "auto" }} exit={{ opacity: 0, height: 0 }}
-                    style={{ background: `${P.error}0f`, border: `1px solid ${P.error}44`, borderLeft: `3px solid ${P.error}`, padding: "10px 14px", marginBottom: 18, overflow: "hidden" }}>
+                    style={{ background: `${P.error}0f`, border: `1px solid ${P.error}44`, borderLeft: `3px solid ${P.error}`, padding: "9px 12px", marginBottom: 12, overflow: "hidden" }}>
                     <span style={{ ...mono(8, 700), color: P.error, letterSpacing: ".06em" }}>⚠ {errors.general}</span>
                     {errors.generalCode === "auth/email-already-in-use" && (
                       <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
@@ -1770,6 +1785,7 @@ export default function RegisterPage({ onGoLogin, onGoBack, onSuccess, googleDat
                 <motion.div key="step1"
                   initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.25 }}>
+                  
 
                   {/* Google button (only non-Google flow) */}
                   {!fromGoogle && (
@@ -1778,7 +1794,7 @@ export default function RegisterPage({ onGoLogin, onGoBack, onSuccess, googleDat
                         aria-label="Continuar registro con Google"
                         whileHover={!loadingGoogle && !loading ? { scale: 1.02, y: -2, borderColor: "rgba(66,133,244,0.4)" } : {}}
                         whileTap={!loadingGoogle && !loading ? { scale: 0.97 } : {}}
-                        style={{ width: "100%", padding: "12px 16px", marginBottom: 12,
+                        style={{ width: "100%", padding: "11px 15px", marginBottom: 10,
                           background: "rgba(10,14,26,0.7)", border: `1px solid rgba(66,133,244,0.22)`,
                           borderRadius: 10,
                           boxShadow: "0 4px 16px rgba(0,0,0,0.3)", backdropFilter: "blur(8px)",
@@ -1800,7 +1816,7 @@ export default function RegisterPage({ onGoLogin, onGoBack, onSuccess, googleDat
                         )}
                       </motion.button>
 
-                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
                         <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg, transparent, ${P.line})` }} />
                         <span style={{ ...sans(11, 500), color: P.muted, letterSpacing: ".06em" }}>o crea con correo</span>
                         <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg, ${P.line}, transparent)` }} />
@@ -1850,14 +1866,14 @@ export default function RegisterPage({ onGoLogin, onGoBack, onSuccess, googleDat
                               setRememberMe(v => !v);
                             }
                           }}
-                          style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, cursor: "pointer", userSelect: "none" }}>
+                          style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, cursor: "pointer", userSelect: "none" }}>
                           <div style={{ width: 16, height: 16, background: rememberMe ? HOME_PUBLIC_COLORS.mage : "transparent", border: `2px solid ${rememberMe ? HOME_PUBLIC_COLORS.mage : P.muted}`, display: "flex", alignItems: "center", justifyContent: "center", transition: "all .15s", flexShrink: 0 }}>
                             {rememberMe && <span style={{ color: "#fff", fontSize: 10, fontWeight: 700, lineHeight: 1 }}>✓</span>}
                           </div>
                           <span style={{ ...sans(12, 500), color: P.muted }}>Mantener sesión iniciada</span>
                         </div>
 
-                        <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 10 }}>
+                        <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 8 }}>
                           <RadixCheckbox.Root
                             id="reg-tos"
                             checked={tosAccepted}
@@ -1879,7 +1895,7 @@ export default function RegisterPage({ onGoLogin, onGoBack, onSuccess, googleDat
                           {errors.tos && (
                             <motion.div role="alert"
                               initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
-                              transition={{ duration: 0.2 }} style={{ overflow: "hidden", marginBottom: 12 }}>
+                              transition={{ duration: 0.2 }} style={{ overflow: "hidden", marginBottom: 10 }}>
                               <div style={{ ...mono(8, 700), color: P.error, background: `${P.error}11`, border: `1px solid ${P.error}44`, padding: "7px 12px", display: "flex", alignItems: "center", gap: 6 }}>
                                 <span>⚠</span> {errors.tos}
                               </div>
@@ -1890,8 +1906,8 @@ export default function RegisterPage({ onGoLogin, onGoBack, onSuccess, googleDat
                         <motion.div
                           variants={FV.up}
                           style={{
-                            marginBottom: 10,
-                            padding: "10px 12px",
+                            marginBottom: 8,
+                            padding: "9px 11px",
                             borderRadius: 12,
                             border: `1px solid ${activeAccent}2f`,
                             background: `linear-gradient(180deg, ${activeAccent}10, rgba(9,11,20,0.82))`,
@@ -1920,7 +1936,7 @@ export default function RegisterPage({ onGoLogin, onGoBack, onSuccess, googleDat
                           background: loading
                             ? `${HOME_PUBLIC_COLORS.mage}44`
                             : makePrimaryButtonBackground(activeAccent, false),
-                          border: "none", padding: "15px", borderRadius: 10,
+                          border: "none", padding: "13px", borderRadius: 10,
                           cursor: loading ? "not-allowed" : "pointer",
                           display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
                           boxShadow: `0 4px 24px ${HOME_PUBLIC_COLORS.mage}24, 0 0 0 1px ${HOME_PUBLIC_COLORS.mage}12` }}>
@@ -1930,7 +1946,7 @@ export default function RegisterPage({ onGoLogin, onGoBack, onSuccess, googleDat
                   </motion.form>
 
                   {/* Login link */}
-                  <div style={{ textAlign: "center", marginTop: 12 }}>
+                  <div style={{ textAlign: "center", marginTop: 10 }}>
                     <span style={{ ...sans(13, 400), color: P.muted }}>¿Ya tienes cuenta?{" "}</span>
                     <motion.button type="button" onClick={() => onGoLogin?.()}
                       aria-label="Ir a iniciar sesión"
@@ -1947,12 +1963,13 @@ export default function RegisterPage({ onGoLogin, onGoBack, onSuccess, googleDat
                 <motion.div key="step2"
                   initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.25 }}>
+                  
 
                   {fromHome && (
                     <motion.div
                       initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.35 }}
-                      style={{ ...makeHomePanel({ radius: 16, surface: `${activeAccent}10`, border: `${activeAccent}33`, outerGlow: "rgba(0,0,0,0.14)" }), display: "flex", alignItems: "center", gap: 10, marginBottom: 16, padding: "9px 14px" }}
+                      style={{ ...makeHomePanel({ radius: 16, surface: `${activeAccent}10`, border: `${activeAccent}33`, outerGlow: "rgba(0,0,0,0.14)" }), display: "flex", alignItems: "center", gap: 10, marginBottom: 12, padding: "8px 12px" }}
                     >
                       <span style={{ fontSize: 16 }}>{CLASSES[classIdx].icon}</span>
                       <div>
@@ -1974,15 +1991,15 @@ export default function RegisterPage({ onGoLogin, onGoBack, onSuccess, googleDat
                     fromHome={fromHome}
                     recommendedIdx={initialClassIdxRef.current} />
 
-                  <div style={{ ...makeHomePanel({ radius: 16, surface: "rgba(9,10,18,0.74)", outerGlow: "rgba(0,0,0,0.16)" }), marginBottom: 14, padding: "14px 14px 12px" }}>
+                  <div style={{ ...makeHomePanel({ radius: 16, surface: "rgba(9,10,18,0.74)", outerGlow: "rgba(0,0,0,0.16)" }), marginBottom: 12, padding: "12px 12px 10px" }}>
                     <div style={{ ...mono(8, 700), color: activeAccent, letterSpacing: ".1em", marginBottom: 10 }}>
                       TU CUENTA EMPIEZA CON
                     </div>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 10 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8 }}>
                       {REGISTER_REWARD_PREVIEW.map((reward) => (
-                        <div key={reward.title} style={{ ...makeHomePanel({ radius: 14, surface: "rgba(255,255,255,0.03)", outerGlow: "rgba(0,0,0,0.12)" }), padding: "10px 10px 12px", textAlign: "center" }}>
-                          <img src={reward.image} alt="" style={{ width: 34, height: 34, objectFit: "contain", marginBottom: 8 }} />
-                          <div style={{ ...sans(11, 700), color: "#f5f2ff", marginBottom: 4 }}>{reward.title}</div>
+                        <div key={reward.title} style={{ ...makeHomePanel({ radius: 14, surface: "rgba(255,255,255,0.03)", outerGlow: "rgba(0,0,0,0.12)" }), padding: "8px 8px 10px", textAlign: "center" }}>
+                          <img src={reward.image} alt="" style={{ width: 30, height: 30, objectFit: "contain", marginBottom: 6 }} />
+                          <div style={{ ...sans(10, 700), color: "#f5f2ff", marginBottom: 3 }}>{reward.title}</div>
                           <div style={{ ...sans(10, 500), color: P.muted, lineHeight: 1.45 }}>{reward.copy}</div>
                         </div>
                       ))}
@@ -1999,7 +2016,7 @@ export default function RegisterPage({ onGoLogin, onGoBack, onSuccess, googleDat
                       background: loading
                         ? `${activeAccent}44`
                         : makePrimaryButtonBackground(activeAccent, true),
-                      border: "none", padding: "15px", borderRadius: 10, marginBottom: 10,
+                      border: "none", padding: "13px", borderRadius: 10, marginBottom: 8,
                       cursor: loading ? "not-allowed" : "pointer",
                       display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
                       boxShadow: `0 4px 24px ${activeAccent}33, 0 0 0 1px ${activeAccent}16` }}>

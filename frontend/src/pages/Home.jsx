@@ -50,17 +50,17 @@ const HOME_CLASSES = [
     floor: "/exercises/hero/hero-floor-glow-warrior.png",
     zoneBanner: "/exercises/zones/zone-fuerza-banner.png",
     sceneMark: "/exercises/hero/hero-training-mark.png",
-    title: "Fuerza, impacto y constancia con lectura de progreso real.",
+    title: "Fuerza, constancia y progreso que se nota.",
     subtitle:
-      "Entra con una ruta clara hacia fuerza, botin, misiones y progreso visible para que cada sesion tenga peso desde el primer dia.",
+      "Abre rutas de fuerza con metas claras, recompensas visibles y una lectura simple de tu avance.",
     route: "Campo de fuerza",
-    routeCopy: "Quests fisicas con peso real, cadenas de repeticiones y progreso estable.",
+    routeCopy: "Retos de fuerza con progreso firme y cierres claros.",
     perks: [
       "Resalta rutas de fuerza, funcional y calistenia.",
       "Prioriza contratos de impacto y cierres con botin claro.",
-      "Empuja una lectura mas roja, mas firme y con energia de arena.",
+      "Da a la interfaz un tono mas firme y directo.",
     ],
-    classCopy: "Pensado para quien quiere ver el entrenamiento como avance de campana y no como una lista suelta.",
+    classCopy: "Buena opcion si quieres sentir cada sesion como un paso fuerte dentro del mapa.",
   },
   {
     key: "ARQUERO",
@@ -73,17 +73,17 @@ const HOME_CLASSES = [
     floor: "/exercises/hero/hero-floor-glow-archer.png",
     zoneBanner: "/exercises/zones/zone-cardio-banner.png",
     sceneMark: "/exercises/hero/hero-training-mark.png",
-    title: "Velocidad, pulso y ritmo para sostener la aventura.",
+    title: "Ritmo, velocidad y cardio sin perder el hilo.",
     subtitle:
-      "Sigue rutas de cardio, HIIT y movilidad con sesiones rapidas, metas claras y recompensas pensadas para mantener el ritmo.",
+      "Sigue rutas agiles con sesiones cortas, metas limpias y recompensas que invitan a volver.",
     route: "Ruta de impulso",
-    routeCopy: "Tramos de cardio, desplazamiento, movilidad y sesiones cortas con retorno rapido.",
+    routeCopy: "Cardio, movilidad y sesiones rapidas con retorno claro.",
     perks: [
       "Muestra primero zonas de cardio, HIIT y ritmo activo.",
       "Da mas protagonismo a rachas, tiempo y distancia recorrida.",
-      "Favorece recorridos agiles y metas que premian constancia sin perder velocidad.",
+      "Premia constancia y velocidad sin recargar la pantalla.",
     ],
-    classCopy: "Ideal para quien necesita entrar, leer el mapa rapido y arrancar sin perder tiempo.",
+    classCopy: "Ideal si quieres entrar, entender rapido el mapa y arrancar sin rodeos.",
   },
   {
     key: "MAGO",
@@ -96,17 +96,17 @@ const HOME_CLASSES = [
     floor: "/exercises/hero/hero-floor-glow-mage.png",
     zoneBanner: "/exercises/zones/zone-flexibilidad-banner.png",
     sceneMark: "/exercises/hero/hero-training-mark.png",
-    title: "Control corporal, respiracion y foco convertidos en progreso.",
+    title: "Foco, control y calma con avance real.",
     subtitle:
-      "Encuentra un camino mas preciso para respirar mejor, ganar movilidad y avanzar con control real del cuerpo.",
+      "Encuentra una ruta mas precisa para respirar mejor, ganar movilidad y entrenar con mas control.",
     route: "Santuario del foco",
-    routeCopy: "Respiracion, flexibilidad, control corporal y sesiones con memoria real del heroe.",
+    routeCopy: "Respiracion, flexibilidad y control con memoria real.",
     perks: [
       "Destaca mente, flexibilidad y recuperacion inteligente.",
       "Hace visible el progreso suave sin quitar peso al botin.",
-      "Refuerza sesiones donde enfoque, tecnica y recuperacion suman de verdad.",
+      "Refuerza sesiones donde tecnica y recuperacion tambien cuentan.",
     ],
-    classCopy: "Hecha para quien quiere una escena con presencia, pero con un tono mas limpio y concentrado.",
+    classCopy: "Encaja bien si buscas una lectura mas limpia, mas enfocada y menos ruidosa.",
   },
 ];
 
@@ -114,13 +114,13 @@ const HERO_IDLE_FRAMES = Array.from({ length: 8 }, (_, index) => `/avatar/idle/i
 
 const HOME_NEUTRAL_PREVIEW = {
   key: "NEUTRAL",
-  title: "El gremio abre sus puertas con fuerza, ritmo y foco listos para que elijas tu camino.",
+  title: "Elige tu clase y entra a un mapa donde entrenar si se siente distinto.",
   subtitle:
-    "Explora el mapa, conoce las clases y descubre como tu entrenamiento puede sentirse como una aventura continua desde el primer vistazo.",
+    "Explora el mundo, mira las clases y entiende rapido como tu progreso toma forma dentro de ForgeVenture.",
   hero: "/missions/missions-hero-default.png",
   crest: "/ui/header/section-home.png",
   route: "Mesa del gremio",
-  routeCopy: "Guerrero, Arquero y Mago esperan para que descubras cual encaja mejor con tu forma de entrenar.",
+  routeCopy: "Guerrero, Arquero y Mago te muestran tres formas distintas de vivir el mismo progreso.",
   zoneBanner: "/logo.png",
   sceneMark: "/exercises/hero/hero-training-mark.png",
 };
@@ -140,9 +140,9 @@ const FEATURE_BANDS = [
     icon: "/ui/header/section-home.png",
     image: "/ui/dashboard-bg.png",
     label: "Home del heroe",
-    title: "Tu base reune progreso, botin y decisiones del dia en un solo vistazo.",
+    title: "Tu base junta progreso, botin y decisiones del dia en un solo lugar.",
     copy:
-      "Racha, XP, misiones, ranking y recompensas se leen como si hubieras abierto tu propia bitacora.",
+      "Racha, XP, misiones y recompensas aparecen con lectura rapida desde que entras.",
     bullets: ["Resumen del heroe", "Recompensas visibles", "Estado del dia"],
   },
   {
@@ -150,9 +150,9 @@ const FEATURE_BANDS = [
     icon: "/ui/header/section-ejercicios.png",
     image: "/exercises/hero/training-scene-default.png",
     label: "Campo de entrenamiento",
-    title: "Cada zona de entrenamiento propone un reto claro y una recompensa concreta.",
+    title: "Cada zona propone un reto claro y una recompensa concreta.",
     copy:
-      "Recorre fuerza, cardio, movilidad y mas con hojas tecnicas, sesiones guiadas y objetivos que te invitan a volver.",
+      "Recorre fuerza, cardio y movilidad con sesiones guiadas y objetivos faciles de seguir.",
     bullets: ["Mapa de zonas", "Rutina rapida", "Tecnica y equipo"],
   },
   {
@@ -160,9 +160,9 @@ const FEATURE_BANDS = [
     icon: "/ui/header/section-misiones.png",
     image: "/missions/spotlight/spotlight-weekly-banner.png",
     label: "Tablon del gremio",
-    title: "Las misiones convierten tus metas en contratos con botin, riesgo y cierre claro.",
+    title: "Las misiones convierten tus metas en encargos con botin y cierre claro.",
     copy:
-      "Las quests dejan de verse como tickets sueltos y pasan a sentirse como encargos reales del mapa, con estado, rareza y cierre claro.",
+      "Cada quest muestra su estado, su premio y que te conviene resolver primero.",
     bullets: ["Botin visible", "Contrato destacado", "Progreso por encargo"],
   },
   {
@@ -181,39 +181,39 @@ const SYSTEM_PANELS = [
   {
     icon: Camera,
     image: "/exercises/chips/chip-camera.png",
-    title: "Modo camara con conteo real",
-    copy: "Cuando usas vision, la pagina premia repeticiones reales y una lectura mas honesta del esfuerzo.",
+    title: "Camara con conteo real",
+    copy: "Si entrenas con vision, el sistema reconoce repeticiones y registra mejor tu esfuerzo.",
   },
   {
     icon: TimerReset,
     image: "/exercises/chips/chip-timer.png",
-    title: "Timer con progreso limpio",
-    copy: "Si entrenas sin camara, el tiempo sigue teniendo peso y la sesion conserva su valor dentro del avance.",
+    title: "Timer que tambien cuenta",
+    copy: "Si entrenas sin camara, tu tiempo igual suma y la sesion mantiene su valor.",
   },
   {
     icon: Shield,
     image: "/missions/rewards/reward-contract-chest.png",
-    title: "Misiones y recompensas con memoria",
-    copy: "La interfaz no solo muestra loot: lo liga a rutas, contratos y estados utiles para volver manana.",
+    title: "Recompensas que no se pierden",
+    copy: "Todo queda ligado a tus rutas, tus encargos y tu siguiente paso dentro del mapa.",
   },
 ];
 
 const FAQ_ITEMS = [
   {
-    q: "Que hace distinta a ForgeVenture frente a una app fitness comun?",
-    a: "No se limita a registrar sesiones. Todo se presenta como un RPG de progreso personal: clases, botin, contratos, rutas y memoria real del heroe.",
+    q: "Que hace distinta a ForgeVenture?",
+    a: "No solo registra sesiones. Convierte tu entrenamiento en progreso visible con clases, rutas, misiones y recompensas.",
   },
   {
     q: "Se puede entrenar sin camara?",
-    a: "Si. El sistema ya contempla sesiones manuales y por timer para que el progreso no dependa de un solo modo de verificacion.",
+    a: "Si. Puedes avanzar con camara, timer o registro manual segun como prefieras entrenar.",
   },
   {
     q: "La clase cambia de verdad la experiencia?",
-    a: "Si. El color, la prioridad de zonas, el tono de algunas recomendaciones y el foco de progreso cambian para que cada cuenta se sienta propia.",
+    a: "Si. La clase cambia colores, prioridades y recomendaciones para que tu cuenta se sienta mas tuya.",
   },
   {
     q: "La pagina publica coincide con lo que luego ve el usuario dentro?",
-    a: "Si. Lo que ves aqui anticipa el mismo mundo de progreso, clases, quests y recompensas que encuentras al entrar en tu cuenta.",
+    a: "Si. La portada ya te muestra el mismo tono de progreso, clases y recompensas que ves al entrar.",
   },
 ];
 
@@ -1994,25 +1994,6 @@ const PAGE_CSS = `
     filter: drop-shadow(0 0 18px color-mix(in srgb, var(--fv-accent) 24%, transparent));
   }
 
-  .fvl-final-support {
-    display: grid;
-    grid-template-columns: 88px minmax(0, 1fr);
-    gap: 14px;
-    align-items: center;
-    padding: 14px;
-    border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(10, 9, 20, 0.74);
-  }
-
-  .fvl-final-support img {
-    width: 88px;
-    height: 88px;
-    border-radius: 16px;
-    object-fit: cover;
-    background: #fff;
-  }
-
   .fvl-social-fab {
     position: fixed;
     right: max(18px, calc(env(safe-area-inset-right) + 12px));
@@ -2633,7 +2614,7 @@ export default function Home({ onLogin, onRegister }) {
       return {
         eyebrow: "Ritmo de la manana",
         title: "Hora de activar el cuerpo",
-        copy: "Buen momento para abrir una ruta ligera, despertar el pulso y dejar lista la energia del dia.",
+        copy: "Buen momento para activar el cuerpo y arrancar el dia con una ruta corta.",
       };
     }
 
@@ -2641,14 +2622,14 @@ export default function Home({ onLogin, onRegister }) {
       return {
         eyebrow: "Ritmo de la tarde",
         title: "Ventana de rendimiento",
-        copy: "Ideal para buscar intensidad, sumar trabajo fisico real y aprovechar tu mejor tramo del dia.",
+      copy: "Buena hora para apretar el ritmo y sumar una sesion con mas impacto.",
       };
     }
 
     return {
       eyebrow: "Ritmo de la noche",
       title: "Cierre con foco y recuperacion",
-      copy: "Buena hora para movilidad, respiracion y una sesion que deje progreso sin cargar de mas el cuerpo.",
+      copy: "Mejor momento para bajar revoluciones, moverte con calma y cerrar bien el dia.",
     };
   }, [currentHour]);
 
@@ -2666,17 +2647,17 @@ export default function Home({ onLogin, onRegister }) {
     ? {
         eyebrow: "Tu regreso",
         title: "Tu avance sigue vivo",
-        copy: "Entra para retomar tus frentes, revisar tus recompensas y volver a sumar XP desde donde lo dejaste.",
+        copy: "Entra para retomar tus rutas, revisar recompensas y seguir desde donde lo dejaste.",
       }
     : {
         eyebrow: "Para quien es",
         title: "Si quieres entrenar con un motivo claro",
-        copy: "Sirve para crear habito, bajar grasa, sostener ritmo o gamificar tu progreso sin perder de vista lo fisico.",
+        copy: "Ideal si quieres crear habito, moverte mejor y sentir que cada sesion si empuja tu progreso.",
       };
 
   const heroContextCopy = isReturningUser
-    ? "Tu avance sigue vivo: vuelve a tus frentes, revisa tus recompensas y retoma el pulso sin empezar desde cero."
-    : "Descubre un mundo donde el ejercicio se convierte en avance visible: clases con identidad, caminos claros, botin y una base que recuerda cada paso de tu heroe.";
+    ? "Tu avance sigue vivo. Vuelve a tus rutas, revisa tus recompensas y sigue sin empezar desde cero."
+    : "Descubre un mundo donde entrenar se convierte en avance visible: clases con identidad, rutas claras y recompensas que si motivan.";
 
   useEffect(() => {
     let mounted = true;
@@ -2827,7 +2808,7 @@ export default function Home({ onLogin, onRegister }) {
           <img src="/logo.png" alt="ForgeVenture" />
           <span className="fvl-brand-copy">
             <strong>ForgeVenture</strong>
-            <span>RPG fitness del gremio</span>
+            <span>Fitness RPG claro y vivo</span>
           </span>
         </button>
 
@@ -2883,7 +2864,7 @@ export default function Home({ onLogin, onRegister }) {
 
               <h1>
                 ForgeVenture
-                <small>Entrena, sube de nivel y haz que el fitness se vea como una aventura real.</small>
+                <small>Entrena con rumbo, sube de nivel y haz que tu progreso se sienta de verdad.</small>
               </h1>
 
               <p>{heroContextCopy}</p>
@@ -2891,15 +2872,15 @@ export default function Home({ onLogin, onRegister }) {
               <div className="fvl-chip-row">
                 <span className="fvl-badge">
                   <Swords size={15} />
-                  <strong>Aventura fisica</strong>
+                  <strong>Entreno con rumbo</strong>
                 </span>
                 <span className="fvl-badge">
                   <HeartPulse size={15} />
-                  <strong>Progreso real</strong>
+                  <strong>Progreso visible</strong>
                 </span>
                 <span className="fvl-badge">
                   <Sparkles size={15} />
-                  <strong>Clases vivas</strong>
+                  <strong>Clases con identidad</strong>
                 </span>
               </div>
 
@@ -3004,14 +2985,14 @@ export default function Home({ onLogin, onRegister }) {
 
                 <div className="fvl-stat-strip">
                   <div className="fvl-surface-card">
-                  <small>{heroPreviewIndex >= 0 ? "Clase del momento" : "Inicio abierto"}</small>
+                  <small>{heroPreviewIndex >= 0 ? "Clase destacada" : "Vista general"}</small>
                   <strong>{heroPreviewIndex >= 0 ? heroPreview.name : "Tres clases"}</strong>
-                  <p>{heroPreviewIndex >= 0 ? heroPreview.classCopy : "Empieza explorando el gremio completo antes de elegir el camino que mas se parezca a tu forma de entrenar."}</p>
+                  <p>{heroPreviewIndex >= 0 ? heroPreview.classCopy : "Mira el mundo primero y luego elige la clase que mejor encaje contigo."}</p>
                   </div>
                   <div className="fvl-surface-card">
                     <small>{hasLiveStats ? "Gremio activo" : "Gremio en expansion"}</small>
                   <strong>{statsPayload.totalUsers ?? 0}+</strong>
-                  <p>{hasLiveStats ? "Heroes ya visibles avanzando con rutas, rachas y progreso compartido." : "Vista base del mapa mientras llegan cifras reales del gremio."}</p>
+                  <p>{hasLiveStats ? "Ya hay heroes avanzando con rutas, rachas y progreso visible." : "Vista base del mapa mientras llegan cifras reales del gremio."}</p>
                 </div>
                 <div className="fvl-surface-card">
                   <small>{dayGuidance.eyebrow}</small>
@@ -3048,17 +3029,17 @@ export default function Home({ onLogin, onRegister }) {
             <SectionHeading
               icon="/ui/header/section-misiones.png"
               eyebrow="Mesa del gremio"
-              title="Todo lo importante del gremio vive aqui para que elijas tu camino sin perder el hilo."
-              copy="Explora el mundo, compara clases, entiende como progresa tu heroe y resuelve dudas dentro de una misma sala de mando."
+              title="Todo lo importante vive aqui para que entiendas rapido como funciona ForgeVenture."
+              copy="Explora el mundo, mira las clases, entiende como progresas y resuelve lo esencial antes de entrar."
             />
 
             <div className="fvl-command-shell">
               <aside className="fvl-command-rail">
                 {[
-                  { id: "mundo", label: "Mundo", copy: "Recorre las zonas clave del universo ForgeVenture." },
-                  { id: "clases", label: "Clases", copy: "Mira como cambia el viaje segun tu estilo de entrenamiento." },
-                  { id: "sistema", label: "Sistema", copy: "Descubre como se guardan sesiones, rachas y recompensas." },
-                  { id: "faq", label: "FAQ", copy: "Aclara lo esencial antes de abrir tu campana." },
+                  { id: "mundo", label: "Mundo", copy: "Recorre las zonas clave del mapa." },
+                  { id: "clases", label: "Clases", copy: "Mira que cambia segun tu forma de entrenar." },
+                  { id: "sistema", label: "Sistema", copy: "Entiende como sumas progreso y recompensas." },
+                  { id: "faq", label: "FAQ", copy: "Aclara lo esencial antes de entrar." },
                 ].map((item) => (
                   <button
                     key={item.id}
@@ -3149,15 +3130,15 @@ export default function Home({ onLogin, onRegister }) {
                             <div className="fvl-deck-rail">
                               <div className="fvl-deck-stage-panel">
                                 <strong>Ruta conectada</strong>
-                                <span>Cada frente del gremio se enlaza con el siguiente para que siempre sepas a donde ir.</span>
+                                <span>Cada parte del mapa se conecta con la siguiente para que siempre sepas por donde seguir.</span>
                               </div>
                               <div className="fvl-deck-stage-panel">
                                 <strong>Mundo vivo</strong>
-                                <span>Home, ejercicios, misiones y rutinas laten como partes del mismo viaje.</span>
+                                <span>Home, ejercicios, misiones y rutinas funcionan como partes del mismo recorrido.</span>
                               </div>
                               <div className="fvl-deck-stage-panel">
                                 <strong>Decision clara</strong>
-                                <span>En pocos pasos sabes donde arrancar y que recompensa vale la pena perseguir.</span>
+                                <span>En pocos pasos entiendes donde empezar y que vale la pena abrir primero.</span>
                               </div>
                             </div>
                           </div>
@@ -3187,17 +3168,17 @@ export default function Home({ onLogin, onRegister }) {
                               <div className="fvl-panel-copy">
                                 <small>Clase elegida</small>
                                 <strong>{selected.name}</strong>
-                                <p>Marca el tono de tu viaje y la forma en que se presentan tus rutas mas afines.</p>
+                                <p>Marca el tono del mapa y la forma en que se te muestran tus rutas mas afines.</p>
                               </div>
                               <div className="fvl-panel-copy">
                                 <small>Territorio afin</small>
                                 <strong>{selected.short}</strong>
-                                <p>Da prioridad a territorios y recomendaciones acordes con tu manera de entrenar.</p>
+                                <p>Da prioridad a zonas y recomendaciones acordes con tu manera de entrenar.</p>
                               </div>
                               <div className="fvl-panel-copy">
                                 <small>Lectura del mapa</small>
                                 <strong>Mas claridad</strong>
-                                <p>Todo se ordena para que veas mejor tu progreso, tus rutas y tu siguiente objetivo.</p>
+                                <p>Todo se acomoda para que veas mejor tu progreso y tu siguiente paso.</p>
                               </div>
                             </div>
                           </div>
@@ -3255,10 +3236,9 @@ export default function Home({ onLogin, onRegister }) {
                               <img src="/ui/header/section-personaje.png" alt="" />
                               <span>Forja con reglas claras</span>
                             </div>
-                            <h3>Entrar al mundo ya cuenta una historia de progreso, no una lista de features.</h3>
+                            <h3>Entrar ya deja claro por que vale la pena volver.</h3>
                             <p>
-                              Aqui entiendes rapido como se vive ForgeVenture: sesiones reales, rutas por clase,
-                              progreso con memoria y recompensas que empujan a seguir avanzando.
+                              Aqui entiendes rapido como funciona ForgeVenture: clases, rutas, progreso guardado y recompensas que si empujan a seguir.
                             </p>
                             <div className="fvl-system-points">
                               {SYSTEM_PANELS.map((item) => {
@@ -3286,21 +3266,21 @@ export default function Home({ onLogin, onRegister }) {
                             <div className="fvl-panel-copy" style={{ padding: 0, background: "transparent", border: "none" }}>
                               <small>Lo que te aguarda</small>
                               <strong style={{ fontFamily: "'Sora',sans-serif", fontSize: 18 }}>Cada sesion deja huella</strong>
-                              <p>Tu progreso no se pierde: el gremio guarda rachas, rutas, botin y decisiones para que siempre tengas un siguiente paso.</p>
+                              <p>Tu progreso no se pierde: quedan guardadas tus rutas, recompensas y el siguiente paso del mapa.</p>
                             </div>
                             <div className="fvl-side-grid" style={{ marginTop: 14 }}>
                               <div className="fvl-system-point">
                                 <div className="fvl-icon-wrap"><Brain size={18} /></div>
                                 <div>
                                   <strong style={{ display: "block", fontFamily: "'Sora',sans-serif", fontSize: 13, marginBottom: 4 }}>Recomendacion con criterio</strong>
-                                  <p>Las sugerencias apuntan a tu clase, a tu ritmo y a lo que mas te conviene entrenar hoy.</p>
+                                  <p>Las sugerencias miran tu clase, tu ritmo y lo que mejor te conviene hoy.</p>
                                 </div>
                               </div>
                               <div className="fvl-system-point">
                                 <div className="fvl-icon-wrap"><Lock size={18} /></div>
                                 <div>
                                   <strong style={{ display: "block", fontFamily: "'Sora',sans-serif", fontSize: 13, marginBottom: 4 }}>Progreso bajo control</strong>
-                                  <p>Sabes que hiciste, que te falta y que recompensa te espera sin perderte entre menus.</p>
+                                  <p>Sabes que hiciste, que te falta y que te espera sin perderte entre pantallas.</p>
                                 </div>
                               </div>
                             </div>
@@ -3309,8 +3289,8 @@ export default function Home({ onLogin, onRegister }) {
                           <div className="fvl-system-band">
                             <div className="fvl-panel-copy" style={{ padding: 0, background: "transparent", border: "none" }}>
                               <small>Pulso del gremio</small>
-                              <strong style={{ fontFamily: "'Sora',sans-serif", fontSize: 18 }}>Empiezas con una meta y sales con una ruta.</strong>
-                              <p>Desde la primera visita ya puedes entender que entrenar, como sumar XP y por que vale la pena volver manana.</p>
+                              <strong style={{ fontFamily: "'Sora',sans-serif", fontSize: 18 }}>Entras con una idea y sales con un plan claro.</strong>
+                              <p>Desde la primera visita ya entiendes que entrenar, como sumar progreso y por que vale la pena volver.</p>
                             </div>
                             <div className="fvl-chip-row" style={{ marginTop: 14 }}>
                               <span className="fvl-badge"><Flame size={14} /><strong>Racha</strong><span>encendida</span></span>
@@ -3362,22 +3342,22 @@ export default function Home({ onLogin, onRegister }) {
                         <div className="fvl-system-band">
                           <div className="fvl-panel-copy" style={{ padding: 0, background: "transparent", border: "none" }}>
                             <small>Antes de partir</small>
-                            <strong style={{ fontFamily: "'Sora',sans-serif", fontSize: 22 }}>Todo apunta a una sola idea:</strong>
-                            <p>hacer que moverse, entrenar y volver manana se sienta como avanzar en un mundo propio.</p>
+                            <strong style={{ fontFamily: "'Sora',sans-serif", fontSize: 22 }}>La idea es simple:</strong>
+                            <p>hacer que entrenar, volver y mejorar se sienta como avanzar dentro de un mundo propio.</p>
                           </div>
                           <div className="fvl-side-grid" style={{ marginTop: 18 }}>
                             <div className="fvl-system-point">
                               <div className="fvl-icon-wrap"><Shield size={18} /></div>
                               <div>
                                 <strong style={{ display: "block", fontFamily: "'Sora',sans-serif", fontSize: 13, marginBottom: 4 }}>Progreso con sentido</strong>
-                                <p>Cada zona, mision o rutina existe para ayudarte a avanzar de manera clara, no para llenarte de ruido.</p>
+                                <p>Cada zona, mision o rutina existe para ayudarte a avanzar con claridad, no para llenarte de ruido.</p>
                               </div>
                             </div>
                             <div className="fvl-system-point">
                               <div className="fvl-icon-wrap"><Trophy size={18} /></div>
                               <div>
                                 <strong style={{ display: "block", fontFamily: "'Sora',sans-serif", fontSize: 13, marginBottom: 4 }}>Recompensas visibles</strong>
-                                <p>El botin, las rachas y los logros siempre tienen un lugar claro dentro de tu avance.</p>
+                                <p>El botin, las rachas y los logros siempre tienen un lugar claro dentro de tu progreso.</p>
                               </div>
                             </div>
                           </div>
@@ -3403,9 +3383,9 @@ export default function Home({ onLogin, onRegister }) {
                   <img src="/ui/header/section-donaciones.png" alt="" />
                   <span>Da el primer paso</span>
                 </div>
-                <h2>Empieza hoy y convierte tu entrenamiento en una aventura que deja huella.</h2>
+                <h2>Empieza hoy y dale a tu entrenamiento una forma mas clara de avanzar.</h2>
                 <p>
-                  Elige tu clase, abre tu primera ruta y deja que misiones, ejercicios y rutinas te empujen a volver con un objetivo nuevo cada dia.
+                  Elige tu clase, abre tu primera ruta y deja que misiones, ejercicios y rutinas te den una razon real para volver.
                 </p>
               </div>
 
@@ -3416,14 +3396,6 @@ export default function Home({ onLogin, onRegister }) {
                 <button className="fvl-nav-ghost" onClick={onLogin}>
                   {user ? "Volver a mi ruta" : "Ya tengo cuenta"}
                 </button>
-                <div className="fvl-final-support">
-                  <img src="/qr-donacion.png" alt="QR de apoyo al proyecto" />
-                  <div>
-                    <small>Apoyo al gremio</small>
-                    <strong style={{ display: "block", fontFamily: "'Sora',sans-serif", fontSize: 15, margin: "4px 0 6px" }}>Escanea y ayuda a seguir ampliando el mundo.</strong>
-                    <p>Tu apoyo ayuda a sumar nuevas rutas, mejoras visuales y mas contenido para el gremio.</p>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -3432,11 +3404,11 @@ export default function Home({ onLogin, onRegister }) {
         <footer className="fvl-footer">
           <div>
             <strong>ForgeVenture</strong>
-            <p>Forja tu cuerpo. Vive la aventura. Cada sesion cuenta y cada paso deja progreso.</p>
+            <p>Entrena con rumbo, gana progreso y haz que cada sesion si deje huella.</p>
           </div>
           <div>
             <small>Camino del heroe</small>
-            <p>Fuerza, ritmo o control: el gremio siempre tiene una ruta lista para ti.</p>
+            <p>Fuerza, ritmo o control: siempre hay una ruta lista para ti.</p>
           </div>
         </footer>
       </main>
@@ -3454,7 +3426,7 @@ export default function Home({ onLogin, onRegister }) {
               <div className="fvl-social-panel-head">
                 <div>
                   <strong>Habla con el gremio</strong>
-                  <p>Elige la via que te quede mas comoda para dudas, soporte o novedades.</p>
+                  <p>Elige la via que te quede mas comoda para soporte, dudas o novedades.</p>
                 </div>
                 <button
                   type="button"

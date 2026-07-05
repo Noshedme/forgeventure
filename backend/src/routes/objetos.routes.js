@@ -5,6 +5,7 @@ import admin      from "../config/firebase.js";
 import { verifyToken }     from "../middleware/auth.js";
 import { checkRole }       from "../middleware/checkRole.js";
 import { listActiveBoosts } from "../services/boosts.service.js";
+import { bustUserCache } from "../utils/userCache.js";
 
 const { FieldValue } = admin.firestore;
 
@@ -14,6 +15,18 @@ const router = Router();
 const _catalogCache = { data: null, ts: 0 };
 const CATALOG_TTL   = 5 * 60_000;
 const invalidateCatalog = () => { _catalogCache.ts = 0; };
+
+const SUPPORTED_EFFECT_TYPES = new Set([
+  "xp_instant",
+  "hp_recover",
+  "level_boost",
+  "title_grant",
+  "xp_bonus",
+  "xp_mult",
+  "streak_shield",
+  "cooldown_red",
+  "unlock_class",
+]);
 
 // ── Constantes de validación ──────────────────────────────────────────────────
 const CATEGORIAS_VALIDAS = ["Poción","Consumible","Cosmético","Equipo","Coleccionable","Especial"];
@@ -84,6 +97,60 @@ function ledgerKindFromCategory(category = "") {
   return "loot";
 }
 
+function getEffectTypes(item = {}) {
+  return Array.isArray(item?.efectos)
+    ? item.efectos.map((ef) => String(ef?.tipo || "").trim()).filter(Boolean)
+    : [];
+}
+
+function getMarketKind(item = {}) {
+  const rawCat = String(item?.categoria || item?.cat || "").toLowerCase();
+  const effectTypes = getEffectTypes(item);
+
+  if (effectTypes.includes("cosmetic_skin") || rawCat.includes("cosm")) return "cosmetic";
+  if (!effectTypes.length) return "collectible";
+  if (effectTypes.includes("level_boost")) return "service";
+  if (effectTypes.includes("unlock_class") || effectTypes.includes("title_grant")) return "legacy";
+  if (effectTypes.some((type) => SUPPORTED_EFFECT_TYPES.has(type))) return "functional";
+  return "legacy";
+}
+
+function getRetiredReason(item = {}) {
+  const effectTypes = getEffectTypes(item);
+  if (effectTypes.includes("cosmetic_skin")) return "Las skins antiguas ahora viven en la vitrina de skins y avatares.";
+  if (effectTypes.includes("unlock_class")) return "El desbloqueo de clase ya no forma parte del mercado general.";
+  if (effectTypes.includes("title_grant")) return "Los titulos ahora se gestionan desde servicios y coleccion.";
+  if (effectTypes.length && effectTypes.some((type) => !SUPPORTED_EFFECT_TYPES.has(type))) return "Este objeto usa una logica legacy que ya no se ofrece en el mercado activo.";
+  return "";
+}
+
+function canUseItemSafely(item = {}) {
+  const effectTypes = getEffectTypes(item);
+  if (!effectTypes.length) return false;
+  const marketKind = getMarketKind(item);
+  if (!["functional", "service"].includes(marketKind)) return false;
+  return effectTypes.every((type) => SUPPORTED_EFFECT_TYPES.has(type));
+}
+
+function annotateMarketItem(item = {}) {
+  const effectTypes = getEffectTypes(item);
+  const marketKind = getMarketKind(item);
+  const retiredReason = getRetiredReason(item);
+  return {
+    ...item,
+    effectTypes,
+    marketKind,
+    catalogStatus: retiredReason ? "legacy" : "canonical",
+    retiredReason,
+    supportedUse: canUseItemSafely(item),
+  };
+}
+
+function isCanonicalPublicMarketItem(item = {}) {
+  const annotated = annotateMarketItem(item);
+  return annotated.catalogStatus === "canonical" && annotated.marketKind !== "cosmetic";
+}
+
 function applyNestedUpdate(target, path, value) {
   if (!path.includes(".")) {
     target[path] = value;
@@ -120,8 +187,16 @@ function buildProfilePatch(userData, updates, now) {
     xpNext: Number(merged.xpNext || 1000),
     hp: Number(merged.hp ?? 100),
     skillPoints: Number(merged.skillPoints || 0),
+    levelsBoughtTotal: Number(merged.levelsBoughtTotal || 0),
+    heroClass: merged.heroClass || "",
     titulo: merged.titulo || "",
     ownedTitles,
+    ownedAvatars: Array.isArray(merged.ownedAvatars) ? merged.ownedAvatars : ["avatar_01"],
+    ownedFrames: Array.isArray(merged.ownedFrames) ? merged.ownedFrames : [],
+    ownedSkins: Array.isArray(merged.ownedSkins) ? merged.ownedSkins : ["default"],
+    activeAvatar: merged.activeAvatar || "avatar_01",
+    activeFrame: merged.activeFrame ?? null,
+    activeSkin: merged.activeSkin || "default",
     unlockedClass: merged.unlockedClass || null,
     streakShield: merged.streakShield || null,
     activeBoosts: merged.activeBoosts || {},
@@ -270,7 +345,9 @@ router.get("/public", verifyToken, async (req, res) => {
       return res.json({ ok: true, objetos: _catalogCache.data });
     }
     const snapshot = await db.collection("objects").where("activo", "==", true).get();
-    const objetos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const objetos = snapshot.docs
+      .map(doc => annotateMarketItem({ id: doc.id, ...doc.data() }))
+      .filter(isCanonicalPublicMarketItem);
     _catalogCache.data = objetos;
     _catalogCache.ts   = now;
     return res.json({ ok: true, objetos });
@@ -287,7 +364,7 @@ router.get("/inventory", verifyToken, async (req, res) => {
   try {
     const invSnap = await db.collection("users").doc(req.user.uid)
       .collection("inventory").where("cantidad", ">", 0).get();
-    const items = invSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const items = invSnap.docs.map(doc => annotateMarketItem({ id: doc.id, ...doc.data() }));
     return res.json({ ok: true, items });
   } catch (err) {
     console.error("Error en GET /objetos/inventory:", err);
@@ -469,8 +546,15 @@ router.post("/buy", verifyToken, async (req, res) => {
 
       const obj      = objSnap.data();
       const userData = userSnap.data();
+      const marketItem = annotateMarketItem({ id, ...obj });
 
       if (!obj.activo) throw Object.assign(new Error("Objeto no disponible"), { code: 400 });
+      if (!isCanonicalPublicMarketItem(marketItem)) {
+        throw Object.assign(
+          new Error(marketItem.retiredReason || "Este objeto ya no forma parte del mercado activo."),
+          { code: 400 }
+        );
+      }
 
       const price     = Number(obj.precio || 0);
       const total     = price * Number(cantidad);
@@ -539,6 +623,7 @@ router.post("/buy", verifyToken, async (req, res) => {
     ]).catch(err => console.warn("[buy:post-tx]", err.message));
 
     // Invalida caché si el item era limitado (stock cambió)
+    bustUserCache(uid);
     if (obj.limitado) invalidateCatalog();
 
     return res.json({ ok: true, total, coins: newCoins });
@@ -595,7 +680,19 @@ router.post("/buy-level", verifyToken, async (req, res) => {
         updatedAt:          now,
       });
 
-      return { newLevel, newXpNext, newCoins, newBought, now, nextSkillPoints };
+      const profilePatch = buildProfilePatch(d, {
+        level: newLevel,
+        xp: 0,
+        xpNext: newXpNext,
+        coins: newCoins,
+        levelsBoughtTotal: newBought,
+        lastLevelUp: now,
+        totalLevelUps: (d.totalLevelUps || 0) + 1,
+        skillPoints: nextSkillPoints,
+        updatedAt: now,
+      }, now);
+
+      return { newLevel, newXpNext, newCoins, newBought, now, nextSkillPoints, profilePatch };
     });
 
     // Log historial de compra (outside transaction)
@@ -620,6 +717,8 @@ router.post("/buy-level", verifyToken, async (req, res) => {
       timestamp: result.now,
     });
 
+    bustUserCache(uid);
+
     return res.json({
       ok:           true,
       leveledUp:    true,
@@ -631,6 +730,7 @@ router.post("/buy-level", verifyToken, async (req, res) => {
       coinsLeft:    result.newCoins,
       levelsBought: result.newBought,
       maxBuy:       LEVEL_MAX_BUY,
+      profilePatch: result.profilePatch,
     });
   } catch (err) {
     const status = err.code === 400 ? 400 : 500;
@@ -669,6 +769,9 @@ router.post("/use/:id", verifyToken, async (req, res) => {
       let obj = invData;
       if (objSnap.exists) {
         obj = { ...invData, ...objSnap.data() };
+      }
+      if (!canUseItemSafely(obj)) {
+        throw Object.assign(new Error(getRetiredReason(obj) || "Este objeto ya no tiene una logica de uso valida en el mercado actual."), { code: 400 });
       }
 
       const { updates, summary, xpGanado, newLevel, leveledUp } = applyEfectos(obj, userData);
@@ -716,6 +819,8 @@ router.post("/use/:id", verifyToken, async (req, res) => {
       effects:   result.summary,
       timestamp: result.now,
     }).catch((logErr) => console.warn("[use:item:activity]", logErr.message));
+
+    bustUserCache(uid);
 
     return res.json({
       ok:         true,
@@ -915,9 +1020,10 @@ router.post("/seed-items", verifyToken, checkRole("admin"), async (req, res) => 
     const now   = new Date().toISOString();
     for (const item of toInsert) {
       const ref = db.collection("objects").doc();
-      batch.set(ref, { ...item, creadoEn: now, usos: 0 });
+      batch.set(ref, { ...item, creadoEn: now, usos: 0, metadata: { ...(item.metadata || {}), marketCatalog: "functional" } });
     }
     await batch.commit();
+    invalidateCatalog();
 
     return res.json({ ok: true, message: `${toInsert.length} objetos sembrados`, inserted: toInsert.length });
   } catch (err) {
