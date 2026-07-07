@@ -1,15 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { toast } from "sonner";
 import {
-  Settings, Volume2, Palette, Gamepad2, User,
-  MousePointer2, Music, Bell, Zap, Type, RotateCcw,
+  Settings, Volume2, Palette, User,
+  MousePointer2, Music, Zap, Type,
   LogOut, ChevronDown, Cloud, List, Shield, Target, Sparkles,
-  Check, X, Monitor, Globe,
+  Check, X, Monitor,
 } from "lucide-react";
 import sm, { TRACKS } from "../../services/soundManager";
-import { useLang, LANGS } from "../../hooks/useLang.js";
-import { db } from "../../firebase";
+import { useLang } from "../../hooks/useLang.js";
+import { auth, db } from "../../firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 
 // ── SC Admin palette ──────────────────────────────────────────────
@@ -89,7 +88,6 @@ const SETTINGS_EVENT = "fv-settings-changed";
 const ALL_TABS = [
   { id: "audio",  key: "sp.tab.audio",   Ico: Volume2 },
   { id: "visual", key: "sp.tab.visual",  Ico: Palette },
-  { id: "juego",  key: "sp.tab.game",    Ico: Gamepad2, auth: true },
   { id: "cuenta", key: "sp.tab.account", Ico: User,     auth: true },
 ];
 
@@ -97,7 +95,7 @@ const DEFAULTS = {
   themeId: "wine-aurora", accent: "#C9184A",
   reducedMotion: false, streakNotif: true, xpPopups: true,
   cursor: "normal", scale: "M", bgTrack: TRACKS[0].id,
-  clickEnabled: true, bgEnabled: false, bgVolume: 0.35, lang: "es",
+  clickEnabled: true, bgEnabled: false, bgVolume: 0.35,
 };
 
 const FIRESTORE_KEY_MAP = {
@@ -353,7 +351,8 @@ function emitSettingsChanged(detail) {
 //  MAIN COMPONENT
 // ═════════════════════════════════════════════════════════════════
 export default function SettingsPanel({ user, profile }) {
-  const { lang, setLang, t } = useLang();
+  const { t } = useLang();
+  const [runtimeProfile, setRuntimeProfile] = useState(() => profile || null);
   const [themeId, setThemeIdRaw] = useState(() => localStorage.getItem("fv_theme") || "wine-aurora");
   const T = THEMES[themeId] || THEMES["wine-aurora"];
   const [accent, setAccentRaw] = useState(() => localStorage.getItem("fv_accent") || T.accent);
@@ -371,11 +370,8 @@ export default function SettingsPanel({ user, profile }) {
   const [tab,           setTab]           = useState("audio");
   const [gearSpin,      setGearSpin]      = useState(false);
   const [savedFlash,    setSavedFlash]    = useState(false);
-  const [confirmReset,  setConfirmReset]  = useState(false);
   const [changelogOpen, setChangelogOpen] = useState(false);
   const [hasNew,        setHasNew]        = useState(() => localStorage.getItem(SEEN_KEY) !== CURRENT_VER);
-  const [hoverAccent,   setHoverAccent]   = useState(null);
-  const displayAccent = hoverAccent || accent;
 
   const panelRef  = useRef(null);
   const syncTimer = useRef(null);
@@ -391,11 +387,10 @@ export default function SettingsPanel({ user, profile }) {
     bgEnabled: sounds.bgEnabled,
     bgVolume: sounds.bgVolume,
     clickEnabled: sounds.clickEnabled,
-    lang,
   }), [
     themeId, accent, reducedMotion, streakNotif, xpPopups,
     cursor, scale, sounds.currentTrack, sounds.bgEnabled,
-    sounds.bgVolume, sounds.clickEnabled, lang,
+    sounds.bgVolume, sounds.clickEnabled,
   ]);
 
   // ── Effects ───────────────────────────────────────────────────
@@ -427,6 +422,49 @@ export default function SettingsPanel({ user, profile }) {
   }, [getRuntimeSettings]);
 
   useEffect(() => {
+    setRuntimeProfile(profile || null);
+  }, [profile]);
+
+  useEffect(() => {
+    const applyProfilePatch = (detail = {}) => {
+      if (!detail || typeof detail !== "object") return;
+      setRuntimeProfile((prev) => {
+        const next = { ...(prev || {}), ...detail };
+        if (detail.level !== undefined) next.level = Number(detail.level || 1);
+        if (detail.nivel !== undefined) next.nivel = Number(detail.nivel || 1);
+        if (detail.level !== undefined && detail.nivel === undefined) next.nivel = Number(detail.level || 1);
+        if (detail.xp !== undefined) next.xp = Number(detail.xp || 0);
+        if (detail.xpTotal !== undefined) next.xpTotal = Number(detail.xpTotal || 0);
+        if (detail.xpNext !== undefined) {
+          next.xpNext = Number(detail.xpNext || 0);
+          next.xpSiguienteNivel = Number(detail.xpNext || 0);
+        }
+        if (detail.heroClass !== undefined && !detail.clase) next.clase = detail.heroClass;
+        return next;
+      });
+    };
+
+    const onProfileUpdated = (event) => applyProfilePatch(event?.detail || {});
+    const onLevelUp = (event) => {
+      const detail = event?.detail || {};
+      applyProfilePatch({
+        level: detail.newLevel ?? detail.level,
+        nivel: detail.newLevel ?? detail.level,
+        xp: detail.xp,
+        xpNext: detail.xpNext,
+        heroClass: detail.heroClass,
+      });
+    };
+
+    window.addEventListener("profileUpdated", onProfileUpdated);
+    window.addEventListener("levelUp", onLevelUp);
+    return () => {
+      window.removeEventListener("profileUpdated", onProfileUpdated);
+      window.removeEventListener("levelUp", onLevelUp);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!user?.uid) return;
     (async () => {
       try {
@@ -444,7 +482,6 @@ export default function SettingsPanel({ user, profile }) {
         if (s.bgEnabled    !== undefined) sm.setBgEnabled(Boolean(s.bgEnabled));
         if (typeof s.bgVolume === "number") sm.setBgVolume(s.bgVolume);
         if (s.bgTrack) sm.setTrack(s.bgTrack);
-        if (s.lang) setLang(s.lang);
       } catch (_) {}
     })();
   }, [user?.uid]);
@@ -531,31 +568,6 @@ export default function SettingsPanel({ user, profile }) {
     saveAndSync({ [remoteKey]: next });
   };
 
-  const doReset = useCallback(() => {
-    sm.playClick();
-    setThemeIdRaw(DEFAULTS.themeId); applyThemeVars(DEFAULTS.themeId);
-    setAccentRaw(DEFAULTS.accent);
-    document.documentElement.style.setProperty("--fv-accent", DEFAULTS.accent);
-    document.documentElement.style.fontSize = "16px";
-    setReducedMotion(false); setStreakNotif(true); setXpPopups(true);
-    setCursorRaw(DEFAULTS.cursor); setScaleRaw(DEFAULTS.scale);
-    sm.setClickEnabled(DEFAULTS.clickEnabled);
-    sm.setBgEnabled(DEFAULTS.bgEnabled);
-    sm.setBgVolume(DEFAULTS.bgVolume);
-    sm.setTrack(DEFAULTS.bgTrack);
-    setLang(DEFAULTS.lang);
-    Object.entries({
-      fv_theme: DEFAULTS.themeId, fv_accent: DEFAULTS.accent,
-      fv_reduced_motion: "0", fv_streak_notif: "1", fv_xp_popups: "1",
-      fv_cursor: DEFAULTS.cursor, fv_ui_scale: DEFAULTS.scale,
-      fv_lang: DEFAULTS.lang,
-    }).forEach(([k, v]) => localStorage.setItem(k, v));
-    setConfirmReset(false);
-    syncFirestore(DEFAULTS);
-    emitSettingsChanged(DEFAULTS);
-    flash();
-  }, [flash, syncFirestore, setLang]);
-
   const openPanel = useCallback(() => {
     sm.playClick(); setOpen(o => !o);
     if (hasNew) { setHasNew(false); localStorage.setItem(SEEN_KEY, CURRENT_VER); }
@@ -564,15 +576,25 @@ export default function SettingsPanel({ user, profile }) {
   // ── Derived ───────────────────────────────────────────────────
   const visibleTabs = ALL_TABS.filter(tb => !tb.auth || user);
   const volPct      = Math.round(sounds.bgVolume * 100);
-  const xp          = profile?.xp ?? 0;
-  const nivel       = profile?.nivel ?? 1;
-  const xpNext      = profile?.xpSiguienteNivel ?? nivel * 100;
-  const xpPct       = Math.min(100, Math.round((xp / xpNext) * 100));
-  const ClassIco    = CLASS_ICONS[profile?.heroClass] || Shield;
+  const profileView = runtimeProfile || profile || null;
+  const accountName = profileView?.nombre || profileView?.username || profileView?.displayName || t("common.adventurer");
+  const accountClassKey = String(profileView?.heroClass || profileView?.clase || "GUERRERO").toUpperCase();
+  const toNum = (...values) => {
+    for (const value of values) {
+      const n = Number(value);
+      if (Number.isFinite(n)) return n;
+    }
+    return null;
+  };
+  const xp          = toNum(profileView?.xp, profileView?.currentXp, 0) ?? 0;
+  const nivel       = toNum(profileView?.level, profileView?.nivel, profileView?.stats?.level, 1) ?? 1;
+  const xpNext      = Math.max(1, toNum(profileView?.xpNext, profileView?.xpSiguienteNivel, profileView?.nextLevelXp, nivel * 100) ?? (nivel * 100));
+  const xpPct       = Math.min(100, Math.max(0, Math.round((xp / xpNext) * 100)));
+  const ClassIco    = CLASS_ICONS[accountClassKey] || Shield;
 
   return (
     <>
-      <style>{buildCSS(accent, displayAccent, cursor)}</style>
+      <style>{buildCSS(accent, accent, cursor)}</style>
 
       {cursor === "pixel" && <PixelCursor accent={accent} />}
 
@@ -668,9 +690,9 @@ export default function SettingsPanel({ user, profile }) {
               background:`rgba(10,14,26,0.96)`,
               backdropFilter:"blur(20px)", WebkitBackdropFilter:"blur(20px)",
               border:`1px solid ${P.navy}`,
-              borderTop:`2px solid ${displayAccent}`,
+              borderTop:`2px solid ${accent}`,
               borderRadius:16,
-              boxShadow:`0 8px 40px rgba(0,0,0,0.7), 0 0 40px ${displayAccent}18`,
+              boxShadow:`0 8px 40px rgba(0,0,0,0.7), 0 0 40px ${accent}18`,
               padding:"18px 20px 20px",
               scrollbarWidth:"thin", scrollbarColor:`${P.navy} transparent`,
               touchAction:"pan-y",
@@ -681,12 +703,12 @@ export default function SettingsPanel({ user, profile }) {
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:16 }}>
               <div style={{
                 width:34, height:34, borderRadius:9,
-                background:`${displayAccent}14`, border:`1px solid ${displayAccent}44`,
+                background:`${accent}14`, border:`1px solid ${accent}44`,
                 display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0,
-                boxShadow:`0 0 12px ${displayAccent}28`,
+                boxShadow:`0 0 12px ${accent}28`,
                 transition:"background .18s, box-shadow .18s",
               }}>
-                <Settings size={16} color={displayAccent} style={{ transition:"color .18s" }}/>
+                <Settings size={16} color={accent} style={{ transition:"color .18s" }}/>
               </div>
               <div>
                 <div style={{ ...orb(11,700), color:P.white, letterSpacing:".08em" }}>
@@ -801,99 +823,6 @@ export default function SettingsPanel({ user, profile }) {
                 {tab === "visual" && (
                   <motion.div variants={SV.container} initial="hidden" animate="show">
 
-                    {/* Language picker */}
-                    <motion.div variants={SV.item} style={{ paddingBottom:12, marginBottom:4, borderBottom:`1px solid ${P.navy}` }}>
-                      <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:8 }}>
-                        <Globe size={13} color={P.blue}/>
-                        <span className="sp-section-label" style={{ marginBottom:0 }}>{t("sp.visual.lang")}</span>
-                      </div>
-                      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:5 }}>
-                        {LANGS.map(lng => (
-                          <button
-                            key={lng.code}
-                            onClick={() => { sm.playClick(); setLang(lng.code); saveAndSync({ lang: lng.code }); }}
-                            style={{
-                              display:"flex", alignItems:"center", justifyContent:"center", gap:6,
-                              padding:"7px 8px", borderRadius:8, cursor:"pointer",
-                              background: lang === lng.code ? `${accent}18` : P.panel,
-                              border:`1.5px solid ${lang === lng.code ? accent : P.navy}`,
-                              color: lang === lng.code ? accent : P.muted,
-                              boxShadow: lang === lng.code ? `0 0 8px ${accent}33` : "none",
-                              transition:"all .18s",
-                            }}
-                          >
-                            <span style={{ fontSize:14 }}>{lng.flag}</span>
-                            <span style={{ ...raj(12,600), letterSpacing:".03em" }}>{lng.label}</span>
-                            {lang === lng.code && <Check size={10} color={accent}/>}
-                          </button>
-                        ))}
-                      </div>
-                    </motion.div>
-
-                    <motion.div variants={SV.item}>
-                      <div className="sp-section-label">{t("sp.visual.theme")}</div>
-                      <div style={{ display:"flex", gap:5, marginBottom:12 }}>
-                        {Object.entries(THEMES).map(([id, theme]) => (
-                          <button
-                            key={id}
-                            className={`sp-theme-card${themeId === id ? " active" : ""}`}
-                            onClick={() => setTheme(id)}
-                            style={{
-                              background: themeId === id ? `${accent}12` : P.panel,
-                              border:`1.5px solid ${themeId === id ? accent : P.navy}`,
-                            }}
-                          >
-                            <div style={{ fontSize:15 }}>{theme.icon}</div>
-                            <div style={{
-                              ...orb(6), color: themeId === id ? accent : P.muted,
-                              marginTop:3, letterSpacing:".04em",
-                            }}>
-                              {theme.label.split(" ")[0].toUpperCase()}
-                            </div>
-                            <div style={{ display:"flex", gap:2, justifyContent:"center", marginTop:5 }}>
-                              {[theme.accent, theme.blue, theme.green].map(c => (
-                                <div key={c} style={{ width:5, height:5, borderRadius:"50%", background:c }} />
-                              ))}
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </motion.div>
-
-                    <motion.div variants={SV.item}>
-                      <div className="sp-section-label">{t("sp.visual.accent")}</div>
-                      <div style={{ display:"flex", gap:10, alignItems:"center", paddingBottom:10, borderBottom:`1px solid ${P.navy}` }}>
-                        {ACCENT_PRESETS.map(p => (
-                          <button
-                            key={p.value}
-                            className={`sp-accent-dot${accent === p.value ? " active" : ""}`}
-                            style={{ background:p.value, boxShadow: accent === p.value ? `0 0 10px ${p.glow}` : "none" }}
-                            title={p.label}
-                            onClick={() => setAccent(p.value)}
-                            onMouseEnter={() => setHoverAccent(p.value)}
-                            onMouseLeave={() => setHoverAccent(null)}
-                          />
-                        ))}
-                        <label
-                          title={t("sp.visual.accent_custom")}
-                          style={{ position:"relative", cursor:"pointer" }}
-                          onMouseEnter={() => setHoverAccent(accent)}
-                          onMouseLeave={() => setHoverAccent(null)}
-                        >
-                          <div style={{
-                            width:24, height:24, borderRadius:"50%",
-                            background:"conic-gradient(#C9184A,#4CC9F0,#7C3AED,#22C55E,#C9184A)",
-                            border:"2px solid transparent", transition:"all .2s",
-                          }} />
-                          <input
-                            type="color" value={accent}
-                            onChange={e => setAccent(e.target.value)}
-                            style={{ position:"absolute", inset:0, opacity:0, width:"100%", height:"100%", cursor:"pointer" }}
-                          />
-                        </label>
-                      </div>
-                    </motion.div>
-
                     <motion.div variants={SV.item}>
                       <div className="sp-section-label">{t("sp.visual.cursor")}</div>
                       <div style={{ display:"flex", gap:5, marginBottom:8 }}>
@@ -914,25 +843,6 @@ export default function SettingsPanel({ user, profile }) {
                       </div>
                     </motion.div>
 
-                    <motion.div variants={SV.item}>
-                      <div className="sp-section-label">{t("sp.visual.scale")}</div>
-                      <div style={{ display:"flex", gap:5, marginBottom:8 }}>
-                        {SCALE_OPTS.map(opt => (
-                          <button key={opt.id} className="sp-scale-btn"
-                            onClick={() => setScale(opt.id)}
-                            style={{
-                              background: scale === opt.id ? `${accent}18` : P.panel,
-                              border:`1.5px solid ${scale === opt.id ? accent : P.navy}`,
-                              color: scale === opt.id ? accent : P.muted,
-                              boxShadow: scale === opt.id ? `0 0 8px ${accent}33` : "none",
-                            }}
-                          >
-                            <span style={{ ...raj(opt.id === "S" ? 14 : opt.id === "M" ? 17 : 21, 700), color: scale === opt.id ? accent : P.mutedL }}>Aa</span>
-                            <span>{opt.id}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </motion.div>
 
                     <Row Ico={Zap} color={P.purple} label={t("sp.visual.motion")} sub={t("sp.visual.motion_sub")}>
                       <Toggle on={reducedMotion} onToggle={mkToggle(setReducedMotion, reducedMotion, "fv_reduced_motion", true)} />
@@ -940,33 +850,6 @@ export default function SettingsPanel({ user, profile }) {
                   </motion.div>
                 )}
 
-                {/* ── JUEGO ── */}
-                {tab === "juego" && user && (
-                  <motion.div variants={SV.container} initial="hidden" animate="show">
-                    <Row Ico={Bell} color={P.orange} label={t("sp.game.streak")} sub={t("sp.game.streak_sub")}>
-                      <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                        <button
-                          onClick={() => {
-                            sm.playClick();
-                            toast.warning(t("sp.game.streak_toast"), { duration: 4000 });
-                          }}
-                          style={{
-                            padding:"3px 8px", borderRadius:5,
-                            background:`${accent}18`, border:`1px solid ${accent}55`,
-                            color:accent, ...orb(7), cursor:"pointer", letterSpacing:".05em",
-                            whiteSpace:"nowrap",
-                          }}
-                        >
-                          {t("sp.game.test")}
-                        </button>
-                        <Toggle on={streakNotif} onToggle={mkToggle(setStreakNotif, streakNotif, "fv_streak_notif")} />
-                      </div>
-                    </Row>
-                    <Row Ico={Zap} color={P.gold} label={t("sp.game.xp")} sub={t("sp.game.xp_sub")}>
-                      <Toggle on={xpPopups} onToggle={mkToggle(setXpPopups, xpPopups, "fv_xp_popups")} />
-                    </Row>
-                  </motion.div>
-                )}
 
                 {/* ── CUENTA ── */}
                 {tab === "cuenta" && user && (
@@ -987,7 +870,7 @@ export default function SettingsPanel({ user, profile }) {
                       </div>
                       <div style={{ flex:1, minWidth:0 }}>
                         <div style={{ ...raj(14,700), color:P.white, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-                          {profile?.nombre || t("common.adventurer")}
+                          {accountName}
                         </div>
                         <div style={{ ...raj(11,500), color:P.muted, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", marginBottom:7 }}>
                           {user?.email}
@@ -1019,7 +902,13 @@ export default function SettingsPanel({ user, profile }) {
                     {/* Logout */}
                     <motion.div variants={SV.item}>
                       <button
-                        onClick={() => { sm.playClick(); import("../../firebase").then(({ auth }) => auth.signOut()); }}
+                        onClick={async () => {
+                          sm.playClick();
+                          try {
+                            await auth.signOut();
+                            setOpen(false);
+                          } catch (_) {}
+                        }}
                         style={{
                           width:"100%", padding:"10px", borderRadius:8, marginBottom:8,
                           background:"transparent", border:`1px solid ${P.red}44`,
@@ -1032,56 +921,6 @@ export default function SettingsPanel({ user, profile }) {
                       >
                         <LogOut size={13}/> {t("sp.account.logout")}
                       </button>
-                    </motion.div>
-
-                    {/* Reset */}
-                    <motion.div variants={SV.item}>
-                      <AnimatePresence mode="wait">
-                        {!confirmReset ? (
-                          <motion.button
-                            key="reset-btn"
-                            initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
-                            onClick={() => { sm.playClick(); setConfirmReset(true); }}
-                            style={{
-                              width:"100%", padding:"9px", borderRadius:8, marginBottom:12,
-                              background:"transparent", border:`1px solid ${P.navy}`,
-                              ...raj(12,600), color:P.muted, cursor:"pointer", letterSpacing:".04em",
-                              display:"flex", alignItems:"center", justifyContent:"center", gap:6,
-                            }}
-                          >
-                            <RotateCcw size={12}/> {t("sp.account.reset")}
-                          </motion.button>
-                        ) : (
-                          <motion.div
-                            key="reset-confirm"
-                            initial={{ opacity:0, y:4 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }}
-                            style={{
-                              background:`${P.red}0E`, border:`1px solid ${P.red}33`,
-                              borderRadius:10, padding:"12px 14px", marginBottom:12,
-                            }}
-                          >
-                            <div style={{ ...raj(12,500), color:P.white, marginBottom:10, textAlign:"center" }}>
-                              {t("sp.account.reset_confirm")}
-                            </div>
-                            <div style={{ display:"flex", gap:8 }}>
-                              <button onClick={doReset} style={{
-                                flex:1, padding:"8px", borderRadius:7,
-                                background:P.red, border:"none",
-                                ...raj(12,700), color:P.bg, cursor:"pointer",
-                              }}>
-                                {t("sp.account.confirm")}
-                              </button>
-                              <button onClick={() => { sm.playClick(); setConfirmReset(false); }} style={{
-                                flex:1, padding:"8px", borderRadius:7,
-                                background:"transparent", border:`1px solid ${P.navy}`,
-                                ...raj(12,600), color:P.muted, cursor:"pointer",
-                              }}>
-                                {t("sp.account.cancel")}
-                              </button>
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
                     </motion.div>
 
                     {/* Changelog */}
